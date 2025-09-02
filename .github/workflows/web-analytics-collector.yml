@@ -129,8 +129,8 @@ jobs:
                 days_since_monday = today.weekday()  # 0=Monday, 6=Sunday
                 previous_monday = today - timedelta(days=days_since_monday + 7)
                 previous_sunday = previous_monday + timedelta(days=6)
-                
-                target_week = previous_monday.strftime("%Y-W%U")
+                # Use ISO week calculation for consistency
+                target_week = previous_monday.strftime("%Y-W%V")
                 
                 print(f"📊 Collecting web analytics data for EBP Dashboard")
                 print(f"🎯 Target week: {target_week} (completed week {previous_monday.strftime('%Y-%m-%d')} to {previous_sunday.strftime('%Y-%m-%d')})")
