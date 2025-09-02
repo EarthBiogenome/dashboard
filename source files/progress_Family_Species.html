@@ -731,6 +731,27 @@
           },
           tooltip: {
             trigger: "axis",
+            position: function (point, params, dom, rect, size) {
+              // Get the chart container width
+              var chartWidth = size.viewSize[0];
+              var tooltipWidth = size.contentSize[0];
+              var tooltipHeight = size.contentSize[1];
+              
+              // Position tooltip on the right side of the chart
+              // If there's enough space on the right, position it there
+              // Otherwise, position it on the left side of the mouse
+              var x = point[0] + 20; // 20px offset from mouse
+              if (x + tooltipWidth > chartWidth) {
+                x = point[0] - tooltipWidth - 20; // Position on left if not enough space on right
+              }
+              
+              // Keep tooltip within vertical bounds
+              var y = point[1] - tooltipHeight / 2;
+              if (y < 0) y = 0;
+              if (y + tooltipHeight > size.viewSize[1]) y = size.viewSize[1] - tooltipHeight;
+              
+              return [x, y];
+            },
             formatter: function (params) {
               // For total calculation
               if (!activeType.includes('YoY Growth')) {
