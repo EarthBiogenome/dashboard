@@ -32,8 +32,18 @@ def load_weekly_analytics_data():
     weekly_df = weekly_df.sort_values('collection_date')
     
     # Calculate cumulative totals (similar to GitHub traffic analysis)
-    weekly_df['cumulative_sessions'] = weekly_df['sessions'].cumsum()
-    weekly_df['cumulative_users'] = weekly_df['total_users'].cumsum()
+    # Use monthly_sessions when available to avoid double-counting overlapping periods
+    weekly_df['cumulative_sessions'] = weekly_df['monthly_sessions'].fillna(
+        weekly_df['sessions'].cumsum()
+    )
+    
+    # For users, use actual monthly totals to avoid double-counting returning visitors
+    # Use monthly_active_users when available, otherwise estimate based on weekly data
+    weekly_df['cumulative_users'] = weekly_df['monthly_active_users'].fillna(
+        # Fallback: rough estimate assuming 20% returning visitors
+        (weekly_df['total_users'].cumsum() * 0.8).astype(int)
+    )
+    
     weekly_df['cumulative_screen_page_views'] = weekly_df['screen_page_views'].cumsum()
     weekly_df['cumulative_custom_events'] = weekly_df['total_custom_events'].cumsum()
     
