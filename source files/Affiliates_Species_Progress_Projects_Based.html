@@ -634,7 +634,28 @@
           },
           tooltip: {
             trigger: "axis",
-            position: ['85%', '15%'], // Position in upper-right corner
+            position: function (point, params, dom, rect, size) {
+              // Get the chart container width and tooltip dimensions
+              var chartWidth = size.viewSize[0];
+              var tooltipWidth = size.contentSize[0];
+              var tooltipHeight = size.contentSize[1];
+              
+              // Position tooltip close to the mouse with smart positioning
+              // Default: 15px offset from mouse
+              var x = point[0] + 15;
+              var y = point[1] - tooltipHeight / 2;
+              
+              // If tooltip would go off the right edge, position it to the left
+              if (x + tooltipWidth > chartWidth) {
+                x = point[0] - tooltipWidth - 15;
+              }
+              
+              // Keep tooltip within vertical bounds
+              if (y < 0) y = 5;
+              if (y + tooltipHeight > size.viewSize[1]) y = size.viewSize[1] - tooltipHeight - 5;
+              
+              return [x, y];
+            },
             formatter: function (params) {
               // Add project name as the first line
               var projectName = params[0].name;
