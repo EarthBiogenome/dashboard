@@ -37,12 +37,29 @@ def load_weekly_analytics_data():
         weekly_df['sessions'].cumsum()
     )
     
-    # For users, use actual monthly totals to avoid double-counting returning visitors
-    # Use monthly_active_users when available, otherwise estimate based on weekly data
-    weekly_df['cumulative_users'] = weekly_df['monthly_active_users'].fillna(
-        # Fallback: rough estimate assuming 20% returning visitors
-        (weekly_df['total_users'].cumsum() * 0.8).astype(int)
-    )
+    # For users, create truly cumulative tracking
+    # Use monthly_active_users as the authoritative source when available,
+    # but ensure it's truly cumulative (only increases)
+    cumulative_users = []
+    max_users = 0
+    
+    for _, row in weekly_df.iterrows():
+        if pd.notna(row['monthly_active_users']):
+            # Use actual monthly active users from GA
+            current_users = int(row['monthly_active_users'])
+        else:
+            # Estimate based on new users (more conservative approach)
+            if not cumulative_users:
+                current_users = int(row['total_users'] * 0.8)  # Initial estimate
+            else:
+                # Add new users, assuming some retention
+                current_users = max_users + int(row['new_users'] * 0.9)
+        
+        # Ensure cumulative property (never decreases)
+        max_users = max(max_users, current_users)
+        cumulative_users.append(max_users)
+    
+    weekly_df['cumulative_users'] = cumulative_users
     
     weekly_df['cumulative_screen_page_views'] = weekly_df['screen_page_views'].cumsum()
     weekly_df['cumulative_custom_events'] = weekly_df['total_custom_events'].cumsum()
