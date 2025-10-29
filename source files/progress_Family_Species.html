@@ -70,17 +70,35 @@
       .select-container {
         display: flex;
         justify-content: center;
-        align-items: center;
-        margin: 10px 0 20px 0;  /* Centered below title with proper spacing */
+        align-items: flex-end;  /* Align to bottom for consistent height */
+        margin: 30px 0 20px 0;  /* Increased top margin for more space below title */
         position: relative;
         z-index: 1;  /* Ensure it stays above other elements */
+        gap: 40px;  /* Increased gap between dropdown groups */
+      }
+
+      /* Select group styling */
+      .select-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .select-label {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        text-align: center;
       }
 
       /* Custom select style */
       .custom-select {
         position: relative;
         display: inline-block;
-        width: 200px;
+        width: 140px;  /* Increased width for better spacing */
       }
 
       .select-box {
@@ -177,12 +195,63 @@
   <body>
     <h1 class="page-title">Annual EBP Progress</h1>
     <div class="select-container">
-      <div class="custom-select">
-        <div class="select-box">Cumulative</div>
-        <div class="options-container">
-          <div class="option">Cumulative</div>
-          <div class="option">Actual</div>
-          <div class="option">YoY Growth</div>
+      <div class="select-group">
+        <label class="select-label">Data Type</label>
+        <div class="custom-select">
+          <div class="select-box">Cumulative</div>
+          <div class="options-container">
+            <div class="option">Cumulative</div>
+            <div class="option">Actual</div>
+            <div class="option">YoY Growth</div>
+          </div>
+        </div>
+      </div>
+      <div class="select-group">
+        <label class="select-label">Start Year</label>
+        <div class="custom-select">
+          <div class="select-box">2010</div>
+          <div class="options-container">
+            <div class="option">2010</div>
+            <div class="option">2011</div>
+            <div class="option">2012</div>
+            <div class="option">2013</div>
+            <div class="option">2014</div>
+            <div class="option">2015</div>
+            <div class="option">2016</div>
+            <div class="option">2017</div>
+            <div class="option">2018</div>
+            <div class="option">2019</div>
+            <div class="option">2020</div>
+            <div class="option">2021</div>
+            <div class="option">2022</div>
+            <div class="option">2023</div>
+            <div class="option">2024</div>
+            <div class="option">2025</div>
+          </div>
+        </div>
+      </div>
+      <div class="select-group">
+        <label class="select-label">End Year</label>
+        <div class="custom-select">
+          <div class="select-box">2025</div>
+          <div class="options-container">
+            <div class="option">2010</div>
+            <div class="option">2011</div>
+            <div class="option">2012</div>
+            <div class="option">2013</div>
+            <div class="option">2014</div>
+            <div class="option">2015</div>
+            <div class="option">2016</div>
+            <div class="option">2017</div>
+            <div class="option">2018</div>
+            <div class="option">2019</div>
+            <div class="option">2020</div>
+            <div class="option">2021</div>
+            <div class="option">2022</div>
+            <div class="option">2023</div>
+            <div class="option">2024</div>
+            <div class="option">2025</div>
+          </div>
         </div>
       </div>
     </div>
@@ -212,6 +281,8 @@
       const familyDataMap = {}
       const speciesDataMap = {}
       let activeType = 'Cumulative'
+      let startYear = 2010
+      let endYear = 2025
       let familyChart = null
       let speciesChart = null
       
@@ -271,6 +342,25 @@
         console.log('Cache cleared');
       }
       
+      // Helper function to get effective start year based on user selection and data availability
+      function getEffectiveStartYear(dataType) {
+        const dataStartYear = 2010; // Data from services.js is already filtered to 2010-2025
+        return Math.max(startYear, dataStartYear);
+      }
+
+      // Helper function to validate year range
+      function validateYearRange() {
+        if (startYear > endYear) {
+          console.warn(`Start year (${startYear}) is greater than end year (${endYear}). Swapping values.`);
+          const temp = startYear;
+          startYear = endYear;
+          endYear = temp;
+          
+          // Update the UI to reflect the swap
+          updateYearDropdowns();
+        }
+      }
+
       // Helper function to convert actual data to cumulative data
       function calculateCumulativeFromActual(actualData) {
         const cumulativeData = {
@@ -294,6 +384,42 @@
           });
           
           // Update description with total
+          cumulativeSeries.description = formatNumber(cumSum);
+          cumulativeData.series.push(cumulativeSeries);
+        });
+        
+        return cumulativeData;
+      }
+
+      // Helper function to recalculate cumulative data for filtered year range
+      function recalculateCumulativeForYearRange(actualData, startYear, endYear) {
+        const dataStartYear = 2010;
+        const startIndex = startYear - dataStartYear;
+        const endIndex = endYear - dataStartYear;
+        
+        const cumulativeData = {
+          category: actualData.category.slice(startIndex, endIndex + 1),
+          series: [],
+          tableName: actualData.tableName.replace('(Actual)', '(Cumulative)')
+        };
+        
+        // For each series (assembly level)
+        actualData.series.forEach(actualSeries => {
+          const cumulativeSeries = {
+            ...actualSeries,
+            data: []
+          };
+          
+          // Calculate cumulative sum for the filtered range
+          let cumSum = 0;
+          const filteredData = actualSeries.data.slice(startIndex, endIndex + 1);
+          
+          filteredData.forEach(value => {
+            cumSum += value;
+            cumulativeSeries.data.push(cumSum);
+          });
+          
+          // Update description with total for this range
           cumulativeSeries.description = formatNumber(cumSum);
           cumulativeData.series.push(cumulativeSeries);
         });
@@ -419,6 +545,34 @@
         switchToView(type);
       }
       
+      function checkoutStartYear(year) {
+        const newStartYear = parseInt(year);
+        if(startYear === newStartYear) return;
+        
+        startYear = newStartYear;
+        validateYearRange();
+        console.log(`Start year changed to: ${startYear}`);
+        
+        // Reinitialize charts with new year range
+        if (familyChart && speciesChart) {
+          switchToView(activeType);
+        }
+      }
+      
+      function checkoutEndYear(year) {
+        const newEndYear = parseInt(year);
+        if(endYear === newEndYear) return;
+        
+        endYear = newEndYear;
+        validateYearRange();
+        console.log(`End year changed to: ${endYear}`);
+        
+        // Reinitialize charts with new year range
+        if (familyChart && speciesChart) {
+          switchToView(activeType);
+        }
+      }
+      
       function switchToView(type) {
         const familyOption = familyChart.getOption();
         const speciesOption = speciesChart.getOption();
@@ -431,11 +585,10 @@
         // Calculate optimal start year for each chart independently
         const familyStartYear = findOptimalStartYearForData(familyDataMap[type], 'Family');
         const speciesStartYear = findOptimalStartYearForData(speciesDataMap[type], 'Species');
-        const endYear = 2025;
         
-        console.log(`Switching to ${type}: Family starts ${familyStartYear}, Species starts ${speciesStartYear}`);
+        console.log(`Switching to ${type}: Family starts ${familyStartYear}, Species starts ${speciesStartYear}, End year: ${endYear}`);
         
-        // Generate year ranges for each chart
+        // Generate year ranges for each chart using the selected end year
         const familyYearRange = Array.from({length: endYear - familyStartYear + 1}, (_, i) => familyStartYear + i);
         const speciesYearRange = Array.from({length: endYear - speciesStartYear + 1}, (_, i) => speciesStartYear + i);
         
@@ -443,12 +596,28 @@
         familyOption.xAxis[0].data = familyYearRange;
         speciesOption.xAxis[0].data = speciesYearRange;
         
-        // Trim and apply consistent ordering to series data
-        const trimmedFamilySeries = trimSeriesToStartYear(familyDataMap[type].series, familyStartYear, 'familyProgressContainer');
-        const trimmedSpeciesSeries = trimSeriesToStartYear(speciesDataMap[type].series, speciesStartYear, 'speciesProgressContainer');
+        // Get the appropriate data based on type
+        let familySeries, speciesSeries;
         
-        familyOption.series = applyConsistentOrdering(trimmedFamilySeries, 'familyProgressContainer');
-        speciesOption.series = applyConsistentOrdering(trimmedSpeciesSeries, 'speciesProgressContainer');
+        if (type === 'Cumulative') {
+          // Recalculate cumulative data for the selected year range
+          const familyCumulativeData = recalculateCumulativeForYearRange(familyDataMap['Actual'], familyStartYear, endYear);
+          const speciesCumulativeData = recalculateCumulativeForYearRange(speciesDataMap['Actual'], speciesStartYear, endYear);
+          
+          familySeries = familyCumulativeData.series;
+          speciesSeries = speciesCumulativeData.series;
+          
+          console.log(`Recalculated cumulative data for Family: ${familyStartYear}-${endYear}`);
+          console.log(`Recalculated cumulative data for Species: ${speciesStartYear}-${endYear}`);
+        } else {
+          // For Actual and YoY Growth, trim the existing data
+          familySeries = trimSeriesToStartYear(familyDataMap[type].series, familyStartYear, 'familyProgressContainer');
+          speciesSeries = trimSeriesToStartYear(speciesDataMap[type].series, speciesStartYear, 'speciesProgressContainer');
+        }
+        
+        // Apply consistent ordering to series data
+        familyOption.series = applyConsistentOrdering(familySeries, 'familyProgressContainer');
+        speciesOption.series = applyConsistentOrdering(speciesSeries, 'speciesProgressContainer');
         
         familyChart.setOption(familyOption);
         speciesChart.setOption(speciesOption);
@@ -550,20 +719,31 @@
         showErrorMessage('speciesProgressContainer', 'species');
       }
 
+      // Function to update year dropdown displays
+      function updateYearDropdowns() {
+        const allSelectBoxes = document.querySelectorAll('.select-box');
+        const startYearBox = allSelectBoxes[1]; // Second dropdown (Start Year)
+        const endYearBox = allSelectBoxes[2];   // Third dropdown (End Year)
+        if (startYearBox) startYearBox.textContent = startYear;
+        if (endYearBox) endYearBox.textContent = endYear;
+      }
+
       // Function to find the first year with non-zero counts for a specific data type
       function findOptimalStartYearForData(data, dataType) {
-        // Use correct original start years based on the original hardcoded values
-        const originalStartYear = dataType === 'Family' ? 2004 : 2002;
-        const endYear = 2025;
+        // Data from services.js is already filtered to 2010-2025
+        const dataStartYear = 2010;
+        
+        // Get the effective start year based on user selection
+        const effectiveStartYear = getEffectiveStartYear(dataType);
         
         if (!data || !data.series || data.series.length === 0) {
-          console.log(`No data available for ${dataType}, using original start year: ${originalStartYear}`);
-          return originalStartYear;
+          console.log(`No data available for ${dataType}, using effective start year: ${effectiveStartYear}`);
+          return effectiveStartYear;
         }
         
-        // Find the first year where this data type has non-zero counts
-        for (let year = originalStartYear; year <= endYear; year++) {
-          const yearIndex = year - originalStartYear;
+        // Find the first year where this data type has non-zero counts, starting from effective start year
+        for (let year = effectiveStartYear; year <= endYear; year++) {
+          const yearIndex = year - dataStartYear;
           
           // Check if this year index exists in the data and has non-zero values
           for (let series of data.series) {
@@ -577,8 +757,8 @@
           }
         }
         
-        console.log(`${dataType} using original start year: ${originalStartYear} (no non-zero data found)`);
-        return originalStartYear;
+        console.log(`${dataType} using effective start year: ${effectiveStartYear} (no non-zero data found)`);
+        return effectiveStartYear;
       }
 
       // Function to find the optimal start year (takes the later of family and species start years)
@@ -598,22 +778,22 @@
         return optimalStartYear;
       }
 
-      // Function to trim series data to match the optimal start year
+      // Function to trim series data to match the user's selected year range
       function trimSeriesToStartYear(series, startYear, containerId) {
-        // Original start years differ between charts based on the original hardcoded values
-        const originalStartYear = containerId === 'familyProgressContainer' ? 2004 : 2002;
-        const skipYears = startYear - originalStartYear;
+        // Data from services.js is already filtered to 2010-2025
+        const dataStartYear = 2010;
+        const skipYears = startYear - dataStartYear;
         
-        console.log(`Trimming ${containerId}: originalStartYear=${originalStartYear}, newStartYear=${startYear}, skipYears=${skipYears}`);
+        console.log(`Trimming ${containerId}: dataStartYear=${dataStartYear}, userStartYear=${startYear}, skipYears=${skipYears}`);
         
-        // Only skip years if the optimal start year is later than the original start year
+        // Only skip years if the user wants to start later than 2010
         if (skipYears > 0) {
           return series.map(s => ({
             ...s,
-            data: s.data.slice(skipYears) // Remove data points before the optimal start year
+            data: s.data.slice(skipYears) // Remove data points before the user's start year
           }));
         } else {
-          // If optimal start year is same or earlier, return original series
+          // If user wants to start from 2010 or earlier, return original series
           return series;
         }
       }
@@ -624,16 +804,15 @@
 
         // Determine optimal start year for this specific chart
         const dataType = containerId === 'familyProgressContainer' ? 'Family' : 'Species';
-        const startYear = findOptimalStartYearForData(data, dataType);
-        const endYear = 2025;
+        const chartStartYear = findOptimalStartYearForData(data, dataType);
         
-        console.log(`${dataType} chart using start year: ${startYear}`);
+        console.log(`${dataType} chart using start year: ${chartStartYear}, end year: ${endYear}`);
         
-        // Generate year range from optimal start year to end year
-        const yearRange = Array.from({length: endYear - startYear + 1}, (_, i) => startYear + i);
+        // Generate year range from optimal start year to selected end year
+        const yearRange = Array.from({length: endYear - chartStartYear + 1}, (_, i) => chartStartYear + i);
 
         // Trim series data to match the optimal start year
-        const trimmedSeries = trimSeriesToStartYear(data.series, startYear, containerId);
+        const trimmedSeries = trimSeriesToStartYear(data.series, chartStartYear, containerId);
 
         // Apply consistent ordering and colors to series data using helper function
         const seriesWithColors = applyConsistentOrdering(trimmedSeries, containerId);
@@ -796,26 +975,50 @@
       }
 
        // JavaScript to handle dropdown functionality
-    document.querySelector('.select-box').addEventListener('click', function() {
-      const select = this.parentElement;
-      select.classList.toggle('active');
+    document.querySelectorAll('.select-box').forEach(selectBox => {
+      selectBox.addEventListener('click', function() {
+        const select = this.parentElement;
+        select.classList.toggle('active');
+      });
     });
 
     document.querySelectorAll('.option').forEach(option => {
       option.addEventListener('click', function() {
         const selectBox = option.parentElement.previousElementSibling;
+        const selectContainer = option.parentElement.parentElement;
         selectBox.textContent = option.textContent;
-        selectBox.parentElement.classList.remove('active');
-        checkoutChart(option.textContent)
+        selectContainer.classList.remove('active');
+        
+        // Determine which dropdown was clicked based on the select container
+        const optionsCount = selectContainer.querySelector('.options-container').children.length;
+        
+        if (optionsCount === 3) {
+          // Data type dropdown (Cumulative, Actual, YoY Growth)
+          checkoutChart(option.textContent);
+        } else if (optionsCount === 16) {
+          // Year dropdown - determine if it's start or end year based on position
+          const allSelectGroups = document.querySelectorAll('.select-group');
+          const clickedSelectGroup = selectContainer.parentElement;
+          
+          if (clickedSelectGroup === allSelectGroups[1]) {
+            // Start Year dropdown
+            checkoutStartYear(option.textContent);
+          } else if (clickedSelectGroup === allSelectGroups[2]) {
+            // End Year dropdown
+            checkoutEndYear(option.textContent);
+          }
+        }
       });
     });
 
     // Close dropdown when clicking outside
     document.addEventListener('click', function(event) {
-      const select = document.querySelector('.custom-select');
-      if (!select.contains(event.target)) {
-        select.classList.remove('active');
-      }
+      const selects = document.querySelectorAll('.custom-select');
+      selects.forEach(select => {
+        if (!select.contains(event.target)) {
+          select.classList.remove('active');
+        }
+      });
     });
 
     // Add copyright notice with fallback

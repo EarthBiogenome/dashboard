@@ -389,8 +389,8 @@ async function fetchData(url) {
         'complete genome': 'complete genome'
       };
       
-      // Initialize yearly data structure
-      for (let year = 2002; year <= 2025; year++) {
+      // Initialize yearly data structure (species data starts from 2010)
+      for (let year = 2010; year <= 2025; year++) {
         yearlyData[year] = {
           'contig': 0,
           'scaffold': 0,
@@ -415,10 +415,10 @@ async function fetchData(url) {
               const year = assemblyDate.getFullYear();
               const assemblyLevel = assemblyLevelValue.toLowerCase(); // Convert to lowercase to match our mapping
               
-              if (year >= 2002 && year <= 2025 && assemblyLevels.includes(assemblyLevel)) {
+              if (year >= 2010 && year <= 2025 && assemblyLevels.includes(assemblyLevel)) {
                 yearlyData[year][assemblyLevel]++;
                 processedCount++;
-              } else if (year >= 2002 && year <= 2025) {
+              } else if (year >= 2010 && year <= 2025) {
                 // Log unrecognized assembly levels to help with debugging
                 console.log('Unrecognized assembly level:', assemblyLevelValue, 'for year', year);
               }
@@ -434,7 +434,7 @@ async function fetchData(url) {
       
       // Convert to the format expected by the chart
       const chartStartTime = performance.now();
-      const category = Array.from({length: 2025 - 2002 + 1}, (_, i) => 2002 + i);
+      const category = Array.from({length: 2025 - 2010 + 1}, (_, i) => 2010 + i);
       const series = [];
       
       assemblyLevels.forEach(level => {
@@ -561,8 +561,8 @@ async function fetchData(url) {
       const yearlyData = {};
       const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
       
-      // Initialize yearly data structure (families start from 2004)
-      for (let year = 2004; year <= 2025; year++) {
+      // Initialize yearly data structure (families data starts from 2010)
+      for (let year = 2010; year <= 2025; year++) {
         yearlyData[year] = {
           'contig': 0,
           'scaffold': 0,
@@ -587,10 +587,10 @@ async function fetchData(url) {
               const year = assemblyDate.getFullYear();
               const assemblyLevel = assemblyLevelValue.toLowerCase();
               
-              if (year >= 2004 && year <= 2025 && assemblyLevels.includes(assemblyLevel)) {
+              if (year >= 2010 && year <= 2025 && assemblyLevels.includes(assemblyLevel)) {
                 yearlyData[year][assemblyLevel]++;
                 processedCount++;
-              } else if (year >= 2004 && year <= 2025) {
+              } else if (year >= 2010 && year <= 2025) {
                 console.log('Unrecognized family assembly level:', assemblyLevelValue, 'for year', year);
               }
             }
@@ -605,7 +605,7 @@ async function fetchData(url) {
       
       // Convert to the format expected by the chart
       const chartStartTime = performance.now();
-      const category = Array.from({length: 2025 - 2004 + 1}, (_, i) => 2004 + i);
+      const category = Array.from({length: 2025 - 2010 + 1}, (_, i) => 2010 + i);
       const series = [];
       
       assemblyLevels.forEach(level => {
