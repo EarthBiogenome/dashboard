@@ -13,7 +13,7 @@ Complete traffic monitoring system for the EBP Dashboard repository.
 ### Get Latest Data
 ```bash
 cd traffic-data
-git pull origin ebp-main
+git pull
 ```
 
 ### Run Analysis

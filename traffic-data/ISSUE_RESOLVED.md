@@ -79,7 +79,7 @@ The automated traffic data collection is now working correctly:
 ### View Latest Data
 ```powershell
 cd "C:\Users\fchen13\ASU Dropbox\Fang Chen\Work Documents\EBP\Dashboard reports"
-git pull ebp ebp-main
+git pull
 ```
 
 ### Run Analysis
@@ -119,7 +119,7 @@ Simple verification without visualizations.
 
 Every Monday after 2:30 AM UTC, you can:
 1. Check GitHub Actions for green checkmark ✅
-2. Pull latest data: `git pull ebp ebp-main`
+2. Pull latest data: `git pull`
 3. Verify last entry: `Get-Content traffic-data/weekly_summary.csv | Select-Object -Last 1`
 
 Or just let it run automatically and pull data whenever you need it!

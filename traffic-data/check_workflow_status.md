@@ -1,8 +1,9 @@
 # How to Check and Trigger the Workflow
 
-## Important: Which Repository?
+## Repository
 
-The GitHub Actions workflow runs on the **EarthBiogenome/dashboard** repository, NOT on your fork.
+The GitHub Actions workflow runs on the **EarthBiogenome/dashboard** repository.  
+Your local repository is connected to this as the `ebp` remote.
 
 ### Step 1: Check Recent Workflow Runs
 
@@ -53,7 +54,7 @@ After the workflow completes:
 If the workflow succeeded:
 ```powershell
 cd "C:\Users\fchen13\ASU Dropbox\Fang Chen\Work Documents\EBP\Dashboard reports"
-git pull ebp ebp-main
+git pull
 cd traffic-data
 python run_analysis.py
 ```
