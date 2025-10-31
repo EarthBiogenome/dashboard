@@ -20,6 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ebp-main
           token: ${{ secrets.TRAFFIC_TOKEN }}
           fetch-depth: 0
       
@@ -27,7 +28,9 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action - Traffic Collector"
-          git pull origin ${{ github.ref_name }} || echo "No remote changes to pull"
+          echo "📍 Current branch: $(git branch --show-current)"
+          echo "📍 Remote ref: ${{ github.ref_name }}"
+          git pull origin ebp-main || echo "No remote changes to pull"
       
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -252,23 +255,30 @@ jobs:
           git add traffic-data/
           
           if git diff --cached --quiet; then
-            echo "No changes to commit"
-            exit 0
+            echo "⚠️ No changes to commit - this may indicate an issue with data collection"
+            echo "no_changes=true" >> $GITHUB_ENV
+          else
+            CURRENT_DATE=$(date -u +"%Y-%m-%d")
+            WEEK_NUM=$(date -u +"%Y-W%U")
+            git commit -m "📊 Update weekly traffic data - ${WEEK_NUM} (${CURRENT_DATE})"
+            echo "✅ Changes committed successfully"
+            echo "no_changes=false" >> $GITHUB_ENV
           fi
-          
-          CURRENT_DATE=$(date -u +"%Y-%m-%d")
-          WEEK_NUM=$(date -u +"%Y-W%U")
-          git commit -m "📊 Update weekly traffic data - ${WEEK_NUM} (${CURRENT_DATE})"
-          
-          echo "Changes committed successfully"
       
       - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.TRAFFIC_TOKEN }}
-          branch: ${{ github.ref }}
+        if: env.no_changes != 'true'
+        run: |
+          echo "🚀 Pushing changes to ebp-main..."
+          git push origin ebp-main
+          if [ $? -eq 0 ]; then
+            echo "✅ Push successful"
+          else
+            echo "❌ Push failed"
+            exit 1
+          fi
       
       - name: Summary
+        if: always()
         run: |
           echo "## Weekly Traffic Data Collection Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -279,6 +289,13 @@ jobs:
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             tail -1 traffic-data/weekly_summary.csv >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Push Status" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ env.no_changes }}" == "true" ]; then
+              echo "⚠️ No changes detected - possible collection issue" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ Changes committed and pushed to ebp-main" >> $GITHUB_STEP_SUMMARY
+            fi
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Collection Schedule" >> $GITHUB_STEP_SUMMARY
             echo "- **Frequency**: Weekly on Mondays at 2:00 AM UTC" >> $GITHUB_STEP_SUMMARY
