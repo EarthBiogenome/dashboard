@@ -86,14 +86,14 @@
    <div id="chartContainer1">
      <div class="loading">
        <div class="spinner"></div>
-       <div class="progress-text">Loading EBP Affiliate species count data...</div>
+       <div class="progress-text">Fetching data...</div>
      </div>
    </div>
    
    <div id="chartContainer2">
      <div class="loading">
        <div class="spinner"></div>
-       <div class="progress-text">Loading ERGA Umbrella species count data...</div>
+       <div class="progress-text">Fetching data...</div>
      </div>
    </div>
    
@@ -279,10 +279,7 @@
 
       window.onload = async function () {
         try {
-          // Update progress
-          updateProgress('chartContainer1', 'Fetching project categories...');
-          // updateProgress('chartContainer2', 'Fetching project categories...');
-          // updateProgress('chartContainer3', 'Fetching project categories...');
+          // Charts will show "Fetching data..." until ready
 
           // First, try to get categories from GoaT API
           const finalReportUrl = 'https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree%282759%29%20AND%20long_list%20AND%20bioproject%3DPRJNA533106&rank=species&includeEstimates=false&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&xOpts=%2C%2C55%2C%2CEBP%20Affiliate&caption=Assemblies%20available%20on%20INSDC%20for%20target%20species%20across%20EBP-affiliated%20projects.%20Note%20that%20umbrella%20projects%20will%20inherit%20counts%20from%20their%20sub-projects%20and%20that%20overlapping%20targets%20sequenced%20by%20at%20least%20one%20EBP%20affiliate%20will%20appear%20as%20complete%20in%20all%20projects%20targeting%20that%20taxon&taxonomy=ncbi&result=taxon&queryId=vLCkKyxY2S'
@@ -329,10 +326,7 @@
             });
           }
 
-          // Update progress
-          updateProgress('chartContainer1', `Fetching data for ${projectsToFetch.length} projects...`);
-          // updateProgress('chartContainer2', `Fetching data for ${projectsToFetch.length} projects...`);
-          // updateProgress('chartContainer3', `Fetching data for ${projectsToFetch.length} projects...`);
+          // Loading indicators already show "Fetching data..."
           
           // Debug: log which projects are being processed
           console.log('Projects to fetch:', projectsToFetch.map(p => `${p.projectName} (${p.projectId})`));
@@ -377,9 +371,6 @@
 
           // Fetch all project data with automatic pagination
           const projectPromises = projectsToFetch.map((project, index) => {
-            updateProgress('chartContainer1', `Fetching ${project.projectName} data... (${index + 1}/${projectsToFetch.length})`);
-            // updateProgress('chartContainer2', `Fetching ${project.projectName} data... (${index + 1}/${projectsToFetch.length})`);
-            // updateProgress('chartContainer3', `Fetching ${project.projectName} data... (${index + 1}/${projectsToFetch.length})`);
             return fetchAllProjectData(project.projectId, project.projectName);
           });
 
@@ -394,9 +385,7 @@
             console.warn('⚠️ Projects with errors:', failedProjects.map(p => `${p.projectName}: ${p.error}`));
           }
           
-          updateProgress('chartContainer1', 'Processing species count data...');
-          // updateProgress('chartContainer2', 'Processing genome size data...');
-          // updateProgress('chartContainer3', 'Processing assembly span data...');
+          // Processing data - indicator already shows "Fetching data..."
 
           // Optimized data processing
           results.forEach((projectResult, index) => {
@@ -431,8 +420,8 @@
           // Create chart data structures
           const chartData = [
             {
-              data: { report: { report: { yLabel: "Count of species", histogram: { histograms: { byCat: speciesCounts, buckets: [] } } } } },
-              title: 'Count of species',
+              data: { report: { report: { yLabel: "Count of Species", histogram: { histograms: { byCat: speciesCounts, buckets: [] } } } } },
+              title: 'Count of Species',
               containerId: 'chartContainer1'
             }
             /* ,
@@ -450,8 +439,6 @@
 
           // Initialize charts
           chartData.forEach((chart, index) => {
-            updateProgress(chart.containerId, `Rendering ${chart.title.toLowerCase()}...`);
-            
             const { series } = getDefaultStackedBarData(chart.data);
             const chartInstance = initEchart({series: series, categories: validCategories}, chart.containerId, chart.title);
             
@@ -459,7 +446,7 @@
           });
 
           // ===== ERGA CHART DATA FETCHING AND PROCESSING =====
-          updateProgress('chartContainer2', 'Fetching project categories...');
+          // Loading indicator already shows "Fetching data..."
 
           // Prepare ERGA projects
           const ergaProjectsToFetch = [];
@@ -473,7 +460,6 @@
             }
           });
 
-          updateProgress('chartContainer2', `Fetching data for ${ergaProjectsToFetch.length} projects...`);
           console.log('ERGA Projects to fetch:', ergaProjectsToFetch.map(p => `${p.projectName} (${p.projectId})`));
 
           // Pre-initialize ERGA data structures
@@ -486,7 +472,6 @@
 
           // Fetch all ERGA project data with automatic pagination
           const ergaProjectPromises = ergaProjectsToFetch.map((project, index) => {
-            updateProgress('chartContainer2', `Fetching ${project.projectName} data... (${index + 1}/${ergaProjectsToFetch.length})`);
             return fetchAllProjectData(project.projectId, project.projectName);
           });
 
@@ -498,7 +483,7 @@
             console.warn('⚠️ ERGA Projects with errors:', failedErgaProjects.map(p => `${p.projectName}: ${p.error}`));
           }
           
-          updateProgress('chartContainer2', 'Processing species count data...');
+          // Processing ERGA data - indicator already shows "Fetching data..."
 
           // Process ERGA data
           ergaResults.forEach((projectResult, index) => {
@@ -520,13 +505,12 @@
 
           // Create ERGA chart data structure
           const ergaChartData = {
-            data: { report: { report: { yLabel: "Count of species", histogram: { histograms: { byCat: ergaSpeciesCounts, buckets: [] } } } } },
-            title: 'Count of species',
+            data: { report: { report: { yLabel: "Count of Species", histogram: { histograms: { byCat: ergaSpeciesCounts, buckets: [] } } } } },
+            title: 'Count of Species',
             containerId: 'chartContainer2'
           };
 
           // Initialize ERGA chart
-          updateProgress('chartContainer2', `Rendering ${ergaChartData.title.toLowerCase()}...`);
           const { series: ergaSeries } = getDefaultStackedBarData(ergaChartData.data);
           chartInstance2 = initEchart({series: ergaSeries, categories: ergaValidCategories}, ergaChartData.containerId, ergaChartData.title, 'ERGA Umbrella');
 

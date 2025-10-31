@@ -51,9 +51,9 @@ const pages = [
         icon: "fa-tree"
       },
       {
-        name: "Affiliate Progress",
+        name: "Affiliate & Regional Node Progress",
         file: "./source files/Affiliates_Node_Species_Progress.html",
-        description: "Assembly progress across EBP affiliate projects",
+        description: "Assembly progress across EBP affiliate projects and regional nodes",
         icon: "fa-chart-column"
       }
     ]
