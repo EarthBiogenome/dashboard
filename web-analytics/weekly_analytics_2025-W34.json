@@ -1,0 +1,261 @@
+{
+  "collection_info": {
+    "week": "2025-W34",
+    "collection_date": "2025-08-29",
+    "week_start": "2025-08-24",
+    "collected_at": "2025-08-29T13:08:43.897155",
+    "property_id": "498012997",
+    "website_url": "https://earthbiogenome.github.io/dashboard/"
+  },
+  "weekly_metrics": {
+    "sessions": 10,
+    "total_users": 9,
+    "new_users": 3,
+    "screen_page_views": 8,
+    "avg_bounce_rate": 0.2333333333333333,
+    "avg_session_duration": 260.75936451666666,
+    "avg_engagement_rate": 0.7666666666666667,
+    "countries_reached": 5,
+    "total_custom_events": 31,
+    "days_collected": 5,
+    "monthly_active_users": 24,
+    "monthly_sessions": 81
+  },
+  "raw_data": {
+    "overview_data": [
+      {
+        "date": "20250822",
+        "sessions": 3,
+        "total_users": 3,
+        "new_users": 2,
+        "screen_page_views": 2,
+        "bounce_rate": 0.6666666666666666,
+        "avg_session_duration": 13.479577333333333,
+        "engagement_rate": 0.3333333333333333
+      },
+      {
+        "date": "20250825",
+        "sessions": 1,
+        "total_users": 1,
+        "new_users": 1,
+        "screen_page_views": 1,
+        "bounce_rate": 0.0,
+        "avg_session_duration": 30.543606,
+        "engagement_rate": 1.0
+      },
+      {
+        "date": "20250826",
+        "sessions": 1,
+        "total_users": 1,
+        "new_users": 0,
+        "screen_page_views": 1,
+        "bounce_rate": 0.0,
+        "avg_session_duration": 83.890176,
+        "engagement_rate": 1.0
+      },
+      {
+        "date": "20250828",
+        "sessions": 4,
+        "total_users": 3,
+        "new_users": 0,
+        "screen_page_views": 3,
+        "bounce_rate": 0.5,
+        "avg_session_duration": 79.63048325,
+        "engagement_rate": 0.5
+      },
+      {
+        "date": "20250829",
+        "sessions": 1,
+        "total_users": 1,
+        "new_users": 0,
+        "screen_page_views": 1,
+        "bounce_rate": 0.0,
+        "avg_session_duration": 1096.25298,
+        "engagement_rate": 1.0
+      }
+    ],
+    "geographic_data": [
+      {
+        "country": "Sweden",
+        "city": "Lulea",
+        "sessions": 2,
+        "users": 2,
+        "screen_page_views": 2
+      },
+      {
+        "country": "United States",
+        "city": "Phoenix",
+        "sessions": 2,
+        "users": 1,
+        "screen_page_views": 1
+      },
+      {
+        "country": "Canada",
+        "city": "Richmond",
+        "sessions": 1,
+        "users": 1,
+        "screen_page_views": 1
+      },
+      {
+        "country": "Canada",
+        "city": "Vancouver",
+        "sessions": 1,
+        "users": 1,
+        "screen_page_views": 0
+      },
+      {
+        "country": "France",
+        "city": "",
+        "sessions": 1,
+        "users": 1,
+        "screen_page_views": 1
+      },
+      {
+        "country": "France",
+        "city": "(not set)",
+        "sessions": 1,
+        "users": 1,
+        "screen_page_views": 1
+      },
+      {
+        "country": "United Kingdom",
+        "city": "Cambridge",
+        "sessions": 1,
+        "users": 1,
+        "screen_page_views": 1
+      },
+      {
+        "country": "United States",
+        "city": "Tempe",
+        "sessions": 1,
+        "users": 1,
+        "screen_page_views": 1
+      }
+    ],
+    "device_data": [
+      {
+        "device_category": "desktop",
+        "browser": "Chrome",
+        "operating_system": "Windows",
+        "sessions": 6,
+        "users": 3
+      },
+      {
+        "device_category": "desktop",
+        "browser": "Chrome",
+        "operating_system": "Macintosh",
+        "sessions": 1,
+        "users": 1
+      },
+      {
+        "device_category": "desktop",
+        "browser": "Safari",
+        "operating_system": "Macintosh",
+        "sessions": 1,
+        "users": 1
+      },
+      {
+        "device_category": "mobile",
+        "browser": "Android Runtime",
+        "operating_system": "Android",
+        "sessions": 1,
+        "users": 1
+      },
+      {
+        "device_category": "mobile",
+        "browser": "Chrome",
+        "operating_system": "Android",
+        "sessions": 1,
+        "users": 1
+      }
+    ],
+    "events_data": [
+      {
+        "event_name": "category_view",
+        "date": "20250822",
+        "event_count": 4
+      },
+      {
+        "event_name": "dashboard_loaded",
+        "date": "20250822",
+        "event_count": 2
+      },
+      {
+        "event_name": "scroll_depth",
+        "date": "20250822",
+        "event_count": 1
+      },
+      {
+        "event_name": "category_view",
+        "date": "20250825",
+        "event_count": 2
+      },
+      {
+        "event_name": "dashboard_loaded",
+        "date": "20250825",
+        "event_count": 1
+      },
+      {
+        "event_name": "scroll_depth",
+        "date": "20250825",
+        "event_count": 1
+      },
+      {
+        "event_name": "category_view",
+        "date": "20250826",
+        "event_count": 2
+      },
+      {
+        "event_name": "dashboard_loaded",
+        "date": "20250826",
+        "event_count": 1
+      },
+      {
+        "event_name": "visualization_click",
+        "date": "20250826",
+        "event_count": 1
+      },
+      {
+        "event_name": "category_view",
+        "date": "20250828",
+        "event_count": 6
+      },
+      {
+        "event_name": "visualization_click",
+        "date": "20250828",
+        "event_count": 4
+      },
+      {
+        "event_name": "dashboard_loaded",
+        "date": "20250828",
+        "event_count": 3
+      },
+      {
+        "event_name": "category_view",
+        "date": "20250829",
+        "event_count": 2
+      },
+      {
+        "event_name": "dashboard_loaded",
+        "date": "20250829",
+        "event_count": 1
+      }
+    ],
+    "monthly_overview": [
+      {
+        "sessions": 81,
+        "total_users": 24,
+        "new_users": 22,
+        "screen_page_views": 77,
+        "bounce_rate": 0.30864197530864196,
+        "avg_session_duration": 434.80004972839504,
+        "engagement_rate": 0.691358024691358
+      }
+    ]
+  },
+  "summary": {
+    "period": "2025-08-24 to 2025-08-29",
+    "days_of_data": 5,
+    "engagement_quality": "High"
+  }
+}

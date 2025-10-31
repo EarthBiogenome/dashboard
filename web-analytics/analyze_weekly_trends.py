@@ -173,6 +173,19 @@ def create_engagement_trends(weekly_df):
     
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
     
+    # Detect data gaps (more than 14 days between consecutive entries)
+    gaps = []
+    for i in range(len(weekly_df) - 1):
+        days_diff = (weekly_df.iloc[i+1]['collection_date'] - weekly_df.iloc[i]['collection_date']).days
+        if days_diff > 14:  # More than 2 weeks gap
+            gaps.append({
+                'start_idx': i,
+                'end_idx': i + 1,
+                'start_date': weekly_df.iloc[i]['collection_date'],
+                'end_date': weekly_df.iloc[i+1]['collection_date'],
+                'weeks_missing': int(days_diff / 7)
+            })
+    
     # 1. Weekly Sessions and Users (bar chart)
     x_pos = np.arange(len(weekly_df))
     width = 0.35
@@ -181,6 +194,15 @@ def create_engagement_trends(weekly_df):
                     label='Weekly Sessions', color='skyblue', alpha=0.8)
     bars2 = ax1.bar(x_pos + width/2, weekly_df['total_users'], width,
                     label='Weekly Users', color='lightcoral', alpha=0.8)
+    
+    # Add gap indicators to first chart
+    for gap in gaps:
+        gap_center = (gap['start_idx'] + gap['end_idx']) / 2
+        ax1.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
+        ax1.text(gap_center, ax1.get_ylim()[1] * 0.9, 
+                f"Gap: {gap['weeks_missing']} weeks\nmissing", 
+                ha='center', va='top', fontsize=8, style='italic',
+                bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
     
     ax1.set_xlabel('Week (Month/Day)')
     ax1.set_ylabel('Activity Count')
@@ -198,6 +220,11 @@ def create_engagement_trends(weekly_df):
              marker='s', linewidth=3, label='Total Users', color='darkred')
     ax2.fill_between(weekly_df['week_label'], weekly_df['cumulative_users'], alpha=0.3, color='lightcoral')
     
+    # Add gap indicators to second chart
+    for gap in gaps:
+        gap_center = (gap['start_idx'] + gap['end_idx']) / 2
+        ax2.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
+    
     ax2.set_xlabel('Week (Month/Day)')
     ax2.set_ylabel('Cumulative Count')
     ax2.legend()
@@ -211,6 +238,13 @@ def create_engagement_trends(weekly_df):
     engagement_file = "weekly_engagement_trends.png"
     plt.savefig(engagement_file, dpi=300, bbox_inches='tight')
     print(f"📈 Web analytics trends saved as: {engagement_file}")
+    
+    # Report detected gaps
+    if gaps:
+        print(f"\n⚠️  Detected {len(gaps)} data gap(s):")
+        for gap in gaps:
+            print(f"   • {gap['start_date'].strftime('%Y-%m-%d')} to {gap['end_date'].strftime('%Y-%m-%d')} "
+                  f"({gap['weeks_missing']} weeks missing)")
     
     plt.show()
 

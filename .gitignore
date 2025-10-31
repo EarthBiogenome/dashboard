@@ -50,11 +50,14 @@ ENV/
 *.xlsx
 *.tsv
 
-# Google Analytics 4 - Sensitive data
+# Google Analytics 4 - Keep credentials secret but allow data files
 web-analytics/ga4_service_account.json
 web-analytics/ga4_config.json
-web-analytics/weekly_analytics_*.json
-web-analytics/*.csv
+
+# Allow web analytics data files (exception to global rules)
+!web-analytics/weekly_analytics_*.json
+!web-analytics/weekly_web_analytics.csv
+!web-analytics/*.png
 
 # GitHub Traffic Data - IMPORTANT: These files should be tracked for historical data
 # Allow traffic data files (exception to global *.csv and *.json rules)
