@@ -52,7 +52,7 @@ const pages = [
       },
       {
         name: "Affiliate Progress",
-        file: "./source files/Affiliates_Species_Progress_Projects_Based.html",
+        file: "./source files/Affiliates_Node_Species_Progress.html",
         description: "Assembly progress across EBP affiliate projects",
         icon: "fa-chart-column"
       }
