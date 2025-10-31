@@ -66,14 +66,14 @@ web-analytics/*
 !web-analytics/requirements.txt
 !web-analytics/archive/
 
-# GitHub Traffic Data - IMPORTANT: These files should be tracked for historical data
-# Allow traffic data files (exception to global *.csv rules)
+# GitHub Repository Analytics - IMPORTANT: These files should be tracked for historical data
+# Allow repo analytics data files (exception to global *.csv rules)
 # Must un-ignore directory first, then un-ignore specific files
-!traffic-data/
-traffic-data/*
-!traffic-data/traffic-*.json
-!traffic-data/weekly_summary.csv
-!traffic-data/*.png
-!traffic-data/*.py
-!traffic-data/*.md
-!traffic-data/archive/
+!repo-analytics/
+repo-analytics/*
+!repo-analytics/traffic-*.json
+!repo-analytics/weekly_summary.csv
+!repo-analytics/*.png
+!repo-analytics/*.py
+!repo-analytics/*.md
+!repo-analytics/archive/

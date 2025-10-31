@@ -60,7 +60,7 @@ jobs:
                   self.owner = owner
                   self.repo = repo
                   self.base_url = "https://api.github.com"
-                  self.data_dir = Path("traffic-data")
+                  self.data_dir = Path("repo-analytics")
                   self.headers = {
                       "Authorization": f"token {token}",
                       "Accept": "application/vnd.github.v3+json",
@@ -202,10 +202,10 @@ jobs:
           REPO_NAME: ${{ github.event.repository.name }}
         run: python collect_traffic.py
       
-      - name: Create README for traffic data
+      - name: Create README for repo analytics
         run: |
-          if [ ! -f traffic-data/README.md ]; then
-            cat > traffic-data/README.md << 'EOF'
+          if [ ! -f repo-analytics/README.md ]; then
+            cat > repo-analytics/README.md << 'EOF'
           # Weekly Traffic Data
           
           This directory contains automatically collected GitHub traffic data for this repository.
@@ -252,7 +252,7 @@ jobs:
       
       - name: Check for changes and commit
         run: |
-          git add traffic-data/
+          git add repo-analytics/
           
           if git diff --cached --quiet; then
             echo "⚠️ No changes to commit - this may indicate an issue with data collection"
@@ -282,12 +282,12 @@ jobs:
         run: |
           echo "## Weekly Traffic Data Collection Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f traffic-data/weekly_summary.csv ]; then
+          if [ -f repo-analytics/weekly_summary.csv ]; then
             echo "✅ Weekly traffic data collected and stored successfully" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Latest Entry" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            tail -1 traffic-data/weekly_summary.csv >> $GITHUB_STEP_SUMMARY
+            tail -1 repo-analytics/weekly_summary.csv >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Push Status" >> $GITHUB_STEP_SUMMARY
