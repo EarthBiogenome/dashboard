@@ -83,7 +83,7 @@ Every Monday after 2:30 AM UTC:
 3. Verify: `Get-Content weekly_summary.csv | Select-Object -Last 1`
 
 ### Manual Trigger (If Needed)
-1. Go to: https://github.com/EarthBiogenome/dashboard/actions/workflows/traffic-collector.yml
+1. Go to: https://github.com/EarthBiogenome/dashboard/actions/workflows/repo-analytics-collector.yml
 2. Click **"Run workflow"** button
 3. Select branch: **ebp-main**
 4. Click **"Run workflow"**
@@ -213,7 +213,7 @@ No need to specify remote/branch - defaults to `ebp/ebp-main`.
 ## 🛠️ Technical Details
 
 ### Workflow Configuration
-- File: `.github/workflows/traffic-collector.yml`
+- File: `.github/workflows/repo-analytics-collector.yml`
 - Checkout: Explicitly uses `ebp-main` branch
 - Commit: Automatic if data changes detected
 - Push: Directly to `ebp-main` branch

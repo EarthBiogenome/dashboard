@@ -1,4 +1,4 @@
-name: Collect Repository Traffic Data
+name: Collect Repository Analytics Data
 
 on:
   schedule:
@@ -280,10 +280,10 @@ jobs:
       - name: Summary
         if: always()
         run: |
-          echo "## Weekly Traffic Data Collection Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Weekly Repository Analytics Collection Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f repo-analytics/weekly_summary.csv ]; then
-            echo "✅ Weekly traffic data collected and stored successfully" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Weekly repository analytics collected and stored successfully" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Latest Entry" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

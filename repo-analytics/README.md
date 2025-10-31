@@ -37,7 +37,7 @@ python analyze_traffic_data.py
 ## 📊 System Info
 
 - **Collection:** Automated weekly (Mondays 2:00 AM UTC)
-- **Workflow:** https://github.com/EarthBiogenome/dashboard/actions/workflows/traffic-collector.yml
+- **Workflow:** https://github.com/EarthBiogenome/dashboard/actions/workflows/repo-analytics-collector.yml
 - **Status:** Fully Operational ✅
 
 ---
