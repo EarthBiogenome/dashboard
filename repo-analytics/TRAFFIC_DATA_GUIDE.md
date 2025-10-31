@@ -246,7 +246,7 @@ Contact EarthBiogenome/dashboard repository administrators.
 Check this guide first, then review error messages for specific problems.
 
 ### Useful Links
-- Workflow: https://github.com/EarthBiogenome/dashboard/actions/workflows/traffic-collector.yml
+- Workflow: https://github.com/EarthBiogenome/dashboard/actions/workflows/repo-analytics-collector.yml
 - Actions: https://github.com/EarthBiogenome/dashboard/actions
 - Repository: https://github.com/EarthBiogenome/dashboard
 
