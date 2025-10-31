@@ -15,7 +15,8 @@ Traffic data collection workflow was running successfully every week since Septe
 
 ### 1. **Workflow Push Configuration**
 - **Problem:** Workflow used generic `${{ github.ref }}` instead of explicit branch name
-- **Fix:** Changed to explicit `git push origin ebp-main` in `.github/workflows/traffic-collector.yml`
+- **Fix:** Changed to explicit `git push origin ebp-main` in the workflow
+  - Note: Within GitHub Actions, `origin` refers to the repository where the workflow runs (EarthBiogenome/dashboard)
 
 ### 2. **Gitignore Blocking Files** ⚠️ CRITICAL
 - **Problem:** `.gitignore` was blocking ALL traffic data files from being committed:
@@ -37,7 +38,7 @@ Traffic data collection workflow was running successfully every week since Septe
 
 | File | Change | Purpose |
 |------|--------|---------|
-| `.github/workflows/traffic-collector.yml` | Explicit checkout and push to `ebp-main` | Ensure data is committed to correct branch |
+| `.github/workflows/traffic-collector.yml` | Explicit checkout and push to `ebp-main` branch | Ensure data is committed to correct branch (workflow uses `git push origin ebp-main` where `origin` = the repo running the action) |
 | `.gitignore` | Allow traffic data files to be tracked | Remove blocking that prevented commits |
 | `traffic-data/analyze_traffic_data.py` | Handle mixed date formats | Parse both old and new date formats |
 | `traffic-data/verify_data.py` | New verification script | Simple data check without emoji issues |
