@@ -54,13 +54,26 @@ ENV/
 web-analytics/ga4_service_account.json
 web-analytics/ga4_config.json
 
-# Allow web analytics data files (exception to global rules)
+# Allow web analytics data files (exception to global *.csv/*.json rules)
+# Must un-ignore directory first, then un-ignore specific files
+!web-analytics/
+web-analytics/*
 !web-analytics/weekly_analytics_*.json
 !web-analytics/weekly_web_analytics.csv
 !web-analytics/*.png
+!web-analytics/*.py
+!web-analytics/*.md
+!web-analytics/requirements.txt
+!web-analytics/archive/
 
 # GitHub Traffic Data - IMPORTANT: These files should be tracked for historical data
-# Allow traffic data files (exception to global *.csv and *.json rules)
+# Allow traffic data files (exception to global *.csv rules)
+# Must un-ignore directory first, then un-ignore specific files
+!traffic-data/
+traffic-data/*
 !traffic-data/traffic-*.json
 !traffic-data/weekly_summary.csv
 !traffic-data/*.png
+!traffic-data/*.py
+!traffic-data/*.md
+!traffic-data/archive/
