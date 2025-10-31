@@ -23,8 +23,8 @@ def load_and_prepare_data():
     # Load data
     df = pd.read_csv(csv_file)
     
-    # Convert date column to datetime
-    df['collection_date'] = pd.to_datetime(df['collection_date'])
+    # Convert date column to datetime (handle mixed formats)
+    df['collection_date'] = pd.to_datetime(df['collection_date'], format='mixed', dayfirst=False)
     
     # Sort by date to ensure proper chronological order
     df = df.sort_values('collection_date')
