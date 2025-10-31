@@ -1,0 +1,48 @@
+STEP-BY-STEP: Manually Trigger Traffic Data Collection
+=====================================================
+
+CRITICAL: This must be done on the EarthBiogenome/dashboard repository!
+
+1. Open your web browser and go to:
+   https://github.com/EarthBiogenome/dashboard/actions/workflows/traffic-collector.yml
+
+2. Look for a blue "Run workflow" button on the right side
+   (If you don't see it, you may not have permissions - see note below)
+
+3. Click "Run workflow" button
+
+4. A small dropdown appears:
+   - Branch: Select "ebp-main"
+   - Click the green "Run workflow" button
+
+5. Wait 10 seconds and refresh the page
+
+6. You should see a new workflow run at the top with:
+   - Yellow dot (running) or Green checkmark (success) or Red X (failed)
+
+7. Click on the workflow run to see details and logs
+
+8. After it completes successfully (green checkmark):
+   - Go back to your terminal/PowerShell
+   - Run: git pull ebp ebp-main
+   - Run: cd traffic-data
+   - Run: python run_analysis.py
+
+If you DON'T see the "Run workflow" button:
+-------------------------------------------
+You need write/maintain permissions on the repository.
+
+Contact the repository administrator to either:
+A) Grant you workflow permissions, OR
+B) Have them manually trigger the workflow for you
+
+Repository administrators can trigger at:
+https://github.com/EarthBiogenome/dashboard/actions/workflows/traffic-collector.yml
+
+---
+
+After workflow runs successfully, you should see new commits like:
+"📊 Update weekly traffic data - 2025-W43 (2025-10-31)"
+
+Then pull and analyze the data.
+

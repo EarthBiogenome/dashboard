@@ -56,7 +56,8 @@ web-analytics/ga4_config.json
 web-analytics/weekly_analytics_*.json
 web-analytics/*.csv
 
-# GitHub Traffic Data - Sensitive business data
-traffic-data/traffic-*.json
-traffic-data/weekly_summary.csv
-traffic-data/*.png
+# GitHub Traffic Data - IMPORTANT: These files should be tracked for historical data
+# Allow traffic data files (exception to global *.csv and *.json rules)
+!traffic-data/traffic-*.json
+!traffic-data/weekly_summary.csv
+!traffic-data/*.png
