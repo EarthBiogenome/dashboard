@@ -25,6 +25,8 @@ python run_analysis.py
 
 **Output**: Data table, trend visualizations (`traffic_trends_analysis.png`), and summary statistics (totals, averages, peak activity, engagement metrics).
 
+**Note**: UTF-8 encoding is configured in your PowerShell profile for emoji support.
+
 ### View Raw Data
 - **CSV**: Open `weekly_summary.csv` in Excel or any CSV viewer
 - **JSON**: Check individual `traffic-YYYY-WXX.json` files for daily breakdowns

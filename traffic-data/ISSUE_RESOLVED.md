@@ -86,7 +86,6 @@ git pull
 ### Run Analysis
 ```powershell
 cd traffic-data
-$env:PYTHONIOENCODING="utf-8"
 python analyze_traffic_data.py
 ```
 

@@ -56,7 +56,7 @@ If the workflow succeeded:
 cd "C:\Users\fchen13\ASU Dropbox\Fang Chen\Work Documents\EBP\Dashboard reports"
 git pull
 cd traffic-data
-python run_analysis.py
+python analyze_traffic_data.py
 ```
 
 ## Troubleshooting
