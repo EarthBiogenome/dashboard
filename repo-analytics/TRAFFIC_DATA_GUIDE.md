@@ -90,6 +90,8 @@ Every Monday after 2:30 AM UTC:
 5. Wait for completion (~30 seconds)
 6. Pull data: `git pull`
 
+**⚠️ Note:** Manual mid-week triggers may collect incomplete data due to GitHub API lag. For most accurate data, rely on scheduled Sunday runs.
+
 ---
 
 ## 🆘 Troubleshooting
@@ -105,6 +107,17 @@ Every Monday after 2:30 AM UTC:
 - ⚠️ Workflow found no changes (might be expected if data already collected)
 - ❌ API rate limit (wait 1 hour, try again)
 - ❌ Token expired (admin needs to regenerate `TRAFFIC_TOKEN`)
+
+### API Data Doesn't Match GitHub UI
+**Symptom:** Numbers in our CSV/JSON are lower than GitHub Insights page shows.
+
+**Cause:** GitHub Traffic API lag (see "API Data Lag" section under "Understanding the Data")
+
+**Solution:**
+- ✅ This is normal for mid-week manual triggers
+- ✅ Wait for scheduled Sunday collection for accurate data
+- ✅ API will eventually match UI (can take 24-48 hours)
+- ℹ️ No action needed - not a bug in our system
 
 ### Analysis Script Errors
 **"Could not find weekly_summary.csv":**
@@ -146,6 +159,35 @@ Every Monday after 2:30 AM UTC:
 
 **Why gaps occur:**
 GitHub API only retains 14 days of traffic data. If collection stops for more than 2 weeks, that data is permanently lost.
+
+### API Data Lag (Important!)
+**⚠️ GitHub Traffic API has known caching/delay issues:**
+
+The GitHub Traffic API serves cached data that can lag behind the real-time UI by **several hours or up to 24 hours**.
+
+**What this means:**
+- **UI (Insights page):** Shows real-time data
+- **API (our collection):** Shows cached/aggregated data that updates periodically
+- **Discrepancy:** Manual collections may show lower numbers than the UI
+
+**Example:**
+```
+GitHub UI:        60 clones, 31 unique cloners
+API Collection:   33 clones, 19 unique cloners
+Difference:       27 clones missing due to API lag
+```
+
+**Why our weekly schedule is optimal:**
+- ✅ Weekly collection on **Sundays at 2 AM UTC** gives 24-48 hours after week ends
+- ✅ This allows API cache to fully update and aggregate the data
+- ✅ By Sunday, API data matches (or is very close to) what UI showed during the week
+
+**If you manually trigger mid-week:**
+- ⚠️ Data for current/recent days may be incomplete
+- ⚠️ The API will eventually catch up, but it takes time
+- ✅ Stick to scheduled runs for most accurate historical data
+
+**Bottom line:** This is a GitHub API limitation, not a bug in our system. Scheduled weekly collections work around this by waiting for data to settle.
 
 ### Cumulative vs Weekly
 - **Weekly metrics:** Activity for that specific week

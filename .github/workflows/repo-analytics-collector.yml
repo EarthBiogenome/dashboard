@@ -138,27 +138,49 @@ jobs:
                   week_str = date_obj.strftime("%Y-W%U")
                   file_exists = csv_file.exists()
                   
+                  # Check for duplicates and update if exists
+                  rows = []
+                  week_found = False
+                  
+                  if file_exists:
+                      with open(csv_file, 'r', encoding='utf-8') as f:
+                          reader = csv.DictReader(f)
+                          for row in reader:
+                              if row['week'] == week_str:
+                                  # Update existing week
+                                  row['collection_date'] = data['date']
+                                  row['views_count'] = data['views']['count']
+                                  row['views_uniques'] = data['views']['uniques']
+                                  row['clones_count'] = data['clones']['count']
+                                  row['clones_uniques'] = data['clones']['uniques']
+                                  row['collected_at'] = data['collected_at']
+                                  week_found = True
+                                  print(f"⚠️  Week {week_str} already exists, updating...")
+                              rows.append(row)
+                  
+                  # Add new week if not found
+                  if not week_found:
+                      rows.append({
+                          'week': week_str,
+                          'collection_date': data['date'],
+                          'views_count': data['views']['count'],
+                          'views_uniques': data['views']['uniques'],
+                          'clones_count': data['clones']['count'],
+                          'clones_uniques': data['clones']['uniques'],
+                          'collected_at': data['collected_at']
+                      })
+                  
+                  # Write back to file
                   try:
-                      with open(csv_file, 'a', newline='', encoding='utf-8') as f:
-                          writer = csv.writer(f)
-                          
-                          if not file_exists:
-                              writer.writerow([
-                                  'week', 'collection_date', 'views_count', 'views_uniques', 
-                                  'clones_count', 'clones_uniques', 'collected_at'
-                              ])
-                          
-                          writer.writerow([
-                              week_str,
-                              data['date'],
-                              data['views']['count'],
-                              data['views']['uniques'],
-                              data['clones']['count'],
-                              data['clones']['uniques'],
-                              data['collected_at']
-                          ])
+                      with open(csv_file, 'w', newline='', encoding='utf-8') as f:
+                          fieldnames = ['week', 'collection_date', 'views_count', 'views_uniques', 
+                                       'clones_count', 'clones_uniques', 'collected_at']
+                          writer = csv.DictWriter(f, fieldnames=fieldnames)
+                          writer.writeheader()
+                          writer.writerows(rows)
                       
-                      print(f"✓ Weekly summary CSV updated: {csv_file}")
+                      action = "updated" if week_found else "added"
+                      print(f"✓ Weekly summary CSV {action}: {csv_file}")
                       
                   except IOError as e:
                       print(f"✗ Failed to update CSV file: {e}")
