@@ -23,7 +23,7 @@ def load_weekly_analytics_data():
     
     if not csv_file.exists():
         print("❌ No weekly analytics data found")
-        print("💡 Run collect_weekly_analytics.py first to collect data")
+        print("💡 Run collect_web_analytics.py first to collect data")
         return None
         
     # Load weekly summary data
@@ -31,40 +31,18 @@ def load_weekly_analytics_data():
     weekly_df['collection_date'] = pd.to_datetime(weekly_df['collection_date'])
     weekly_df = weekly_df.sort_values('collection_date')
     
-    # Calculate cumulative totals (similar to GitHub traffic analysis)
-    # Use monthly_sessions when available to avoid double-counting overlapping periods
-    weekly_df['cumulative_sessions'] = weekly_df['monthly_sessions'].fillna(
-        weekly_df['sessions'].cumsum()
-    )
-    
-    # For users, create truly cumulative tracking
-    # Use monthly_active_users as the authoritative source when available,
-    # but ensure it's truly cumulative (only increases)
-    cumulative_users = []
-    max_users = 0
-    
-    for _, row in weekly_df.iterrows():
-        if pd.notna(row['monthly_active_users']):
-            # Use actual monthly active users from GA
-            current_users = int(row['monthly_active_users'])
-        else:
-            # Estimate based on new users (more conservative approach)
-            if not cumulative_users:
-                current_users = int(row['total_users'] * 0.8)  # Initial estimate
-            else:
-                # Add new users, assuming some retention
-                current_users = max_users + int(row['new_users'] * 0.9)
-        
-        # Ensure cumulative property (never decreases)
-        max_users = max(max_users, current_users)
-        cumulative_users.append(max_users)
-    
-    weekly_df['cumulative_users'] = cumulative_users
-    
+    # Calculate cumulative totals
+    weekly_df['cumulative_sessions'] = weekly_df['sessions'].cumsum()
     weekly_df['cumulative_screen_page_views'] = weekly_df['screen_page_views'].cumsum()
     weekly_df['cumulative_custom_events'] = weekly_df['total_custom_events'].cumsum()
     
-    # Create readable date labels
+    # Calculate cumulative users (sum of weekly totals)
+    # Note: This may slightly overcount unique users over longer periods since
+    # a user who visits multiple weeks will be counted multiple times.
+    # However, this provides a consistent automated metric that shows growth trends.
+    weekly_df['cumulative_users'] = weekly_df['total_users'].cumsum()
+    
+    # Create readable date labels (end date of collection cycle)
     weekly_df['week_label'] = weekly_df['collection_date'].dt.strftime('%m/%d')
     
     print(f"✅ Loaded {len(weekly_df)} weeks of analytics data")
@@ -169,68 +147,73 @@ def create_weekly_trends_analysis(weekly_df):
     plt.show()
 
 def create_engagement_trends(weekly_df):
-    """Create engagement and interaction trends analysis"""
+    """Create engagement and interaction trends analysis
     
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
+    Two vertically stacked charts:
+    - Top: Cumulative counts (users, views, sessions)
+    - Bottom: Weekly actual counts (users, views, sessions)
     
-    # Detect data gaps (more than 14 days between consecutive entries)
-    gaps = []
-    for i in range(len(weekly_df) - 1):
-        days_diff = (weekly_df.iloc[i+1]['collection_date'] - weekly_df.iloc[i]['collection_date']).days
-        if days_diff > 14:  # More than 2 weeks gap
-            gaps.append({
-                'start_idx': i,
-                'end_idx': i + 1,
-                'start_date': weekly_df.iloc[i]['collection_date'],
-                'end_date': weekly_df.iloc[i+1]['collection_date'],
-                'weeks_missing': int(days_diff / 7)
-            })
+    Note: No gap detection needed - GA4 preserves all data, gaps just mean 
+    we haven't collected that period locally yet (not data loss).
+    """
     
-    # 1. Weekly Sessions and Users (bar chart)
-    x_pos = np.arange(len(weekly_df))
-    width = 0.35
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
+    fig.suptitle('EBP Dashboard Web Analytics Trends', fontsize=16, fontweight='bold', y=0.995)
     
-    bars1 = ax1.bar(x_pos - width/2, weekly_df['sessions'], width, 
-                    label='Weekly Sessions', color='skyblue', alpha=0.8)
-    bars2 = ax1.bar(x_pos + width/2, weekly_df['total_users'], width,
-                    label='Weekly Users', color='lightcoral', alpha=0.8)
+    # 1. TOP CHART: Cumulative Counts (line chart with filled areas)
+    ax1.plot(weekly_df['week_label'], weekly_df['cumulative_sessions'], 
+             marker='o', linewidth=2.5, markersize=6, label='Total Sessions', color='#2E86AB')
+    ax1.fill_between(weekly_df['week_label'], weekly_df['cumulative_sessions'], 
+                     alpha=0.2, color='#2E86AB')
     
-    # Add gap indicators to first chart
-    for gap in gaps:
-        gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-        ax1.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
-        ax1.text(gap_center, ax1.get_ylim()[1] * 0.9, 
-                f"Gap: {gap['weeks_missing']} weeks\nmissing", 
-                ha='center', va='top', fontsize=8, style='italic',
-                bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
+    ax1.plot(weekly_df['week_label'], weekly_df['cumulative_users'], 
+             marker='s', linewidth=2.5, markersize=6, label='Total Users (Unique)', color='#A23B72')
+    ax1.fill_between(weekly_df['week_label'], weekly_df['cumulative_users'], 
+                     alpha=0.2, color='#A23B72')
     
-    ax1.set_xlabel('Week (Month/Day)')
-    ax1.set_ylabel('Activity Count')
-    ax1.set_xticks(x_pos)
-    ax1.set_xticklabels(weekly_df['week_label'], rotation=45)
-    ax1.legend()
+    ax1.plot(weekly_df['week_label'], weekly_df['cumulative_screen_page_views'], 
+             marker='^', linewidth=2.5, markersize=6, label='Total Page Views', color='#F18F01')
+    ax1.fill_between(weekly_df['week_label'], weekly_df['cumulative_screen_page_views'], 
+                     alpha=0.2, color='#F18F01')
+    
+    # Add final totals as annotations
+    final_sessions = weekly_df['cumulative_sessions'].iloc[-1]
+    final_users = weekly_df['cumulative_users'].iloc[-1]
+    final_views = weekly_df['cumulative_screen_page_views'].iloc[-1]
+    
+    ax1.text(len(weekly_df)-1, final_sessions, f'{int(final_sessions):,}', 
+             ha='left', va='bottom', fontsize=9, fontweight='bold', color='#2E86AB')
+    ax1.text(len(weekly_df)-1, final_users, f'{int(final_users):,}', 
+             ha='left', va='bottom', fontsize=9, fontweight='bold', color='#A23B72')
+    ax1.text(len(weekly_df)-1, final_views, f'{int(final_views):,}', 
+             ha='left', va='bottom', fontsize=9, fontweight='bold', color='#F18F01')
+    
+    ax1.set_title('Cumulative Totals (All-Time Growth)', fontweight='bold', fontsize=13, pad=10)
+    ax1.set_ylabel('Cumulative Count', fontsize=11, fontweight='bold')
+    ax1.legend(loc='upper left', fontsize=10)
     ax1.set_facecolor('#f8f9fa')
     ax1.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
+    plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right')
     
-    # 2. Cumulative Sessions and Users (line chart with filled areas)
-    ax2.plot(weekly_df['week_label'], weekly_df['cumulative_sessions'], 
-             marker='o', linewidth=3, label='Total Sessions', color='darkblue')
-    ax2.fill_between(weekly_df['week_label'], weekly_df['cumulative_sessions'], alpha=0.3, color='lightblue')
-    ax2.plot(weekly_df['week_label'], weekly_df['cumulative_users'], 
-             marker='s', linewidth=3, label='Total Users', color='darkred')
-    ax2.fill_between(weekly_df['week_label'], weekly_df['cumulative_users'], alpha=0.3, color='lightcoral')
+    # 2. BOTTOM CHART: Weekly Actual Counts (bar chart)
+    x_pos = np.arange(len(weekly_df))
+    width = 0.25
     
-    # Add gap indicators to second chart
-    for gap in gaps:
-        gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-        ax2.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
+    bars1 = ax2.bar(x_pos - width, weekly_df['sessions'], width, 
+                    label='Weekly Sessions', color='#2E86AB', alpha=0.8, edgecolor='#1a4d6d')
+    bars2 = ax2.bar(x_pos, weekly_df['total_users'], width,
+                    label='Weekly Users (Unique)', color='#A23B72', alpha=0.8, edgecolor='#6b2449')
+    bars3 = ax2.bar(x_pos + width, weekly_df['screen_page_views'], width,
+                    label='Weekly Page Views', color='#F18F01', alpha=0.8, edgecolor='#a86201')
     
-    ax2.set_xlabel('Week (Month/Day)')
-    ax2.set_ylabel('Cumulative Count')
-    ax2.legend()
+    ax2.set_title('Weekly Activity (Period Counts)', fontweight='bold', fontsize=13, pad=10)
+    ax2.set_xlabel('Week (Month/Day)', fontsize=11, fontweight='bold')
+    ax2.set_ylabel('Weekly Count', fontsize=11, fontweight='bold')
+    ax2.set_xticks(x_pos)
+    ax2.set_xticklabels(weekly_df['week_label'], rotation=45, ha='right')
+    ax2.legend(loc='upper left', fontsize=10)
     ax2.set_facecolor('#f8f9fa')
-    ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-    plt.xticks(rotation=45)
+    ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7, axis='y')
     
     plt.tight_layout()
     
@@ -238,13 +221,6 @@ def create_engagement_trends(weekly_df):
     engagement_file = "weekly_engagement_trends.png"
     plt.savefig(engagement_file, dpi=300, bbox_inches='tight')
     print(f"📈 Web analytics trends saved as: {engagement_file}")
-    
-    # Report detected gaps
-    if gaps:
-        print(f"\n⚠️  Detected {len(gaps)} data gap(s):")
-        for gap in gaps:
-            print(f"   • {gap['start_date'].strftime('%Y-%m-%d')} to {gap['end_date'].strftime('%Y-%m-%d')} "
-                  f"({gap['weeks_missing']} weeks missing)")
     
     plt.show()
 

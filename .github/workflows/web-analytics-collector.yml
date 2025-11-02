@@ -2,7 +2,7 @@ name: Weekly Web Analytics Collection
 
 on:
   schedule:
-    - cron: '0 2 * * 1'  # Monday 2AM UTC (matches traffic collection)
+    - cron: '0 2 * * 1'  # Weekly on Mondays at 2:00 AM UTC (matches repo-analytics schedule)
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
@@ -48,7 +48,7 @@ jobs:
     - name: Create GA4 Service Account Credentials
       working-directory: web-analytics
       run: |
-        echo '${{ secrets.GA4_SERVICE_ACCOUNT_JSON }}' > ga4_service_account.json
+        echo '${{ secrets.GA4_SERVICE_ACCOUNT_KEY }}' > ga4_service_account.json
     
     - name: Collect Weekly Web Analytics Data
       working-directory: web-analytics
@@ -284,15 +284,81 @@ jobs:
                 return weekly_metrics
             
             def save_weekly_json(self, data):
-                """Save detailed weekly data as JSON"""
+                """Save detailed weekly data to consolidated JSON file"""
                 
-                json_filename = f"weekly_analytics_{data['week']}.json"
+                week_data = {
+                    "collection_info": {
+                        "week": data['week'],
+                        "collection_date": data['date'],
+                        "week_start": data.get('week_start', data['date']),
+                        "collected_at": data['collected_at'],
+                        "property_id": self.property_id,
+                        "website_url": "https://earthbiogenome.github.io/dashboard"
+                    },
+                    "weekly_metrics": data["weekly_metrics"],
+                    "raw_data": {
+                        "overview_data": data.get("overview_data", []),
+                        "geographic_data": data.get("geographic_data", [])
+                    },
+                    "summary": {
+                        "period": f"{data.get('week_start', data['date'])} to {data['date']}",
+                        "days_of_data": data["weekly_metrics"]["days_collected"],
+                        "engagement_quality": "High" if data["weekly_metrics"]["avg_engagement_rate"] > 0.7 else "Medium" if data["weekly_metrics"]["avg_engagement_rate"] > 0.5 else "Low"
+                    }
+                }
                 
-                with open(json_filename, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
+                # Load or create consolidated file
+                consolidated_file = Path("weekly_analytics_all.json")
+                
+                if consolidated_file.exists():
+                    with open(consolidated_file, 'r', encoding='utf-8') as f:
+                        consolidated = json.load(f)
+                else:
+                    consolidated = {
+                        "metadata": {
+                            "description": "Consolidated weekly web analytics data for EBP Dashboard",
+                            "total_weeks": 0,
+                            "date_range": {},
+                            "last_updated": ""
+                        },
+                        "weeks": []
+                    }
+                
+                # Check if this week already exists (update) or is new (append)
+                existing_week_index = None
+                for i, week in enumerate(consolidated['weeks']):
+                    if week['collection_info']['week'] == data['week']:
+                        existing_week_index = i
+                        break
+                
+                if existing_week_index is not None:
+                    consolidated['weeks'][existing_week_index] = week_data
+                    print(f"🔄 Updated existing week {data['week']} in consolidated file")
+                else:
+                    consolidated['weeks'].append(week_data)
+                    print(f"➕ Added new week {data['week']} to consolidated file")
+                
+                # Sort weeks by week number
+                consolidated['weeks'].sort(key=lambda x: x['collection_info']['week'])
+                
+                # Update metadata
+                consolidated['metadata']['total_weeks'] = len(consolidated['weeks'])
+                consolidated['metadata']['last_updated'] = datetime.now(timezone.utc).isoformat()
+                
+                if consolidated['weeks']:
+                    consolidated['metadata']['date_range'] = {
+                        "first_week": consolidated['weeks'][0]['collection_info']['week'],
+                        "last_week": consolidated['weeks'][-1]['collection_info']['week'],
+                        "first_collection": consolidated['weeks'][0]['collection_info']['collection_date'],
+                        "last_collection": consolidated['weeks'][-1]['collection_info']['collection_date']
+                    }
+                
+                # Save consolidated file
+                with open(consolidated_file, 'w', encoding='utf-8') as f:
+                    json.dump(consolidated, f, indent=2, ensure_ascii=False)
                     
-                print(f"✅ Weekly detailed data saved: {json_filename}")
-                return json_filename
+                print(f"✅ Weekly data saved to consolidated file: {consolidated_file}")
+                return str(consolidated_file)
             
             def update_summary_csv(self, data):
                 """Update the weekly summary CSV file"""
@@ -419,16 +485,16 @@ jobs:
 # every Monday at 2:00 AM UTC, using the same "previous week" strategy as the
 # GitHub repository traffic collection.
 #
-# Schedule: Monday 2:00 AM UTC (matches traffic-collector.yml)
+# Schedule: Monday 2:00 AM UTC (matches repo-analytics-collector.yml)
 # Strategy: Collects data for the **completed previous week** to ensure accuracy
 # Data Format: Creates both JSON (detailed) and CSV (summary) files
 #
 # Required GitHub Secrets:
 # - GA4_PROPERTY_ID: Google Analytics 4 property ID 
-# - GA4_SERVICE_ACCOUNT_JSON: Service account credentials JSON
+# - GA4_SERVICE_ACCOUNT_KEY: Service account credentials JSON
 #
 # Files Generated:
-# - weekly_analytics_YYYY-WXX.json: Detailed weekly data with daily breakdowns
+# - weekly_analytics_all.json: Consolidated detailed data (all weeks)
 # - weekly_web_analytics.csv: Cumulative weekly summary data
 #
 # The workflow ensures data consistency with the GitHub traffic system by:
@@ -436,3 +502,6 @@ jobs:
 # 2. Applying the same "previous week" collection logic
 # 3. Creating similar dual file structure (JSON + CSV)
 # 4. Following the same commit/push patterns
+#
+# Note: GA4 preserves historical data, but weekly collection maintains consistency
+# with repo-analytics and provides more granular trend analysis.

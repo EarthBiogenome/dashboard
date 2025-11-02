@@ -23,8 +23,8 @@ week,collection_date,sessions,total_users,new_users,screen_page_views,avg_bounce
 
 ## Usage
 
-- **Weekly Collection**: Run `python collect_weekly_analytics.py`
-- **Analysis & Visualization**: Run `python analyze_weekly_trends.py`
+- **Weekly Collection**: Run `python collect_web_analytics.py`
+- **Analysis & Visualization**: Run `python analyze_web_trends.py`
 - **Comparison with Repository Traffic**: Both systems use similar week numbering
 
 ## Data Interpretation

@@ -23,7 +23,7 @@ This system automatically collects and tracks GitHub traffic data (views and clo
 git pull
 ```
 
-### Run Analysis (Optional)
+### Run Analysis 
 ```powershell
 cd traffic-data
 python analyze_traffic_data.py
@@ -36,7 +36,7 @@ This generates:
 
 ### View Raw Data
 - **CSV:** `weekly_summary.csv` - Open in Excel
-- **JSON:** `traffic-YYYY-WXX.json` files - Detailed daily breakdowns
+- **JSON:** `traffic_data_all.json` - Consolidated detailed data (all weeks)
 
 ---
 
@@ -44,10 +44,11 @@ This generates:
 
 ### Data Files
 - `weekly_summary.csv` - Weekly aggregated data (main file)
-- `traffic-YYYY-WXX.json` - Detailed weekly snapshots with daily breakdowns
+- `traffic_data_all.json` - Consolidated detailed data (all weeks) with daily breakdowns
 
 ### Scripts
 - `analyze_traffic_data.py` - Analysis and visualization script
+- `add_historical_traffic.py` - One-time script to add historical traffic data to your automated traffic collection system.
 
 ### Documentation
 - This file - Complete guide
@@ -118,29 +119,6 @@ Every Monday after 2:30 AM UTC:
 - ✅ Wait for scheduled Sunday collection for accurate data
 - ✅ API will eventually match UI (can take 24-48 hours)
 - ℹ️ No action needed - not a bug in our system
-
-### Analysis Script Errors
-**"Could not find weekly_summary.csv":**
-- Make sure you're in the `traffic-data` directory
-- Check if file exists: `Get-ChildItem weekly_summary.csv`
-
-**"Time data doesn't match format":**
-- This was fixed - dates now parse automatically
-- If error persists, check for corrupt data in CSV
-
-**Encoding/emoji errors:**
-- Should not occur (UTF-8 configured in PowerShell profile)
-- If it happens, run: `$env:PYTHONIOENCODING="utf-8"` then retry
-
-### Workflow Not Running
-**Permissions issue:**
-- You need write/maintain access to EarthBiogenome/dashboard
-- Contact repository admin if you can't trigger workflows
-
-**Token issues:**
-- Workflow uses `TRAFFIC_TOKEN` secret
-- Admin needs to verify it exists and has `repo` scope
-- Check: Settings → Secrets and variables → Actions
 
 ---
 
@@ -264,7 +242,7 @@ No need to specify remote/branch - defaults to `ebp/ebp-main`.
 - Created dynamically by workflow
 - Uses GitHub Traffic API
 - Collects views and clones data
-- Stores in CSV (append) and JSON (new file per week)
+- Stores in CSV (append) and JSON (append)
 
 ### Analysis Requirements
 ```bash

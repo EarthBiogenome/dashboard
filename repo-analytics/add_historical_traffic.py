@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to add historical traffic data to your automated traffic collection system.
-This will create historical entries in the same format as your automated workflow.
+One-time script to add historical traffic data to your automated traffic collection system. This will write pre-defined data to CSV/JSON lines, in the same format as your automated workflow.
 """
 
 import json

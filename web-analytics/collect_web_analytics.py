@@ -1,8 +1,20 @@
 #!/usr/bin/env python3
 """
 Weekly Web Analytics Collector for EBP Dashboard
-Collects weekly GA4 data and maintains cumulative historical records
-Similar to the GitHub traffic collection system
+
+**Purpose: Manual collection/backfilling only**
+
+This script is used for:
+- Backfilling missed periods when automation fails
+- Collecting historical data before automation was set up
+- Local testing/debugging of collection logic
+
+**Normal Usage:**
+For regular operations, data collection happens automatically via GitHub Actions.
+Just run: `python analyze_web_trends.py` after `git pull`
+
+Similar to `add_historical_traffic.py` in repo-analytics, but with active API collection
+capability for any date range, not just hardcoded historical values.
 """
 
 import os
@@ -314,7 +326,11 @@ class WeeklyAnalyticsCollector:
         device_data = self.collect_device_data(start_date, end_date)
         events_data = self.collect_custom_events(start_date, end_date)
         
-        # Also collect 30-day active users for accurate dashboard comparison (aggregated, not daily)
+        # Collect aggregated metrics for the SAME period (to get accurate unique user count)
+        # Using include_date_dimension=False gives us period-wide unique users (no double-counting)
+        period_overview = self.collect_overview_metrics(start_date, end_date, include_date_dimension=False)
+        
+        # Also collect 30-day overview for monthly dashboard comparison
         monthly_overview = self.collect_overview_metrics("30daysAgo", "today", include_date_dimension=False)
         
         if not overview_data:
@@ -326,6 +342,7 @@ class WeeklyAnalyticsCollector:
             "geographic_data": geographic_data,
             "device_data": device_data,
             "events_data": events_data,
+            "period_overview": period_overview,
             "monthly_overview": monthly_overview
         }
     
@@ -336,12 +353,13 @@ class WeeklyAnalyticsCollector:
         geographic_data = data["geographic_data"]
         device_data = data["device_data"]
         events_data = data["events_data"]
+        period_overview = data["period_overview"]
         monthly_overview = data["monthly_overview"]
         
-        # Weekly totals from daily data
+        # Period totals - use aggregated data for accurate unique user counts
         weekly_metrics = {
             "sessions": sum(day.get("sessions", 0) for day in overview_data),
-            "total_users": sum(day.get("total_users", 0) for day in overview_data),
+            "total_users": period_overview[0].get("total_users", 0) if period_overview else 0,  # Use period-aggregated unique users
             "new_users": sum(day.get("new_users", 0) for day in overview_data),
             "screen_page_views": sum(day.get("screen_page_views", 0) for day in overview_data),
             "avg_bounce_rate": sum(day.get("bounce_rate", 0) for day in overview_data) / len(overview_data) if overview_data else 0,
@@ -358,15 +376,14 @@ class WeeklyAnalyticsCollector:
         return weekly_metrics
     
     def save_weekly_json(self, week_info, data, weekly_metrics):
-        """Save detailed weekly data as JSON"""
+        """Save detailed weekly data to consolidated JSON file"""
         
-        json_filename = f"weekly_analytics_{week_info['week']}.json"
-        
-        weekly_data = {
+        # Create week data structure
+        week_data = {
             "collection_info": {
                 **week_info,
-                "property_id": json.load(open(self.config_file))["property_id"] if self.config_file.exists() else None,
-                "website_url": json.load(open(self.config_file))["website_url"] if self.config_file.exists() else None
+                "property_id": self.property_id,
+                "website_url": self.config.get('website_url', 'N/A')
             },
             "weekly_metrics": weekly_metrics,
             "raw_data": data,
@@ -377,11 +394,60 @@ class WeeklyAnalyticsCollector:
             }
         }
         
-        with open(json_filename, 'w', encoding='utf-8') as f:
-            json.dump(weekly_data, f, indent=2, ensure_ascii=False)
+        # Load or create consolidated file
+        consolidated_file = Path("weekly_analytics_all.json")
+        
+        if consolidated_file.exists():
+            with open(consolidated_file, 'r', encoding='utf-8') as f:
+                consolidated = json.load(f)
+        else:
+            consolidated = {
+                "metadata": {
+                    "description": "Consolidated weekly web analytics data for EBP Dashboard",
+                    "total_weeks": 0,
+                    "date_range": {},
+                    "last_updated": ""
+                },
+                "weeks": []
+            }
+        
+        # Check if this week already exists (update) or is new (append)
+        existing_week_index = None
+        for i, week in enumerate(consolidated['weeks']):
+            if week['collection_info']['week'] == week_info['week']:
+                existing_week_index = i
+                break
+        
+        if existing_week_index is not None:
+            # Update existing week
+            consolidated['weeks'][existing_week_index] = week_data
+            print(f"🔄 Updated existing week {week_info['week']} in consolidated file")
+        else:
+            # Append new week
+            consolidated['weeks'].append(week_data)
+            print(f"➕ Added new week {week_info['week']} to consolidated file")
+        
+        # Sort weeks by week number
+        consolidated['weeks'].sort(key=lambda x: x['collection_info']['week'])
+        
+        # Update metadata
+        consolidated['metadata']['total_weeks'] = len(consolidated['weeks'])
+        consolidated['metadata']['last_updated'] = datetime.now().isoformat()
+        
+        if consolidated['weeks']:
+            consolidated['metadata']['date_range'] = {
+                "first_week": consolidated['weeks'][0]['collection_info']['week'],
+                "last_week": consolidated['weeks'][-1]['collection_info']['week'],
+                "first_collection": consolidated['weeks'][0]['collection_info']['collection_date'],
+                "last_collection": consolidated['weeks'][-1]['collection_info']['collection_date']
+            }
+        
+        # Save consolidated file
+        with open(consolidated_file, 'w', encoding='utf-8') as f:
+            json.dump(consolidated, f, indent=2, ensure_ascii=False)
             
-        print(f"✅ Weekly detailed data saved: {json_filename}")
-        return json_filename
+        print(f"✅ Weekly data saved to consolidated file: {consolidated_file}")
+        return str(consolidated_file)
     
     def update_weekly_summary_csv(self, week_info, weekly_metrics):
         """Update the cumulative weekly summary CSV"""
@@ -449,7 +515,7 @@ This directory contains automatically collected weekly Google Analytics data for
 ## Files
 
 - `weekly_web_analytics.csv`: Weekly summary data that grows over time
-- `weekly_analytics_YYYY-WXX.json`: Detailed weekly data with raw GA4 metrics
+- `weekly_analytics_all.json`: Consolidated detailed data with raw GA4 metrics (all weeks)
 
 ## Data Collection
 
@@ -467,8 +533,8 @@ week,collection_date,sessions,total_users,new_users,screen_page_views,avg_bounce
 
 ## Usage
 
-- **Weekly Collection**: Run `python collect_weekly_analytics.py`
-- **Analysis & Visualization**: Run `python analyze_weekly_trends.py`
+- **Weekly Collection**: Run `python collect_web_analytics.py`
+- **Analysis & Visualization**: Run `python analyze_web_trends.py`
 - **Comparison with Repository Traffic**: Both systems use similar week numbering
 
 ## Data Interpretation
@@ -488,7 +554,7 @@ Last updated: """ + datetime.now().strftime("%Y-%m-%d") + """
             
         print(f"✅ Created README: {readme_file}")
     
-    def run_weekly_collection(self):
+    def run_weekly_collection(self, days_back=7):
         """Main weekly collection workflow"""
         
         week_info = self.get_week_info()
@@ -497,8 +563,8 @@ Last updated: """ + datetime.now().strftime("%Y-%m-%d") + """
         print(f"Week: {week_info['week']} (Collection: {week_info['collection_date']})")
         print("=" * 60)
         
-        # Collect data
-        data = self.collect_weekly_data()
+        # Collect data for the past week (default 7 days)
+        data = self.collect_weekly_data(days_back=days_back)
         if not data:
             print("❌ Weekly collection failed - no data collected")
             return False

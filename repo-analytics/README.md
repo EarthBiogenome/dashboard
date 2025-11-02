@@ -13,13 +13,13 @@ git pull
 
 ### Run Analysis
 ```bash
-cd traffic-data
+cd repo-analytics
 python analyze_traffic_data.py
 ```
 
 **View raw data:**
 - `weekly_summary.csv` - Open in Excel
-- `traffic-YYYY-WXX.json` - Detailed weekly snapshots
+- `traffic_data_all.json` - Consolidated detailed data (all weeks)
 
 ---
 
@@ -36,7 +36,7 @@ python analyze_traffic_data.py
 
 ## 📊 System Info
 
-- **Collection:** Automated weekly (Mondays 2:00 AM UTC)
+- **Collection:** Automated weekly (Mondays 2:00 AM UTC or Sundays 7:00 PM MST)
 - **Workflow:** https://github.com/EarthBiogenome/dashboard/actions/workflows/repo-analytics-collector.yml
 - **Status:** Fully Operational ✅
 

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
 Traffic Data Analysis and Visualization for EBP Dashboard Repository
-Focuses on clone metrics with both actual weekly and cumulative views
+Analyzes both visitor (views) and clone metrics with weekly and cumulative trends
 """
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from datetime import datetime
 import numpy as np
 from pathlib import Path
@@ -29,24 +28,42 @@ def load_and_prepare_data():
     # Sort by date to ensure proper chronological order
     df = df.sort_values('collection_date')
     
-    # Calculate cumulative totals
+    # Calculate cumulative totals for both views and clones
+    df['cumulative_views_count'] = df['views_count'].cumsum()
+    df['cumulative_views_uniques'] = df['views_uniques'].cumsum()
     df['cumulative_clones_count'] = df['clones_count'].cumsum()
     df['cumulative_clones_uniques'] = df['clones_uniques'].cumsum()
     
-    # Create readable date labels
-    df['week_label'] = df['collection_date'].dt.strftime('%m/%d')
+    # Create readable date labels (end date of collection cycle)
+    # collection_date is when data was collected (Monday), but we want to show the end of the week (Sunday)
+    df['week_label'] = (df['collection_date'] - pd.Timedelta(days=1)).dt.strftime('%m/%d')
     df['month_year'] = df['collection_date'].dt.strftime('%b %Y')
     
     print(f"✅ Loaded {len(df)} weeks of traffic data")
     print(f"📅 Date range: {df['collection_date'].min().strftime('%Y-%m-%d')} to {df['collection_date'].max().strftime('%Y-%m-%d')}")
     
+    # Check if we have views data
+    has_views_data = df['views_count'].sum() > 0
+    if has_views_data:
+        print(f"👁️  Views data available: {df['views_count'].sum():,} total views")
+    else:
+        print(f"⚠️  No views data yet (may be zero or not collected)")
+    
     return df
 
 
 def create_trend_analysis(df):
-    """Create clone traffic trend analysis visualization"""
+    """Create comprehensive traffic trend analysis visualization for both views and clones"""
     
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
+    has_views_data = df['views_count'].sum() > 0
+    
+    # Create figure with 4 subplots if views data exists, otherwise 2 for clones only
+    if has_views_data:
+        fig, axes = plt.subplots(4, 1, figsize=(10, 12))
+        ax1, ax2, ax3, ax4 = axes
+    else:
+        fig, axes = plt.subplots(2, 1, figsize=(10, 8))
+        ax1, ax2 = axes
     
     # Detect data gaps (more than 14 days between consecutive entries)
     gaps = []
@@ -61,58 +78,160 @@ def create_trend_analysis(df):
                 'weeks_missing': int(days_diff / 7)
             })
     
-    # Combined weekly view
+    # Define x_pos once for all charts to ensure perfect alignment
     x_pos = np.arange(len(df))
-    width = 0.35
+    width = 0.35  # For bar charts
     
-    bars1 = ax1.bar(x_pos - width/2, df['clones_count'], width, 
-                    label='Weekly Clones', color='skyblue', alpha=0.8)
-    bars2 = ax1.bar(x_pos + width/2, df['clones_uniques'], width,
-                    label='Weekly Unique Cloners', color='lightcoral', alpha=0.8)
+    if has_views_data:
+        # CHART 1: Cumulative Views Trend
+        ax1.plot(x_pos, df['cumulative_views_count'], 
+                 marker='o', linewidth=3, label='Total Views', color='darkgreen')
+        ax1.fill_between(x_pos, df['cumulative_views_count'], alpha=0.3, color='lightgreen')
+        ax1.plot(x_pos, df['cumulative_views_uniques'], 
+                 marker='s', linewidth=3, label='Total Unique Visitors', color='darkorange')
+        ax1.fill_between(x_pos, df['cumulative_views_uniques'], alpha=0.3, color='moccasin')
+        
+        for gap in gaps:
+            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
+            ax1.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
+        
+        ax1.set_xlabel('Week (Month/Day)')
+        ax1.set_ylabel('Cumulative Views')
+        ax1.set_xticks(x_pos)
+        ax1.set_xticklabels(df['week_label'], rotation=45)
+        ax1.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
+        ax1.legend()
+        ax1.set_title('Visitor (Views) Trends - Cumulative', fontsize=12, fontweight='bold')
+        ax1.set_facecolor('#f8f9fa')
+        ax1.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
+        
+        # CHART 2: Weekly Views Activity
+        bars1 = ax2.bar(x_pos - width/2, df['views_count'], width, 
+                        label='Weekly Views', color='limegreen', alpha=0.8)
+        bars2 = ax2.bar(x_pos + width/2, df['views_uniques'], width,
+                        label='Weekly Unique Visitors', color='orange', alpha=0.8)
+        
+        for gap in gaps:
+            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
+            ax2.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
+            ax2.text(gap_center, ax2.get_ylim()[1] * 0.9, 
+                    f"Gap: {gap['weeks_missing']} weeks\nmissing", 
+                    ha='center', va='top', fontsize=8, style='italic',
+                    bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
+        
+        ax2.set_xlabel('Week (Month/Day)')
+        ax2.set_ylabel('Weekly Views')
+        ax2.set_xticks(x_pos)
+        ax2.set_xticklabels(df['week_label'], rotation=45)
+        ax2.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
+        ax2.legend()
+        ax2.set_title('Visitor (Views) Trends - Weekly Activity', fontsize=12, fontweight='bold')
+        ax2.set_facecolor('#f8f9fa')
+        ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
+        
+        # CHART 3: Cumulative Clones Trend
+        ax3.plot(x_pos, df['cumulative_clones_count'], 
+                 marker='o', linewidth=3, label='Total Clones', color='darkblue')
+        ax3.fill_between(x_pos, df['cumulative_clones_count'], alpha=0.3, color='lightblue')
+        ax3.plot(x_pos, df['cumulative_clones_uniques'], 
+                 marker='s', linewidth=3, label='Total Unique Cloners', color='darkred')
+        ax3.fill_between(x_pos, df['cumulative_clones_uniques'], alpha=0.3, color='lightcoral')
+        
+        for gap in gaps:
+            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
+            ax3.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
+        
+        ax3.set_xlabel('Week (Month/Day)')
+        ax3.set_ylabel('Cumulative Clones')
+        ax3.set_xticks(x_pos)
+        ax3.set_xticklabels(df['week_label'], rotation=45)
+        ax3.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
+        ax3.legend()
+        ax3.set_title('Clone Trends - Cumulative', fontsize=12, fontweight='bold')
+        ax3.set_facecolor('#f8f9fa')
+        ax3.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
+        
+        # CHART 4: Weekly Clones Activity
+        bars3 = ax4.bar(x_pos - width/2, df['clones_count'], width, 
+                        label='Weekly Clones', color='skyblue', alpha=0.8)
+        bars4 = ax4.bar(x_pos + width/2, df['clones_uniques'], width,
+                        label='Weekly Unique Cloners', color='lightcoral', alpha=0.8)
+        
+        for gap in gaps:
+            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
+            ax4.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
+            ax4.text(gap_center, ax4.get_ylim()[1] * 0.9, 
+                    f"Gap: {gap['weeks_missing']} weeks\nmissing", 
+                    ha='center', va='top', fontsize=8, style='italic',
+                    bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
+        
+        ax4.set_xlabel('Week (Month/Day)')
+        ax4.set_ylabel('Weekly Clones')
+        ax4.set_xticks(x_pos)
+        ax4.set_xticklabels(df['week_label'], rotation=45)
+        ax4.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
+        ax4.legend()
+        ax4.set_title('Clone Trends - Weekly Activity', fontsize=12, fontweight='bold')
+        ax4.set_facecolor('#f8f9fa')
+        ax4.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
+        
+        chart_title = "Repository Traffic Analysis - Views & Clones"
+    else:
+        # CHART 1: Cumulative Clones Trend (when no views data)
+        ax1.plot(x_pos, df['cumulative_clones_count'], 
+                 marker='o', linewidth=3, label='Total Clones', color='darkblue')
+        ax1.fill_between(x_pos, df['cumulative_clones_count'], alpha=0.3, color='lightblue')
+        ax1.plot(x_pos, df['cumulative_clones_uniques'], 
+                 marker='s', linewidth=3, label='Total Unique Cloners', color='darkred')
+        ax1.fill_between(x_pos, df['cumulative_clones_uniques'], alpha=0.3, color='lightcoral')
+        
+        for gap in gaps:
+            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
+            ax1.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
+        
+        ax1.set_xlabel('Week (Month/Day)')
+        ax1.set_ylabel('Cumulative Count')
+        ax1.set_xticks(x_pos)
+        ax1.set_xticklabels(df['week_label'], rotation=45)
+        ax1.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
+        ax1.legend()
+        ax1.set_title('Clone Trends - Cumulative', fontsize=12, fontweight='bold')
+        ax1.set_facecolor('#f8f9fa')
+        ax1.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
+        
+        # CHART 2: Weekly Clones Activity
+        bars1 = ax2.bar(x_pos - width/2, df['clones_count'], width, 
+                        label='Weekly Clones', color='skyblue', alpha=0.8)
+        bars2 = ax2.bar(x_pos + width/2, df['clones_uniques'], width,
+                        label='Weekly Unique Cloners', color='lightcoral', alpha=0.8)
+        
+        for gap in gaps:
+            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
+            ax2.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
+            ax2.text(gap_center, ax2.get_ylim()[1] * 0.9, 
+                    f"Gap: {gap['weeks_missing']} weeks\nmissing", 
+                    ha='center', va='top', fontsize=8, style='italic',
+                    bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
+        
+        ax2.set_xlabel('Week (Month/Day)')
+        ax2.set_ylabel('Activity Count')
+        ax2.set_xticks(x_pos)
+        ax2.set_xticklabels(df['week_label'], rotation=45)
+        ax2.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
+        ax2.legend()
+        ax2.set_title('Clone Trends - Weekly Activity', fontsize=12, fontweight='bold')
+        ax2.set_facecolor('#f8f9fa')
+        ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
+        
+        chart_title = "Repository Traffic Analysis - Clones Only"
     
-    # Add gap indicators to first chart
-    for gap in gaps:
-        gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-        ax1.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
-        ax1.text(gap_center, ax1.get_ylim()[1] * 0.9, 
-                f"Gap: {gap['weeks_missing']} weeks\nmissing", 
-                ha='center', va='top', fontsize=8, style='italic',
-                bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
-    
-    ax1.set_xlabel('Week (Month/Day)')
-    ax1.set_ylabel('Activity Count')
-    ax1.set_xticks(x_pos)
-    ax1.set_xticklabels(df['week_label'], rotation=45)
-    ax1.legend()
-    ax1.set_facecolor('#f8f9fa')
-    ax1.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-    
-    # Cumulative trend comparison
-    ax2.plot(df['week_label'], df['cumulative_clones_count'], 
-             marker='o', linewidth=3, label='Total Clones', color='darkblue')
-    ax2.fill_between(df['week_label'], df['cumulative_clones_count'], alpha=0.3, color='lightblue')
-    ax2.plot(df['week_label'], df['cumulative_clones_uniques'], 
-             marker='s', linewidth=3, label='Total Unique Cloners', color='darkred')
-    ax2.fill_between(df['week_label'], df['cumulative_clones_uniques'], alpha=0.3, color='lightcoral')
-    
-    # Add gap indicators to second chart
-    for gap in gaps:
-        gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-        ax2.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
-    
-    ax2.set_xlabel('Week (Month/Day)')
-    ax2.set_ylabel('Cumulative Count')
-    ax2.legend()
-    ax2.set_facecolor('#f8f9fa')
-    ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-    plt.xticks(rotation=45)
-    
+    plt.suptitle(chart_title, fontsize=14, fontweight='bold', y=0.995)
     plt.tight_layout()
     
     # Save trend analysis
     trend_file = "traffic_trends_analysis.png"
     plt.savefig(trend_file, dpi=300, bbox_inches='tight')
-    print(f"📈 Clone traffic analysis saved as: {trend_file}")
+    print(f"📈 Traffic analysis saved as: {trend_file}")
     
     # Report detected gaps
     if gaps:
@@ -124,10 +243,12 @@ def create_trend_analysis(df):
     plt.show()
 
 def print_summary_statistics(df):
-    """Print summary statistics"""
+    """Print comprehensive summary statistics for both views and clones"""
+    
+    has_views_data = df['views_count'].sum() > 0
     
     print("\n" + "="*60)
-    print("📈 CLONE TRAFFIC SUMMARY STATISTICS")
+    print("📈 REPOSITORY TRAFFIC SUMMARY STATISTICS")
     print("="*60)
     
     print(f"\n🗓️  TIMEFRAME:")
@@ -135,23 +256,50 @@ def print_summary_statistics(df):
     print(f"   • End Date: {df['collection_date'].max().strftime('%B %d, %Y')}")
     print(f"   • Total Weeks: {len(df)}")
     
-    print(f"\n📊 CLONE STATISTICS:")
+    if has_views_data:
+        print(f"\n👁️  VISITOR (VIEWS) STATISTICS:")
+        print(f"   • Total Views (All Time): {df['cumulative_views_count'].iloc[-1]:,}")
+        print(f"   • Total Unique Visitors: {df['cumulative_views_uniques'].iloc[-1]:,}")
+        print(f"   • Average Views per Week: {df['views_count'].mean():.1f}")
+        peak_views_idx = df['views_count'].idxmax()
+        print(f"   • Peak Weekly Views: {df['views_count'].max()} (Week of {df.loc[peak_views_idx, 'collection_date'].strftime('%m/%d/%Y')})")
+        if df['cumulative_views_count'].iloc[-1] > 0:
+            print(f"   • Unique vs Total Views Ratio: {(df['cumulative_views_uniques'].iloc[-1] / df['cumulative_views_count'].iloc[-1] * 100):.1f}%")
+        print(f"   • Recent Activity: {df['views_count'].tail(3).sum()} views in last 3 weeks")
+    
+    print(f"\n📦 CLONE STATISTICS:")
     print(f"   • Total Clones (All Time): {df['cumulative_clones_count'].iloc[-1]:,}")
     print(f"   • Total Unique Cloners: {df['cumulative_clones_uniques'].iloc[-1]:,}")
     print(f"   • Average Clones per Week: {df['clones_count'].mean():.1f}")
-    print(f"   • Peak Weekly Clones: {df['clones_count'].max()} (Week of {df.loc[df['clones_count'].idxmax(), 'collection_date'].strftime('%m/%d/%Y')})")
-    
-    print(f"\n🎯 ENGAGEMENT METRICS:")
-    print(f"   • Unique vs Total Clone Ratio: {(df['cumulative_clones_uniques'].iloc[-1] / df['cumulative_clones_count'].iloc[-1] * 100):.1f}%")
-    print(f"   • Most Active Week: {df['collection_date'][df['clones_count'].idxmax()].strftime('%B %d, %Y')}")
+    peak_clones_idx = df['clones_count'].idxmax()
+    print(f"   • Peak Weekly Clones: {df['clones_count'].max()} (Week of {df.loc[peak_clones_idx, 'collection_date'].strftime('%m/%d/%Y')})")
+    if df['cumulative_clones_count'].iloc[-1] > 0:
+        print(f"   • Unique vs Total Clone Ratio: {(df['cumulative_clones_uniques'].iloc[-1] / df['cumulative_clones_count'].iloc[-1] * 100):.1f}%")
     print(f"   • Recent Activity: {df['clones_count'].tail(3).sum()} clones in last 3 weeks")
+    
+    if has_views_data:
+        print(f"\n🎯 COMPARATIVE METRICS:")
+        # Calculate conversion rate (clones / views)
+        if df['cumulative_views_count'].iloc[-1] > 0:
+            conversion_rate = (df['cumulative_clones_count'].iloc[-1] / df['cumulative_views_count'].iloc[-1] * 100)
+            print(f"   • Clone-to-View Ratio: {conversion_rate:.1f}% (clones per 100 views)")
+        # Recent comparison
+        recent_views = df['views_count'].tail(3).sum()
+        recent_clones = df['clones_count'].tail(3).sum()
+        if recent_views > 0:
+            recent_conversion = (recent_clones / recent_views * 100)
+            print(f"   • Recent 3-Week Conversion: {recent_conversion:.1f}%")
+        print(f"   • Most Active Week (Views): {df['collection_date'][df['views_count'].idxmax()].strftime('%B %d, %Y')}")
+    else:
+        print(f"\n🎯 ENGAGEMENT METRICS:")
+        print(f"   • Most Active Week (Clones): {df['collection_date'][df['clones_count'].idxmax()].strftime('%B %d, %Y')}")
     
     print("="*60)
 
 def main():
     """Main analysis function"""
     
-    print("🚀 Starting EBP Dashboard Clone Traffic Analysis...")
+    print("🚀 Starting EBP Dashboard Traffic Analysis...")
     print("="*60)
     
     # Load data
@@ -162,8 +310,12 @@ def main():
     
     # Print data overview
     print("\n📋 DATA OVERVIEW:")
-    print(df[['week', 'collection_date', 'clones_count', 'clones_uniques', 
-              'cumulative_clones_count', 'cumulative_clones_uniques']].to_string(index=False))
+    has_views_data = df['views_count'].sum() > 0
+    if has_views_data:
+        print(df[['week', 'collection_date', 'views_count', 'views_uniques', 
+                  'clones_count', 'clones_uniques']].to_string(index=False))
+    else:
+        print(df[['week', 'collection_date', 'clones_count', 'clones_uniques']].to_string(index=False))
     
     # Create visualizations
     print("\n📈 Creating trend analysis...")

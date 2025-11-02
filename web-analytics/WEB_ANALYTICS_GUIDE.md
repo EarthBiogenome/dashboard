@@ -17,54 +17,30 @@ This system tracks website traffic and user engagement for the EBP Dashboard usi
 
 ---
 
-## 🚀 Quick Start
-
-### View Latest Data
-```powershell
-git pull
-```
-
-### Run Analysis (Optional)
-```powershell
-cd web-analytics
-python analyze_weekly_trends.py
-```
-
-**Output:**
-- Data table showing all weeks
-- Visualizations (`weekly_engagement_trends.png`)
-- Summary statistics (totals, averages, trends)
-
-### View Raw Data
-- **CSV:** `weekly_web_analytics.csv` - Open in Excel
-- **JSON:** `weekly_analytics_YYYY-WXX.json` - Detailed weekly data
-
----
-
 ## 📁 Files in This Directory
 
 ### Data Files
-- `weekly_web_analytics.csv` - Weekly aggregated data
-- `weekly_analytics_YYYY-WXX.json` - Detailed weekly snapshots
+- `weekly_web_analytics.csv` - Weekly aggregated data (for analysis)
+- `weekly_analytics_all.json` - Consolidated detailed data (all weeks)
 
 ### Scripts
-- `analyze_weekly_trends.py` - Analysis and visualization script
-- `collect_weekly_analytics.py` - Manual data collection (if needed)
-- `setup_ga4_api.py` - One-time API setup verification
+- `analyze_web_trends.py` - **Primary script** - Analysis and visualization (run this!)
+- `collect_web_analytics.py` - Manual collection script (for backfilling only)
 
 ### Configuration (Gitignored)
 - `ga4_config.json` - GA4 property configuration
 - `ga4_service_account.json` - Service account credentials
 
 ### Documentation
-- This file - Complete guide
+- This file - Complete guide (includes setup instructions)
+- README.md - Quick start guide
 
 ---
 
 ## ⚙️ How It Works
 
 ### Automated Collection
-- **Schedule:** Every Monday at 2:00 AM UTC (matches GitHub traffic)
+- **Schedule:** Every Monday at 2:00 AM UTC or Sundays 7:00 PM MST(matches repo-analytics collection schedule)
 - **What it collects:** Previous week's completed data
 - **Source:** Google Analytics 4 Data API
 - **Storage:** Commits to `ebp-main` branch automatically
@@ -106,12 +82,14 @@ Every Monday after 2:30 AM UTC:
 2. Pull latest data: `git pull`
 3. Verify: `Get-Content weekly_web_analytics.csv | Select-Object -Last 1`
 
-### Manual Collection (If Needed)
-If automated collection fails, run manually:
+### Manual Collection (Backfilling Only)
+For backfilling missed data:
 ```powershell
 cd web-analytics
-python collect_weekly_analytics.py
+python collect_web_analytics.py
 ```
+
+**Note:** Normal usage is just `python analyze_web_trends.py` after `git pull`. Only use manual collection for backfilling missed periods.
 
 **Prerequisites:**
 - `ga4_config.json` configured with property ID
@@ -144,7 +122,7 @@ python collect_weekly_analytics.py
 ### Analysis Script Errors
 **"No weekly analytics data found":**
 - Check if `weekly_web_analytics.csv` exists
-- Run `collect_weekly_analytics.py` if file is missing
+- Run `collect_web_analytics.py` if file is missing
 
 **"Authentication failed":**
 - Verify `ga4_service_account.json` exists and is valid
@@ -153,7 +131,7 @@ python collect_weekly_analytics.py
 ### Workflow Not Running
 **Permissions issue:**
 - Verify `GA4_PROPERTY_ID` secret exists
-- Verify `GA4_SERVICE_ACCOUNT_JSON` secret exists
+- Verify `GA4_SERVICE_ACCOUNT_KEY` secret exists
 - Check: Settings → Secrets and variables → Actions
 
 **Configuration issue:**
@@ -288,8 +266,115 @@ Place service account JSON as `ga4_service_account.json`.
 
 **Test configuration:**
 ```powershell
-python setup_ga4_api.py
+python collect_web_analytics.py
 ```
+
+This will test authentication and collect a sample of data.
+
+---
+
+## 🤖 GitHub Actions Automation Setup
+
+### One-Time Setup to Enable Automatic Data Collection
+
+After completing the API Access Setup above, configure GitHub Actions for automated collection.
+
+#### Step 1: Add GitHub Secrets
+
+1. **Navigate to Repository Settings**
+   - Go to: `https://github.com/EarthBiogenome/dashboard/settings/secrets/actions`
+   - Or: `Repository` → `Settings` → `Secrets and variables` → `Actions`
+
+2. **Add Secret #1: GA4_PROPERTY_ID**
+   - Click **"New repository secret"**
+   - **Name:** `GA4_PROPERTY_ID`
+   - **Value:** Your GA4 Property ID (e.g., find this in your GA4 Admin settings)
+   - Click **"Add secret"**
+
+3. **Add Secret #2: GA4_SERVICE_ACCOUNT_KEY**
+   - Click **"New repository secret"**
+   - **Name:** `GA4_SERVICE_ACCOUNT_KEY`
+   - **Value:** Copy the entire JSON content from your local `web-analytics/ga4_service_account.json` file (this file is ignored by git and should never be committed)
+   - Click **"Add secret"**
+
+#### Step 2: Test the Workflow
+
+1. **Trigger Manual Run**
+   - Go to: `https://github.com/EarthBiogenome/dashboard/actions`
+   - Click on: `Weekly Web Analytics Collection` (left sidebar)
+   - Click: `Run workflow` button (top right)
+   - Select branch: `ebp-main`
+   - Click: `Run workflow` button (green)
+
+2. **Monitor the Run**
+   - Wait 2-3 minutes for completion
+   - Click on the workflow run to see details
+   - Check each step completes successfully ✅
+
+3. **Verify Results**
+   ```bash
+   git pull
+   ```
+   - Check for new/updated files:
+     - `web-analytics/weekly_analytics_all.json` (updated)
+     - `web-analytics/weekly_web_analytics.csv` (new row added)
+
+#### Step 3: Verify Automatic Schedule
+
+Once the manual test succeeds, the workflow runs automatically:
+
+**Schedule:** Every Monday at 2:00 AM UTC (same as repo-analytics)
+
+**You don't need to do anything!** Just check in weekly:
+```bash
+git pull
+cd web-analytics
+python analyze_web_trends.py
+```
+
+**Before vs After Automation:**
+
+**Before (Manual):**
+```bash
+# Every week, you had to:
+cd web-analytics
+python collect_web_analytics.py  # Manually run
+python analyze_web_trends.py
+```
+
+**After (Automated):**
+```bash
+# Every week, you just:
+git pull                          # Get auto-collected data
+cd web-analytics
+python analyze_web_trends.py     # Generate charts
+```
+
+**Huge time savings!** 🎉
+
+### Automation Troubleshooting
+
+**Workflow Fails: "Authentication Error"**
+- **Cause:** GitHub secrets not set correctly
+- **Fix:**
+  1. Check secrets exist: Settings → Secrets and variables → Actions
+  2. Verify secret names are EXACTLY: `GA4_PROPERTY_ID` and `GA4_SERVICE_ACCOUNT_KEY`
+  3. Re-add secrets if needed
+
+**Workflow Fails: "Permission Denied"**
+- **Cause:** Service account doesn't have Analytics Viewer access
+- **Fix:**
+  1. Go to GA4 Admin
+  2. Add service account email as Viewer role
+
+**No New Commit After Workflow Run**
+- **Cause:** No new data to collect (already up to date)
+- **Fix:** This is normal - workflow only commits if there's new data
+
+**If you need to update credentials:**
+1. Generate new service account key
+2. Update `GA4_SERVICE_ACCOUNT_KEY` secret in GitHub
+3. Delete old service account key in Google Cloud
 
 ---
 
@@ -303,7 +388,9 @@ These files are created by GitHub Actions workflow using secrets.
 
 ### GitHub Secrets Required
 - `GA4_PROPERTY_ID` - Your GA4 property ID
-- `GA4_SERVICE_ACCOUNT_JSON` - Service account JSON (full content)
+- `GA4_SERVICE_ACCOUNT_KEY` - Service account JSON (full content)
+
+**Note:** These secrets are encrypted and never exposed in logs. Service account has read-only access (Viewer role), and workflow only has permissions to write to this repo.
 
 ---
 
@@ -332,7 +419,7 @@ These files are created by GitHub Actions workflow using secrets.
 
 ### Workflow Configuration
 - File: `.github/workflows/web-analytics-collector.yml`
-- Schedule: Monday 2:00 AM UTC
+- Schedule: Monday 2:00 AM UTC (matches repo-analytics-collector.yml)
 - Checkout: Explicitly uses `ebp-main` branch
 - Commit: Automatic if data changes detected
 - Push: Directly to `ebp-main` branch

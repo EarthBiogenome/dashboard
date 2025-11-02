@@ -2,7 +2,7 @@ name: Collect Repository Analytics Data
 
 on:
   schedule:
-    - cron: '0 2 * * 1'
+    - cron: '0 2 * * 1'  # Weekly on Mondays at 2 AM UTC (safer for 14-day API limit)
   workflow_dispatch:
 
 env:
@@ -120,14 +120,75 @@ jobs:
                       raise
               
               def save_weekly_json(self, data: dict):
+                  """Save weekly data to consolidated JSON file"""
                   date_str = data["date"]
                   week_str = datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-W%U")
-                  filename = self.data_dir / f"traffic-{week_str}.json"
                   
+                  # Create week data structure
+                  week_data = {
+                      "collection_info": {
+                          "week": week_str,
+                          "collection_date": date_str,
+                          "collected_at": data["collected_at"],
+                          "repository": data["repository"]
+                      },
+                      "traffic_data": {
+                          "views": data["views"],
+                          "clones": data["clones"]
+                      }
+                  }
+                  
+                  # Load or create consolidated file
+                  consolidated_file = self.data_dir / "traffic_data_all.json"
+                  
+                  if consolidated_file.exists():
+                      with open(consolidated_file, 'r', encoding='utf-8') as f:
+                          consolidated = json.load(f)
+                  else:
+                      consolidated = {
+                          "metadata": {
+                              "description": "Consolidated weekly traffic data for EBP Dashboard Repository",
+                              "total_weeks": 0,
+                              "date_range": {},
+                              "last_updated": ""
+                          },
+                          "weeks": []
+                      }
+                  
+                  # Check if this week already exists (update) or is new (append)
+                  existing_week_index = None
+                  for i, week in enumerate(consolidated['weeks']):
+                      if week['collection_info']['week'] == week_str:
+                          existing_week_index = i
+                          break
+                  
+                  if existing_week_index is not None:
+                      consolidated['weeks'][existing_week_index] = week_data
+                      print(f"🔄 Updated existing week {week_str} in consolidated file")
+                  else:
+                      consolidated['weeks'].append(week_data)
+                      print(f"➕ Added new week {week_str} to consolidated file")
+                  
+                  # Sort weeks by week number
+                  consolidated['weeks'].sort(key=lambda x: x['collection_info']['week'])
+                  
+                  # Update metadata
+                  consolidated['metadata']['total_weeks'] = len(consolidated['weeks'])
+                  consolidated['metadata']['last_updated'] = datetime.now(timezone.utc).isoformat()
+                  
+                  if consolidated['weeks']:
+                      consolidated['metadata']['date_range'] = {
+                          "first_week": consolidated['weeks'][0]['collection_info']['week'],
+                          "last_week": consolidated['weeks'][-1]['collection_info']['week'],
+                          "first_collection": consolidated['weeks'][0]['collection_info']['collection_date'],
+                          "last_collection": consolidated['weeks'][-1]['collection_info']['collection_date']
+                      }
+                  
+                  # Save consolidated file
                   try:
-                      with open(filename, 'w', encoding='utf-8') as f:
-                          json.dump(data, f, indent=2, ensure_ascii=False)
-                      print(f"✓ Weekly data saved: {filename}")
+                      with open(consolidated_file, 'w', encoding='utf-8') as f:
+                          json.dump(consolidated, f, indent=2, ensure_ascii=False)
+                      print(f"✓ Weekly data saved to consolidated file: {consolidated_file}")
                   except IOError as e:
                       print(f"✗ Failed to save JSON file: {e}")
                       raise
@@ -235,7 +296,7 @@ jobs:
           ## Files
           
           - `weekly_summary.csv`: Weekly summary of views and clones
-          - `traffic-YYYY-WXX.json`: Detailed weekly traffic data including individual day breakdowns from the 14-day rolling window
+          - `traffic_data_all.json`: Consolidated detailed traffic data (all weeks)
           
           ## Data Collection
           
