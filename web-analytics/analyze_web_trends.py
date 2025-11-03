@@ -42,8 +42,10 @@ def load_weekly_analytics_data():
     # However, this provides a consistent automated metric that shows growth trends.
     weekly_df['cumulative_users'] = weekly_df['total_users'].cumsum()
     
-    # Create readable date labels (end date of collection cycle)
-    weekly_df['week_label'] = weekly_df['collection_date'].dt.strftime('%m/%d')
+    # Create readable date labels (end date of the week being collected)
+    # collection_date is the Monday of the week being collected
+    # Show the Sunday (end date) of that week as the label
+    weekly_df['week_label'] = (weekly_df['collection_date'] + pd.Timedelta(days=6)).dt.strftime('%m/%d')
     
     print(f"✅ Loaded {len(weekly_df)} weeks of analytics data")
     print(f"📅 Date range: {weekly_df['collection_date'].min().strftime('%Y-%m-%d')} to {weekly_df['collection_date'].max().strftime('%Y-%m-%d')}")
@@ -143,8 +145,8 @@ def create_weekly_trends_analysis(weekly_df):
     output_file = "weekly_web_analytics_trends.png"
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"📊 Weekly trends analysis saved as: {output_file}")
-    
-    plt.show()
+
+    plt.close()
 
 def create_engagement_trends(weekly_df):
     """Create engagement and interaction trends analysis
@@ -222,7 +224,7 @@ def create_engagement_trends(weekly_df):
     plt.savefig(engagement_file, dpi=300, bbox_inches='tight')
     print(f"📈 Web analytics trends saved as: {engagement_file}")
     
-    plt.show()
+    plt.close()
 
 def create_geographic_growth_analysis(weekly_df):
     """Create geographic reach growth analysis"""
@@ -273,7 +275,7 @@ def create_geographic_growth_analysis(weekly_df):
     plt.savefig(geo_file, dpi=300, bbox_inches='tight')
     print(f"🌍 Geographic & events analysis saved as: {geo_file}")
     
-    plt.show()
+    plt.close()
 
 def print_weekly_summary_statistics(weekly_df):
     """Print comprehensive weekly summary statistics"""

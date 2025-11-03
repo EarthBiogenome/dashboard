@@ -34,9 +34,10 @@ def load_and_prepare_data():
     df['cumulative_clones_count'] = df['clones_count'].cumsum()
     df['cumulative_clones_uniques'] = df['clones_uniques'].cumsum()
     
-    # Create readable date labels (end date of collection cycle)
-    # collection_date is when data was collected (Monday), but we want to show the end of the week (Sunday)
-    df['week_label'] = (df['collection_date'] - pd.Timedelta(days=1)).dt.strftime('%m/%d')
+    # Create readable date labels (end date of the week being collected)
+    # collection_date is the Monday of the week being collected
+    # Show the Sunday (end date) of that week as the label
+    df['week_label'] = (df['collection_date'] + pd.Timedelta(days=6)).dt.strftime('%m/%d')
     df['month_year'] = df['collection_date'].dt.strftime('%b %Y')
     
     print(f"✅ Loaded {len(df)} weeks of traffic data")
@@ -101,7 +102,7 @@ def create_trend_analysis(df):
         ax1.set_xticklabels(df['week_label'], rotation=45)
         ax1.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
         ax1.legend()
-        ax1.set_title('Visitor (Views) Trends - Cumulative', fontsize=12, fontweight='bold')
+        ax1.set_title('Visitor Trends - Cumulative', fontsize=12, fontweight='bold')
         ax1.set_facecolor('#f8f9fa')
         ax1.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
         
@@ -125,7 +126,7 @@ def create_trend_analysis(df):
         ax2.set_xticklabels(df['week_label'], rotation=45)
         ax2.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
         ax2.legend()
-        ax2.set_title('Visitor (Views) Trends - Weekly Activity', fontsize=12, fontweight='bold')
+        ax2.set_title('Visitor Trends - Weekly Activity', fontsize=12, fontweight='bold')
         ax2.set_facecolor('#f8f9fa')
         ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
         
@@ -240,7 +241,8 @@ def create_trend_analysis(df):
             print(f"   • {gap['start_date'].strftime('%Y-%m-%d')} to {gap['end_date'].strftime('%Y-%m-%d')} "
                   f"({gap['weeks_missing']} weeks missing)")
     
-    plt.show()
+    # Close the figure to prevent blocking (file already saved)
+    plt.close()
 
 def print_summary_statistics(df):
     """Print comprehensive summary statistics for both views and clones"""

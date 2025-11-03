@@ -44,19 +44,25 @@ class WeeklyAnalyticsCollector:
         self.config = None
         
     def get_week_info(self, date=None):
-        """Get week number and date info"""
+        """Get week number and date info
+        
+        Matches automated workflow logic: calculates previous completed week's Monday
+        """
         if date is None:
-            date = datetime.now()
+            # Calculate previous week's Monday (completed week) to match workflow
+            date = datetime.now(timezone.utc)
+            days_since_monday = date.weekday()  # 0=Monday, 6=Sunday
+            previous_monday = date - timedelta(days=days_since_monday + 7)
+            date = previous_monday
             
-        # Use Sunday as start of week to match GitHub traffic system
-        week_str = date.strftime("%Y-W%U")
-        week_start = date - timedelta(days=date.weekday() + 1)  # Go to Sunday
+        # Use ISO week calculation for consistency with automated workflow
+        week_str = date.strftime("%Y-W%V")
         
         return {
             "week": week_str,
-            "collection_date": date.strftime("%Y-%m-%d"),
-            "week_start": week_start.strftime("%Y-%m-%d"),
-            "collected_at": date.isoformat()
+            "collection_date": date.strftime("%Y-%m-%d"),  # Monday of the collected week
+            "week_start": date.strftime("%Y-%m-%d"),  # Same as collection_date (Monday)
+            "collected_at": datetime.now(timezone.utc).isoformat()  # Actual collection timestamp
         }
     
     def setup_authentication(self):
@@ -303,11 +309,13 @@ class WeeklyAnalyticsCollector:
             print(f"❌ Failed to collect custom events: {e}")
             return []
     
-    def collect_weekly_data(self, days_back=7):
-        """Collect GA4 data for the past week"""
+    def collect_weekly_data(self, days_back=None):
+        """Collect GA4 data for the previous completed week (Monday to Sunday)
+        
+        Matches automated workflow logic to ensure exactly 7 days of data
+        """
         
         print(f"🚀 Starting weekly web analytics collection")
-        print(f"📅 Collecting data for past {days_back} days")
         print("=" * 60)
         
         # Load configuration and setup authentication
@@ -316,11 +324,29 @@ class WeeklyAnalyticsCollector:
             
         if not self.setup_authentication():
             return None
-            
-        # Collect data for the past week
-        start_date = f"{days_back}daysAgo"
-        end_date = "today"
         
+        # Calculate previous week's Monday to Sunday (completed week)
+        # This matches the automated workflow logic
+        if days_back is None:
+            today = datetime.now(timezone.utc)
+            days_since_monday = today.weekday()  # 0=Monday, 6=Sunday
+            previous_monday = today - timedelta(days=days_since_monday + 7)
+            previous_sunday = previous_monday + timedelta(days=6)
+            
+            # Format dates for GA4 API
+            start_date = previous_monday.strftime("%Y-%m-%d")
+            end_date = previous_sunday.strftime("%Y-%m-%d")
+            
+            print(f"📅 Collecting data for previous completed week")
+            print(f"   Period: {start_date} to {end_date} (7 days)")
+        else:
+            # Legacy mode: use days_back for custom periods
+            start_date = f"{days_back}daysAgo"
+            end_date = "today"
+            print(f"📅 Collecting data for past {days_back} days (custom period)")
+        
+        # Use date strings for API calls
+        # GA4 API accepts both "YYYY-MM-DD" format and "NdaysAgo"/"today"
         overview_data = self.collect_overview_metrics(start_date, end_date)
         geographic_data = self.collect_geographic_data(start_date, end_date)
         device_data = self.collect_device_data(start_date, end_date)
@@ -554,8 +580,12 @@ Last updated: """ + datetime.now().strftime("%Y-%m-%d") + """
             
         print(f"✅ Created README: {readme_file}")
     
-    def run_weekly_collection(self, days_back=7):
-        """Main weekly collection workflow"""
+    def run_weekly_collection(self, days_back=None):
+        """Main weekly collection workflow
+        
+        By default (days_back=None), collects previous completed week (Monday-Sunday, 7 days)
+        Matches automated workflow behavior for consistency
+        """
         
         week_info = self.get_week_info()
         
@@ -563,7 +593,8 @@ Last updated: """ + datetime.now().strftime("%Y-%m-%d") + """
         print(f"Week: {week_info['week']} (Collection: {week_info['collection_date']})")
         print("=" * 60)
         
-        # Collect data for the past week (default 7 days)
+        # Collect data for previous completed week (7 days, Monday-Sunday)
+        # or custom period if days_back is specified
         data = self.collect_weekly_data(days_back=days_back)
         if not data:
             print("❌ Weekly collection failed - no data collected")

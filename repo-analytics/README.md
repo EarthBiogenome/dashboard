@@ -10,11 +10,21 @@ Automated weekly collection of GitHub repository traffic data (views and clones)
 ```bash
 git pull
 ```
+# You'll see updates like:
+# repo-analytics/weekly_summary.csv (new row for this week)
+# web-analytics/weekly_web_analytics.csv (new row for this week)
+# repo-analytics/traffic_data_all.json (updated)
+# web-analytics/weekly_analytics_all.json (updated)
+# Both weekly_trends_analysis.png (new charts)
 
 ### Run Analysis
 ```bash
 cd repo-analytics
 python analyze_traffic_data.py
+
+# Or:
+cd web-analytics  
+python analyze_web_trends.py
 ```
 
 **View raw data:**
