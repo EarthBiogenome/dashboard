@@ -50,6 +50,11 @@ def load_weekly_analytics_data():
     print(f"✅ Loaded {len(weekly_df)} weeks of analytics data")
     print(f"📅 Date range: {weekly_df['collection_date'].min().strftime('%Y-%m-%d')} to {weekly_df['collection_date'].max().strftime('%Y-%m-%d')}")
     
+    # Note: Sessions can be greater than page views when:
+    # - Sessions start but no page view event fires (tracking failures, bot traffic, etc.)
+    # - Single-page bounces where the page view metric isn't captured
+    # This is normal GA4 behavior, not a data quality issue.
+    
     return weekly_df
 
 def create_weekly_trends_analysis(weekly_df):

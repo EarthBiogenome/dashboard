@@ -92,6 +92,14 @@ def create_trend_analysis(df):
                  marker='s', linewidth=3, label='Total Unique Visitors', color='darkorange')
         ax1.fill_between(x_pos, df['cumulative_views_uniques'], alpha=0.3, color='moccasin')
         
+        # Add final totals as annotations
+        final_views_count = df['cumulative_views_count'].iloc[-1]
+        final_views_uniques = df['cumulative_views_uniques'].iloc[-1]
+        ax1.text(x_pos[-1], final_views_count, f'{int(final_views_count):,}', 
+                 ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkgreen')
+        ax1.text(x_pos[-1], final_views_uniques, f'{int(final_views_uniques):,}', 
+                 ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkorange')
+        
         for gap in gaps:
             gap_center = (gap['start_idx'] + gap['end_idx']) / 2
             ax1.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
@@ -137,6 +145,14 @@ def create_trend_analysis(df):
         ax3.plot(x_pos, df['cumulative_clones_uniques'], 
                  marker='s', linewidth=3, label='Total Unique Cloners', color='darkred')
         ax3.fill_between(x_pos, df['cumulative_clones_uniques'], alpha=0.3, color='lightcoral')
+        
+        # Add final totals as annotations
+        final_clones_count = df['cumulative_clones_count'].iloc[-1]
+        final_clones_uniques = df['cumulative_clones_uniques'].iloc[-1]
+        ax3.text(x_pos[-1], final_clones_count, f'{int(final_clones_count):,}', 
+                 ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkblue')
+        ax3.text(x_pos[-1], final_clones_uniques, f'{int(final_clones_uniques):,}', 
+                 ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkred')
         
         for gap in gaps:
             gap_center = (gap['start_idx'] + gap['end_idx']) / 2
@@ -185,6 +201,14 @@ def create_trend_analysis(df):
         ax1.plot(x_pos, df['cumulative_clones_uniques'], 
                  marker='s', linewidth=3, label='Total Unique Cloners', color='darkred')
         ax1.fill_between(x_pos, df['cumulative_clones_uniques'], alpha=0.3, color='lightcoral')
+        
+        # Add final totals as annotations
+        final_clones_count = df['cumulative_clones_count'].iloc[-1]
+        final_clones_uniques = df['cumulative_clones_uniques'].iloc[-1]
+        ax1.text(x_pos[-1], final_clones_count, f'{int(final_clones_count):,}', 
+                 ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkblue')
+        ax1.text(x_pos[-1], final_clones_uniques, f'{int(final_clones_uniques):,}', 
+                 ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkred')
         
         for gap in gaps:
             gap_center = (gap['start_idx'] + gap['end_idx']) / 2

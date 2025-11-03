@@ -382,12 +382,15 @@ class WeeklyAnalyticsCollector:
         period_overview = data["period_overview"]
         monthly_overview = data["monthly_overview"]
         
-        # Period totals - use aggregated data for accurate unique user counts
+        # Period totals - use aggregated data for accurate counts (no date dimension)
+        # This ensures sessions and page views are counted correctly for the entire period
+        # without double-counting issues from sessions spanning midnight
+        period_metrics = period_overview[0] if period_overview else {}
         weekly_metrics = {
-            "sessions": sum(day.get("sessions", 0) for day in overview_data),
-            "total_users": period_overview[0].get("total_users", 0) if period_overview else 0,  # Use period-aggregated unique users
-            "new_users": sum(day.get("new_users", 0) for day in overview_data),
-            "screen_page_views": sum(day.get("screen_page_views", 0) for day in overview_data),
+            "sessions": period_metrics.get("sessions", 0),  # Use period-aggregated sessions
+            "total_users": period_metrics.get("total_users", 0),  # Use period-aggregated unique users
+            "new_users": sum(day.get("new_users", 0) for day in overview_data),  # Keep daily sum for new_users
+            "screen_page_views": period_metrics.get("screen_page_views", 0),  # Use period-aggregated page views
             "avg_bounce_rate": sum(day.get("bounce_rate", 0) for day in overview_data) / len(overview_data) if overview_data else 0,
             "avg_session_duration": sum(day.get("avg_session_duration", 0) for day in overview_data) / len(overview_data) if overview_data else 0,
             "avg_engagement_rate": sum(day.get("engagement_rate", 0) for day in overview_data) / len(overview_data) if overview_data else 0,
