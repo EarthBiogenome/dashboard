@@ -81,11 +81,33 @@ jobs:
                       print(f"✗ API request failed for {endpoint}: {e}")
                       raise
               
+              def compute_weekly_totals(self, daily_entries, week_start, week_end):
+                  """Compute weekly totals from daily GA data (inclusive week start/end)."""
+                  total_count = 0
+                  total_uniques = 0
+                  
+                  for entry in daily_entries or []:
+                      timestamp = entry.get("timestamp")
+                      if not timestamp:
+                          continue
+                      
+                      try:
+                          entry_date = datetime.strptime(timestamp[:10], "%Y-%m-%d").date()
+                      except ValueError:
+                          continue
+                      
+                      if week_start <= entry_date <= week_end:
+                          total_count += entry.get("count", 0)
+                          total_uniques += entry.get("uniques", 0)
+                  
+                  return total_count, total_uniques
+              
               def collect_traffic_data(self) -> dict:
                   # Calculate previous week's Monday (completed week)
                   today = datetime.now(timezone.utc)
                   days_since_monday = today.weekday()  # 0=Monday, 6=Sunday  
                   previous_monday = today - timedelta(days=days_since_monday + 7)
+                  previous_sunday = previous_monday + timedelta(days=6)
                   target_week = previous_monday.strftime("%Y-W%U")
                   
                   print(f"📊 Collecting traffic data for {self.owner}/{self.repo}")
@@ -94,24 +116,44 @@ jobs:
                       views_data = self.make_api_request("traffic/views")
                       clones_data = self.make_api_request("traffic/clones")
                       
+                      week_start_date = previous_monday.date()
+                      week_end_date = previous_sunday.date()
+                      
+                      weekly_views_count, weekly_views_uniques = self.compute_weekly_totals(
+                          views_data.get("views", []),
+                          week_start_date,
+                          week_end_date
+                      )
+                      weekly_clones_count, weekly_clones_uniques = self.compute_weekly_totals(
+                          clones_data.get("clones", []),
+                          week_start_date,
+                          week_end_date
+                      )
+                      
                       traffic_data = {
                           "collected_at": datetime.now(timezone.utc).isoformat(),
                           "date": previous_monday.strftime("%Y-%m-%d"),
                           "repository": f"{self.owner}/{self.repo}",
                           "views": {
-                              "count": views_data.get("count", 0),
-                              "uniques": views_data.get("uniques", 0),
+                              "count": weekly_views_count,
+                              "uniques": weekly_views_uniques,
+                              "rolling_14_day_count": views_data.get("count", 0),
+                              "rolling_14_day_uniques": views_data.get("uniques", 0),
                               "daily_data": views_data.get("views", [])
                           },
                           "clones": {
-                              "count": clones_data.get("count", 0),
-                              "uniques": clones_data.get("uniques", 0),
+                              "count": weekly_clones_count,
+                              "uniques": weekly_clones_uniques,
+                              "rolling_14_day_count": clones_data.get("count", 0),
+                              "rolling_14_day_uniques": clones_data.get("uniques", 0),
                               "daily_data": clones_data.get("clones", [])
                           }
                       }
                       
-                      print(f"✓ Views: {traffic_data['views']['count']} total, {traffic_data['views']['uniques']} unique")
-                      print(f"✓ Clones: {traffic_data['clones']['count']} total, {traffic_data['clones']['uniques']} unique")
+                      print(f"✓ Views (weekly): {traffic_data['views']['count']} total, {traffic_data['views']['uniques']} unique")
+                      print(f"  ↳ Rolling 14-day window: {traffic_data['views']['rolling_14_day_count']} total, {traffic_data['views']['rolling_14_day_uniques']} unique")
+                      print(f"✓ Clones (weekly): {traffic_data['clones']['count']} total, {traffic_data['clones']['uniques']} unique")
+                      print(f"  ↳ Rolling 14-day window: {traffic_data['clones']['rolling_14_day_count']} total, {traffic_data['clones']['rolling_14_day_uniques']} unique")
                       
                       return traffic_data
                       
