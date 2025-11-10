@@ -22,7 +22,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     
     - name: Install Dependencies
       run: |
@@ -48,7 +48,9 @@ jobs:
     - name: Create GA4 Service Account Credentials
       working-directory: web-analytics
       run: |
-        echo '${{ secrets.GA4_SERVICE_ACCOUNT_KEY }}' > ga4_service_account.json
+        cat <<'EOF' > ga4_service_account.json
+        ${{ secrets.GA4_SERVICE_ACCOUNT_KEY }}
+        EOF
     
     - name: Collect Weekly Web Analytics Data
       working-directory: web-analytics

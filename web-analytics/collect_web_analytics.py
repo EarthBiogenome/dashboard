@@ -73,8 +73,16 @@ class WeeklyAnalyticsCollector:
             return False
             
         try:
-            credentials = Credentials.from_service_account_file(
-                self.credentials_file,
+            with open(self.credentials_file, "r", encoding="utf-8") as credentials_source:
+                try:
+                    credentials_data = json.load(credentials_source)
+                except json.JSONDecodeError as json_error:
+                    print(f"❌ Authentication failed: Invalid JSON in credentials file ({json_error})")
+                    print("   ➜ Re-save the GA4 service account JSON in the GA4_SERVICE_ACCOUNT_KEY secret (paste the raw JSON, no extra characters).")
+                    return False
+
+            credentials = Credentials.from_service_account_info(
+                credentials_data,
                 scopes=["https://www.googleapis.com/auth/analytics.readonly"]
             )
             self.client = BetaAnalyticsDataClient(credentials=credentials)
