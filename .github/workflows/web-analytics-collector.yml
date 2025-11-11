@@ -50,78 +50,69 @@ jobs:
       env:
         GA4_SERVICE_ACCOUNT_KEY: ${{ secrets.GA4_SERVICE_ACCOUNT_KEY }}
       run: |
-        python3 <<'PY'
-        import os
+        # Write the secret directly to file (handles multi-line JSON better than env vars in Python)
+        echo "$GA4_SERVICE_ACCOUNT_KEY" > ga4_service_account.json
+
+        # Validate the JSON file
+        python3 <<'EOF'
         import json
-        import base64
         import sys
         from pathlib import Path
 
-        secret = os.environ.get("GA4_SERVICE_ACCOUNT_KEY", "").strip()
         credentials_path = Path("ga4_service_account.json")
 
-        if not secret:
-            print("❌ GA4_SERVICE_ACCOUNT_KEY secret is empty!")
-            print("   Please check your GitHub repository secrets:")
-            print("   Settings → Secrets and variables → Actions → GA4_SERVICE_ACCOUNT_KEY")
+        if not credentials_path.exists():
+            print("❌ Credentials file was not created")
             sys.exit(1)
 
-        def debug_preview(label: str, text: str):
-            preview = text[:80].replace("\n", "\\n")
-            print(f"ℹ️  {label}: length={len(text)}, starts_with='{text[:20] if len(text) > 20 else text}'")
-
-        def write_pretty_json(text: str) -> bool:
-            try:
-                parsed = json.loads(text)
-                if not isinstance(parsed, dict):
-                    raise ValueError("Service account secret must decode to a JSON object.")
-
-                # Verify it has expected service account fields
-                if "type" not in parsed or "project_id" not in parsed:
-                    print("⚠️  Warning: Secret doesn't look like a service account JSON (missing 'type' or 'project_id')")
-
-                credentials_path.write_text(json.dumps(parsed, indent=2), encoding="utf-8")
-                print("✅ Service account credentials file created.")
-                return True
-            except json.JSONDecodeError as e:
-                print(f"❌ JSON decode error: {e}")
-                return False
-            except Exception as exc:
-                print(f"❌ Unable to write credentials file: {exc}")
-                return False
-
-        debug_preview("Raw secret", secret)
-
-        # Try to parse as JSON directly first
-        if write_pretty_json(secret):
-            sys.exit(0)
-
-        # Fallback: try decoding from base64 (if secret was base64-encoded)
-        print("ℹ️  Direct JSON parsing failed, trying base64 decode...")
         try:
-            decoded = base64.b64decode(secret)
-            decoded_str = decoded.decode("utf-8", errors="replace")
-            debug_preview("Base64-decoded secret", decoded_str)
+            with open(credentials_path, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
 
-            if write_pretty_json(decoded_str):
-                sys.exit(0)
+            if not content:
+                print("❌ GA4_SERVICE_ACCOUNT_KEY secret is empty!")
+                print("   Please check your GitHub repository secrets:")
+                print("   Settings → Secrets and variables → Actions → GA4_SERVICE_ACCOUNT_KEY")
+                sys.exit(1)
+
+            # Parse and validate JSON
+            parsed = json.loads(content)
+
+            if not isinstance(parsed, dict):
+                print("❌ Service account secret is not a valid JSON object")
+                sys.exit(1)
+
+            # Verify it has expected service account fields
+            if "type" not in parsed or "project_id" not in parsed:
+                print("⚠️  Warning: Secret doesn't look like a service account JSON")
+                print(f"    Found keys: {list(parsed.keys())}")
+                print("    Expected keys should include: type, project_id, private_key, client_email")
+
+            if parsed.get("type") != "service_account":
+                print("⚠️  Warning: 'type' field is not 'service_account'")
+
+            print("✅ Service account credentials file created and validated")
+            print(f"   Project ID: {parsed.get('project_id', 'N/A')}")
+            print(f"   Client Email: {parsed.get('client_email', 'N/A')}")
+
+        except json.JSONDecodeError as e:
+            print(f"❌ JSON decode error: {e}")
+            print(f"   Error at position {e.pos}")
+            print("")
+            print("📋 Troubleshooting steps:")
+            print("   1. Go to your Google Cloud Console")
+            print("   2. Navigate to IAM & Admin → Service Accounts")
+            print("   3. Find your service account and create/download a new JSON key")
+            print("   4. Open the downloaded JSON file in a text editor")
+            print("   5. Copy the ENTIRE content (from { to })")
+            print("   6. Go to GitHub: Settings → Secrets and variables → Actions")
+            print("   7. Edit GA4_SERVICE_ACCOUNT_KEY and paste the JSON")
+            print("   8. Make sure there are no extra spaces or characters before/after")
+            sys.exit(1)
         except Exception as exc:
-            print(f"❌ Base64 decode failed: {exc}")
-
-        print("")
-        print("❌ Could not process GA4_SERVICE_ACCOUNT_KEY secret")
-        print("")
-        print("📋 Troubleshooting steps:")
-        print("   1. Go to your Google Cloud Console")
-        print("   2. Navigate to IAM & Admin → Service Accounts")
-        print("   3. Find your service account and create/download a new JSON key")
-        print("   4. Open the downloaded JSON file in a text editor")
-        print("   5. Copy the ENTIRE content (from { to })")
-        print("   6. Go to GitHub: Settings → Secrets and variables → Actions")
-        print("   7. Edit GA4_SERVICE_ACCOUNT_KEY and paste the JSON")
-        print("   8. Make sure there are no extra spaces or characters before/after")
-        sys.exit(1)
-        PY
+            print(f"❌ Unable to validate credentials file: {exc}")
+            sys.exit(1)
+        EOF
     
     - name: Collect Weekly Web Analytics Data
       working-directory: web-analytics
