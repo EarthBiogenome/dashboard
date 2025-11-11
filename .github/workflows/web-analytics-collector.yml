@@ -75,6 +75,10 @@ jobs:
                 print("   Settings → Secrets and variables → Actions → GA4_SERVICE_ACCOUNT_KEY")
                 sys.exit(1)
 
+            print(f"ℹ️  Secret length: {len(content)} characters")
+            print(f"ℹ️  First 100 chars: {content[:100]}")
+            print(f"ℹ️  Last 100 chars: {content[-100:]}")
+
             # Parse and validate JSON
             parsed = json.loads(content)
 
@@ -82,32 +86,59 @@ jobs:
                 print("❌ Service account secret is not a valid JSON object")
                 sys.exit(1)
 
+            # Show what keys we found
+            print(f"ℹ️  JSON keys found: {list(parsed.keys())}")
+
             # Verify it has expected service account fields
-            if "type" not in parsed or "project_id" not in parsed:
-                print("⚠️  Warning: Secret doesn't look like a service account JSON")
-                print(f"    Found keys: {list(parsed.keys())}")
-                print("    Expected keys should include: type, project_id, private_key, client_email")
+            required_fields = ["type", "project_id", "private_key", "client_email"]
+            missing_fields = [f for f in required_fields if f not in parsed]
+
+            if missing_fields:
+                print(f"❌ CRITICAL: Missing required fields: {missing_fields}")
+                print(f"   Found keys: {list(parsed.keys())}")
+                print("")
+                print("📋 The service account JSON is INCOMPLETE!")
+                print("   A valid service account key must include:")
+                print("   - type")
+                print("   - project_id")
+                print("   - private_key (THIS IS CRITICAL - contains the authentication certificate)")
+                print("   - private_key_id")
+                print("   - client_email")
+                print("   - client_id")
+                print("")
+                print("   It looks like only part of the JSON was copied.")
+                print("   Please download a NEW key from Google Cloud Console and copy ALL of it.")
+                sys.exit(1)
 
             if parsed.get("type") != "service_account":
                 print("⚠️  Warning: 'type' field is not 'service_account'")
 
+            # Check private_key format
+            private_key = parsed.get("private_key", "")
+            if not private_key.startswith("-----BEGIN PRIVATE KEY-----"):
+                print("⚠️  Warning: private_key doesn't look valid")
+
             print("✅ Service account credentials file created and validated")
             print(f"   Project ID: {parsed.get('project_id', 'N/A')}")
             print(f"   Client Email: {parsed.get('client_email', 'N/A')}")
+            print(f"   Private Key: {'Present' if private_key else 'MISSING'}")
 
         except json.JSONDecodeError as e:
             print(f"❌ JSON decode error: {e}")
             print(f"   Error at position {e.pos}")
+            print(f"   Error line/column: line {e.lineno}, column {e.colno}")
             print("")
             print("📋 Troubleshooting steps:")
             print("   1. Go to your Google Cloud Console")
             print("   2. Navigate to IAM & Admin → Service Accounts")
-            print("   3. Find your service account and create/download a new JSON key")
-            print("   4. Open the downloaded JSON file in a text editor")
-            print("   5. Copy the ENTIRE content (from { to })")
-            print("   6. Go to GitHub: Settings → Secrets and variables → Actions")
-            print("   7. Edit GA4_SERVICE_ACCOUNT_KEY and paste the JSON")
-            print("   8. Make sure there are no extra spaces or characters before/after")
+            print("   3. Find your service account and create/download a NEW JSON key")
+            print("   4. Open the downloaded JSON file in a text editor (Notepad++, VS Code, etc.)")
+            print("   5. Press Ctrl+A to select ALL content (from { to })")
+            print("   6. Press Ctrl+C to copy")
+            print("   7. Go to GitHub: Settings → Secrets and variables → Actions")
+            print("   8. Edit GA4_SERVICE_ACCOUNT_KEY")
+            print("   9. Clear the field completely and paste with Ctrl+V")
+            print("   10. Verify the entire JSON is visible before saving")
             sys.exit(1)
         except Exception as exc:
             print(f"❌ Unable to validate credentials file: {exc}")
