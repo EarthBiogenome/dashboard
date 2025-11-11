@@ -47,10 +47,50 @@ jobs:
     
     - name: Create GA4 Service Account Credentials
       working-directory: web-analytics
+      env:
+        GA4_SERVICE_ACCOUNT_KEY: ${{ secrets.GA4_SERVICE_ACCOUNT_KEY }}
       run: |
-        cat <<'EOF' > ga4_service_account.json
-        ${{ secrets.GA4_SERVICE_ACCOUNT_KEY }}
-        EOF
+        python3 <<'PY'
+        import os
+        import json
+        import base64
+        import sys
+        from pathlib import Path
+
+        secret = os.environ.get("GA4_SERVICE_ACCOUNT_KEY", "")
+        credentials_path = Path("ga4_service_account.json")
+
+        def write_pretty_json(text: str) -> bool:
+            try:
+                parsed = json.loads(text)
+                if not isinstance(parsed, dict):
+                    raise ValueError("Service account secret must decode to a JSON object.")
+                credentials_path.write_text(json.dumps(parsed, indent=2), encoding="utf-8")
+                print("✅ Service account credentials file created.")
+                return True
+            except json.JSONDecodeError:
+                return False
+            except Exception as exc:
+                print(f"❌ Unable to write credentials file: {exc}")
+                return False
+
+        # Attempt to use the secret as raw JSON first
+        if write_pretty_json(secret):
+            sys.exit(0)
+
+        # Fallback: try decoding from base64 (handles secrets stored as base64 strings)
+        try:
+            decoded = base64.b64decode(secret)
+        except Exception as exc:
+            print(f"❌ Service account secret is neither valid JSON nor base64: {exc}")
+            sys.exit(1)
+
+        if write_pretty_json(decoded.decode("utf-8")):
+            sys.exit(0)
+
+        print("❌ Decoded service account secret is not valid JSON.")
+        sys.exit(1)
+        PY
     
     - name: Collect Weekly Web Analytics Data
       working-directory: web-analytics
