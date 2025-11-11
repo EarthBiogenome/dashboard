@@ -60,6 +60,10 @@ jobs:
         secret = os.environ.get("GA4_SERVICE_ACCOUNT_KEY", "")
         credentials_path = Path("ga4_service_account.json")
 
+        def debug_preview(label: str, text: str):
+            preview = text[:60].replace("\n", "\\n")
+            print(f"ℹ️  {label}: length={len(text)}, preview='{preview}'")
+
         def write_pretty_json(text: str) -> bool:
             try:
                 parsed = json.loads(text)
@@ -74,6 +78,8 @@ jobs:
                 print(f"❌ Unable to write credentials file: {exc}")
                 return False
 
+        debug_preview("Raw secret", secret)
+
         # Attempt to use the secret as raw JSON first
         if write_pretty_json(secret):
             sys.exit(0)
@@ -81,6 +87,7 @@ jobs:
         # Fallback: try decoding from base64 (handles secrets stored as base64 strings)
         try:
             decoded = base64.b64decode(secret)
+            debug_preview("Base64-decoded secret", decoded.decode("utf-8", errors="replace"))
         except Exception as exc:
             print(f"❌ Service account secret is neither valid JSON nor base64: {exc}")
             sys.exit(1)
