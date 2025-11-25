@@ -1,14 +1,14 @@
 {
   "metadata": {
     "description": "Consolidated weekly web analytics data for EBP Dashboard",
-    "total_weeks": 15,
+    "total_weeks": 17,
     "date_range": {
       "first_week": "2025-W30",
-      "last_week": "2025-W45",
+      "last_week": "2025-W47",
       "first_collection": "2025-08-09",
-      "last_collection": "2025-11-03"
+      "last_collection": "2025-11-17"
     },
-    "last_updated": "2025-11-11T17:47:36.686721+00:00"
+    "last_updated": "2025-11-24T03:37:12.387009+00:00"
   },
   "weeks": [
     {
@@ -3975,6 +3975,66 @@
       "summary": {
         "period": "2025-11-03 to 2025-11-03",
         "days_of_data": 5,
+        "engagement_quality": "Low"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2025-W46",
+        "collection_date": "2025-11-10",
+        "week_start": "2025-11-10",
+        "collected_at": "2025-11-17T03:20:32.256996+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 15,
+        "total_users": 14,
+        "new_users": 7,
+        "screen_page_views": 13,
+        "avg_bounce_rate": 0.7142857142857143,
+        "avg_session_duration": 158.94328153571428,
+        "avg_engagement_rate": 0.2857142857142857,
+        "countries_reached": 6,
+        "days_collected": 7
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2025-11-10 to 2025-11-10",
+        "days_of_data": 7,
+        "engagement_quality": "Low"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2025-W47",
+        "collection_date": "2025-11-17",
+        "week_start": "2025-11-17",
+        "collected_at": "2025-11-24T03:37:12.385906+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 40,
+        "total_users": 34,
+        "new_users": 28,
+        "screen_page_views": 31,
+        "avg_bounce_rate": 0.765,
+        "avg_session_duration": 155.63560738444446,
+        "avg_engagement_rate": 0.235,
+        "countries_reached": 10,
+        "days_collected": 6
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2025-11-17 to 2025-11-17",
+        "days_of_data": 6,
         "engagement_quality": "Low"
       }
     }
