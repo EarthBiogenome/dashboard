@@ -1,16 +1,46 @@
 {
   "metadata": {
     "description": "Consolidated weekly web analytics data for EBP Dashboard",
-    "total_weeks": 17,
+    "total_weeks": 23,
     "date_range": {
-      "first_week": "2025-W30",
-      "last_week": "2025-W47",
-      "first_collection": "2025-08-09",
-      "last_collection": "2025-11-17"
+      "first_week": "2025-W01",
+      "last_week": "2025-W52",
+      "first_collection": "2025-12-29",
+      "last_collection": "2025-12-22"
     },
-    "last_updated": "2025-11-24T03:37:12.387009+00:00"
+    "last_updated": "2026-01-05T03:59:28.291504+00:00"
   },
   "weeks": [
+    {
+      "collection_info": {
+        "week": "2025-W01",
+        "collection_date": "2025-12-29",
+        "week_start": "2025-12-29",
+        "collected_at": "2026-01-05T03:59:28.290342+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 4,
+        "total_users": 4,
+        "new_users": 2,
+        "screen_page_views": 4,
+        "avg_bounce_rate": 0.0,
+        "avg_session_duration": 102.37208275,
+        "avg_engagement_rate": 1.0,
+        "countries_reached": 2,
+        "days_collected": 4
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2025-12-29 to 2025-12-29",
+        "days_of_data": 4,
+        "engagement_quality": "High"
+      }
+    },
     {
       "collection_info": {
         "week": "2025-W30",
@@ -4036,6 +4066,156 @@
         "period": "2025-11-17 to 2025-11-17",
         "days_of_data": 6,
         "engagement_quality": "Low"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2025-W48",
+        "collection_date": "2025-11-24",
+        "week_start": "2025-11-24",
+        "collected_at": "2025-12-01T03:54:56.292500+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 22,
+        "total_users": 18,
+        "new_users": 9,
+        "screen_page_views": 16,
+        "avg_bounce_rate": 0.5555555555555555,
+        "avg_session_duration": 289.93466374999997,
+        "avg_engagement_rate": 0.4444444444444444,
+        "countries_reached": 8,
+        "days_collected": 6
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2025-11-24 to 2025-11-24",
+        "days_of_data": 6,
+        "engagement_quality": "Low"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2025-W49",
+        "collection_date": "2025-12-01",
+        "week_start": "2025-12-01",
+        "collected_at": "2025-12-08T03:26:03.215909+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 15,
+        "total_users": 10,
+        "new_users": 7,
+        "screen_page_views": 11,
+        "avg_bounce_rate": 0.7777777777777777,
+        "avg_session_duration": 125.87785416666668,
+        "avg_engagement_rate": 0.2222222222222222,
+        "countries_reached": 8,
+        "days_collected": 6
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2025-12-01 to 2025-12-01",
+        "days_of_data": 6,
+        "engagement_quality": "Low"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2025-W50",
+        "collection_date": "2025-12-08",
+        "week_start": "2025-12-08",
+        "collected_at": "2025-12-15T03:45:55.007412+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 25,
+        "total_users": 10,
+        "new_users": 5,
+        "screen_page_views": 11,
+        "avg_bounce_rate": 0.5428571428571429,
+        "avg_session_duration": 102.1778632904762,
+        "avg_engagement_rate": 0.45714285714285713,
+        "countries_reached": 6,
+        "days_collected": 5
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2025-12-08 to 2025-12-08",
+        "days_of_data": 5,
+        "engagement_quality": "Low"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2025-W51",
+        "collection_date": "2025-12-15",
+        "week_start": "2025-12-15",
+        "collected_at": "2025-12-22T03:46:45.493102+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 23,
+        "total_users": 18,
+        "new_users": 12,
+        "screen_page_views": 17,
+        "avg_bounce_rate": 0.40095238095238095,
+        "avg_session_duration": 259.8039114133333,
+        "avg_engagement_rate": 0.599047619047619,
+        "countries_reached": 5,
+        "days_collected": 5
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2025-12-15 to 2025-12-15",
+        "days_of_data": 5,
+        "engagement_quality": "Medium"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2025-W52",
+        "collection_date": "2025-12-22",
+        "week_start": "2025-12-22",
+        "collected_at": "2025-12-29T03:53:17.449166+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 4,
+        "total_users": 4,
+        "new_users": 3,
+        "screen_page_views": 4,
+        "avg_bounce_rate": 0.3333333333333333,
+        "avg_session_duration": 137.22850583333334,
+        "avg_engagement_rate": 0.6666666666666666,
+        "countries_reached": 4,
+        "days_collected": 3
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2025-12-22 to 2025-12-22",
+        "days_of_data": 3,
+        "engagement_quality": "Medium"
       }
     }
   ]
