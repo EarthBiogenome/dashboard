@@ -455,9 +455,9 @@
         showLoadingIndicator('familyProgressContainer');
         showLoadingIndicator('speciesProgressContainer');
         
-        // Family Progress - Load search data to ensure 2025 data is included
+        // Family Progress - Load search data with automatic pagination
         console.log('Starting family data fetch from search endpoint...');
-        const familySearchUrl = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28family%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=2000&offset=0&fields=assembly_date%2Cassembly_level";
+        const familySearchUrl = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28family%29&result=taxon&includeEstimates=true&taxonomy=ncbi&fields=assembly_date%2Cassembly_level";
         
         // Load actual data from search endpoint and calculate cumulative from it
         console.log('Loading family search data to calculate accurate cumulative...');
@@ -483,9 +483,9 @@
           showErrorMessage('familyProgressContainer', 'family');
         });
 
-        // Species Progress - Load search data to ensure 2025 data is included
+        // Species Progress - Load search data with automatic pagination
         console.log('=== STARTING SPECIES SECTION ===');
-        const speciesSearchUrl = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=5000&offset=0&fields=assembly_date%2Cassembly_level";
+        const speciesSearchUrl = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&fields=assembly_date%2Cassembly_level";
         
         console.log('Starting species data fetch from search endpoint...');
         console.log('Species search URL:', speciesSearchUrl);

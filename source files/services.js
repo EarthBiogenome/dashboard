@@ -347,47 +347,106 @@ async function fetchData(url) {
     return filled;
   }
 
+  /**
+   * Fetches all results from a paginated API endpoint.
+   * Automatically handles pagination to retrieve all records.
+   */
+  async function fetchAllPaginatedResults(baseUrl, pageSize = 10000) {
+    const allResults = [];
+    let offset = 0;
+    let totalCount = null;
+    let maxPages = 10; // Safety limit to prevent infinite loops
+    let pageCount = 0;
+    
+    // Determine the separator for adding params
+    const hasQuery = baseUrl.includes('?');
+    const separator = hasQuery ? '&' : '?';
+    
+    console.log(`Starting paginated fetch with pageSize=${pageSize}`);
+    console.log(`Base URL: ${baseUrl}`);
+    
+    while (pageCount < maxPages) {
+      pageCount++;
+      
+      // Build URL with current pagination params
+      const fetchUrl = baseUrl + separator + 'size=' + pageSize + '&offset=' + offset;
+      
+      console.log('Fetching page ' + pageCount + ': offset=' + offset + ', size=' + pageSize);
+      console.log('Fetch URL: ' + fetchUrl);
+      
+      try {
+        const response = await fetch(fetchUrl);
+        
+        if (!response.ok) {
+          console.error('HTTP error: ' + response.status + ' ' + response.statusText);
+          throw new Error('HTTP error: ' + response.status + ' ' + response.statusText);
+        }
+        
+        const data = await response.json();
+        console.log('API response received, keys:', Object.keys(data));
+        
+        // Get total count from first response (GoaT API uses status.hits)
+        if (totalCount === null && data.status && data.status.hits !== undefined) {
+          totalCount = data.status.hits;
+          console.log('Total records available: ' + totalCount);
+        }
+        
+        // Add results from this page
+        if (data.results && data.results.length > 0) {
+          allResults.push.apply(allResults, data.results);
+          console.log('Fetched ' + data.results.length + ' records, total so far: ' + allResults.length);
+          
+          // Check if we've fetched all records
+          if (data.results.length < pageSize) {
+            console.log('Pagination complete (last page). Total fetched: ' + allResults.length);
+            break;
+          }
+          
+          if (totalCount !== null && allResults.length >= totalCount) {
+            console.log('Pagination complete (reached total). Total fetched: ' + allResults.length);
+            break;
+          }
+          
+          offset += pageSize;
+        } else {
+          console.log('No more results, pagination complete');
+          break;
+        }
+      } catch (error) {
+        console.error('Error fetching page ' + pageCount + ':', error);
+        // If we have some results, return them instead of failing completely
+        if (allResults.length > 0) {
+          console.warn('Returning partial results (' + allResults.length + ' records) due to error');
+          return allResults;
+        }
+        throw error;
+      }
+    }
+    
+    if (pageCount >= maxPages) {
+      console.warn('Reached maximum page limit (' + maxPages + '). Total fetched: ' + allResults.length);
+    }
+    
+    return allResults;
+  }
+
   // New function to fetch and aggregate raw species search data
   async function getSpeciesSearchData(searchUrl) {
     try {
       const startTime = performance.now();
-      console.log('Fetching species search data from:', searchUrl);
+      console.log('Fetching species search data with pagination...');
       
       const fetchStartTime = performance.now();
-      const response = await fetch(searchUrl);
-      if (!response.ok) {
-        console.error('HTTP error:', response.status, response.statusText);
-        throw new Error(`Failed to fetch search data: ${response.status} ${response.statusText}`);
-      }
-      const data = await response.json();
+      // Use paginated fetch to get all results
+      const allResults = await fetchAllPaginatedResults(searchUrl);
       const fetchEndTime = performance.now();
       console.log(`Species fetch time: ${(fetchEndTime - fetchStartTime).toFixed(2)}ms`);
       
-      console.log('Search data received, data structure:', Object.keys(data));
-      console.log('Search data sample:', data);
-      
-      // Log the total count and structure
-      if (data.results) {
-        console.log('Total results:', data.results.length);
-        if (data.results.length > 0) {
-          console.log('First result structure:', Object.keys(data.results[0]));
-          console.log('First result sample:', data.results[0]);
-        }
-      } else {
-        console.log('No results field found in response');
-      }
+      console.log('Total species results fetched:', allResults.length);
       
       // Aggregate data by year and assembly level
       const yearlyData = {};
       const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
-      
-      // Mapping from API response values to our internal format
-      const assemblyLevelMapping = {
-        'contig': 'contig',
-        'scaffold': 'scaffold', 
-        'chromosome': 'chromosome',
-        'complete genome': 'complete genome'
-      };
       
       // Initialize yearly data structure (species data starts from 2010)
       for (let year = 2010; year <= 2025; year++) {
@@ -401,9 +460,9 @@ async function fetchData(url) {
       
       // Process search results
       const processStartTime = performance.now();
-      if (data.results && data.results.length > 0) {
+      if (allResults.length > 0) {
         let processedCount = 0;
-        data.results.forEach(item => {
+        allResults.forEach(item => {
           if (item.result && item.result.fields && 
               item.result.fields.assembly_date && item.result.fields.assembly_level) {
             
@@ -413,21 +472,20 @@ async function fetchData(url) {
             if (assemblyDateValue && assemblyLevelValue) {
               const assemblyDate = new Date(assemblyDateValue);
               const year = assemblyDate.getFullYear();
-              const assemblyLevel = assemblyLevelValue.toLowerCase(); // Convert to lowercase to match our mapping
+              const assemblyLevel = assemblyLevelValue.toLowerCase();
               
               if (year >= 2010 && year <= 2025 && assemblyLevels.includes(assemblyLevel)) {
                 yearlyData[year][assemblyLevel]++;
                 processedCount++;
               } else if (year >= 2010 && year <= 2025) {
-                // Log unrecognized assembly levels to help with debugging
                 console.log('Unrecognized assembly level:', assemblyLevelValue, 'for year', year);
               }
             }
           }
         });
         console.log('Processed', processedCount, 'records from search results');
-      const processEndTime = performance.now();
-      console.log(`Species processing time: ${(processEndTime - processStartTime).toFixed(2)}ms`);
+        const processEndTime = performance.now();
+        console.log(`Species processing time: ${(processEndTime - processStartTime).toFixed(2)}ms`);
       } else {
         console.log('No results found in search data');
       }
@@ -531,31 +589,15 @@ async function fetchData(url) {
   async function getFamilySearchData(searchUrl) {
     try {
       const startTime = performance.now();
-      console.log('Fetching family search data from:', searchUrl);
+      console.log('Fetching family search data with pagination...');
       
       const fetchStartTime = performance.now();
-      const response = await fetch(searchUrl);
-      if (!response.ok) {
-        console.error('HTTP error:', response.status, response.statusText);
-        throw new Error(`Failed to fetch family search data: ${response.status} ${response.statusText}`);
-      }
-      const data = await response.json();
+      // Use paginated fetch to get all results
+      const allResults = await fetchAllPaginatedResults(searchUrl);
       const fetchEndTime = performance.now();
       console.log(`Family fetch time: ${(fetchEndTime - fetchStartTime).toFixed(2)}ms`);
       
-      console.log('Family search data received, data structure:', Object.keys(data));
-      console.log('Family search data sample:', data);
-      
-      // Log the total count and structure
-      if (data.results) {
-        console.log('Total family results:', data.results.length);
-        if (data.results.length > 0) {
-          console.log('First family result structure:', Object.keys(data.results[0]));
-          console.log('First family result sample:', data.results[0]);
-        }
-      } else {
-        console.log('No results field found in family response');
-      }
+      console.log('Total family results fetched:', allResults.length);
       
       // Aggregate data by year and assembly level
       const yearlyData = {};
@@ -573,9 +615,9 @@ async function fetchData(url) {
       
       // Process search results
       const processStartTime = performance.now();
-      if (data.results && data.results.length > 0) {
+      if (allResults.length > 0) {
         let processedCount = 0;
-        data.results.forEach(item => {
+        allResults.forEach(item => {
           if (item.result && item.result.fields && 
               item.result.fields.assembly_date && item.result.fields.assembly_level) {
             
@@ -597,8 +639,8 @@ async function fetchData(url) {
           }
         });
         console.log('Processed', processedCount, 'family records from search results');
-      const processEndTime = performance.now();
-      console.log(`Family processing time: ${(processEndTime - processStartTime).toFixed(2)}ms`);
+        const processEndTime = performance.now();
+        console.log(`Family processing time: ${(processEndTime - processStartTime).toFixed(2)}ms`);
       } else {
         console.log('No results found in family search data');
       }
