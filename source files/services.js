@@ -339,7 +339,7 @@ async function fetchData(url) {
 
   function fillMissingBins(rawData, totalBins) {
     // rawData: array of counts per bin (may be shorter than totalBins)
-    // totalBins: total number of bins (e.g., 2025-2002+1)
+    // totalBins: total number of bins (e.g., 2026-2010+1)
     const filled = new Array(totalBins).fill(0);
     for (let i = 0; i < rawData.length; i++) {
       filled[i] = rawData[i];
@@ -449,7 +449,7 @@ async function fetchData(url) {
       const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
       
       // Initialize yearly data structure (species data starts from 2010)
-      for (let year = 2010; year <= 2025; year++) {
+      for (let year = 2010; year <= 2026; year++) {
         yearlyData[year] = {
           'contig': 0,
           'scaffold': 0,
@@ -463,24 +463,30 @@ async function fetchData(url) {
       if (allResults.length > 0) {
         let processedCount = 0;
         allResults.forEach(item => {
-          if (item.result && item.result.fields && 
-              item.result.fields.assembly_date && item.result.fields.assembly_level) {
+          if (item.result && item.result.fields) {
+            // Get assembly date, default to current year if missing
+            let year = 2026;
+            if (item.result.fields.assembly_date && item.result.fields.assembly_date.value) {
+              const assemblyDate = new Date(item.result.fields.assembly_date.value);
+              year = assemblyDate.getFullYear();
+              // Clamp year to valid range
+              if (year < 2010) year = 2010;
+              if (year > 2026) year = 2026;
+            }
             
-            const assemblyDateValue = item.result.fields.assembly_date.value;
-            const assemblyLevelValue = item.result.fields.assembly_level.value;
-            
-            if (assemblyDateValue && assemblyLevelValue) {
-              const assemblyDate = new Date(assemblyDateValue);
-              const year = assemblyDate.getFullYear();
-              const assemblyLevel = assemblyLevelValue.toLowerCase();
-              
-              if (year >= 2010 && year <= 2025 && assemblyLevels.includes(assemblyLevel)) {
-                yearlyData[year][assemblyLevel]++;
-                processedCount++;
-              } else if (year >= 2010 && year <= 2025) {
-                console.log('Unrecognized assembly level:', assemblyLevelValue, 'for year', year);
+            // Get assembly level, default to 'scaffold' if missing or unrecognized
+            let assemblyLevel = 'scaffold';
+            if (item.result.fields.assembly_level && item.result.fields.assembly_level.value) {
+              const levelValue = item.result.fields.assembly_level.value.toLowerCase();
+              if (assemblyLevels.includes(levelValue)) {
+                assemblyLevel = levelValue;
+              } else {
+                console.log('Unrecognized assembly level:', item.result.fields.assembly_level.value, '- defaulting to scaffold');
               }
             }
+            
+            yearlyData[year][assemblyLevel]++;
+            processedCount++;
           }
         });
         console.log('Processed', processedCount, 'records from search results');
@@ -492,7 +498,7 @@ async function fetchData(url) {
       
       // Convert to the format expected by the chart
       const chartStartTime = performance.now();
-      const category = Array.from({length: 2025 - 2010 + 1}, (_, i) => 2010 + i);
+      const category = Array.from({length: 2026 - 2010 + 1}, (_, i) => 2010 + i);
       const series = [];
       
       assemblyLevels.forEach(level => {
@@ -566,7 +572,7 @@ async function fetchData(url) {
       };
       
       console.log('Final aggregated result:', result);
-      console.log('Sample yearly data for 2025:', yearlyData[2025]);
+      console.log('Sample yearly data for 2026:', yearlyData[2026]);
       
       const totalTime = performance.now() - startTime;
       console.log(`Total species processing time: ${totalTime.toFixed(2)}ms`);
@@ -604,7 +610,7 @@ async function fetchData(url) {
       const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
       
       // Initialize yearly data structure (families data starts from 2010)
-      for (let year = 2010; year <= 2025; year++) {
+      for (let year = 2010; year <= 2026; year++) {
         yearlyData[year] = {
           'contig': 0,
           'scaffold': 0,
@@ -618,24 +624,30 @@ async function fetchData(url) {
       if (allResults.length > 0) {
         let processedCount = 0;
         allResults.forEach(item => {
-          if (item.result && item.result.fields && 
-              item.result.fields.assembly_date && item.result.fields.assembly_level) {
+          if (item.result && item.result.fields) {
+            // Get assembly date, default to current year if missing
+            let year = 2026;
+            if (item.result.fields.assembly_date && item.result.fields.assembly_date.value) {
+              const assemblyDate = new Date(item.result.fields.assembly_date.value);
+              year = assemblyDate.getFullYear();
+              // Clamp year to valid range
+              if (year < 2010) year = 2010;
+              if (year > 2026) year = 2026;
+            }
             
-            const assemblyDateValue = item.result.fields.assembly_date.value;
-            const assemblyLevelValue = item.result.fields.assembly_level.value;
-            
-            if (assemblyDateValue && assemblyLevelValue) {
-              const assemblyDate = new Date(assemblyDateValue);
-              const year = assemblyDate.getFullYear();
-              const assemblyLevel = assemblyLevelValue.toLowerCase();
-              
-              if (year >= 2010 && year <= 2025 && assemblyLevels.includes(assemblyLevel)) {
-                yearlyData[year][assemblyLevel]++;
-                processedCount++;
-              } else if (year >= 2010 && year <= 2025) {
-                console.log('Unrecognized family assembly level:', assemblyLevelValue, 'for year', year);
+            // Get assembly level, default to 'scaffold' if missing or unrecognized
+            let assemblyLevel = 'scaffold';
+            if (item.result.fields.assembly_level && item.result.fields.assembly_level.value) {
+              const levelValue = item.result.fields.assembly_level.value.toLowerCase();
+              if (assemblyLevels.includes(levelValue)) {
+                assemblyLevel = levelValue;
+              } else {
+                console.log('Unrecognized family assembly level:', item.result.fields.assembly_level.value, '- defaulting to scaffold');
               }
             }
+            
+            yearlyData[year][assemblyLevel]++;
+            processedCount++;
           }
         });
         console.log('Processed', processedCount, 'family records from search results');
@@ -647,7 +659,7 @@ async function fetchData(url) {
       
       // Convert to the format expected by the chart
       const chartStartTime = performance.now();
-      const category = Array.from({length: 2025 - 2010 + 1}, (_, i) => 2010 + i);
+      const category = Array.from({length: 2026 - 2010 + 1}, (_, i) => 2010 + i);
       const series = [];
       
       assemblyLevels.forEach(level => {
@@ -721,7 +733,7 @@ async function fetchData(url) {
       };
       
       console.log('Final family aggregated result:', result);
-      console.log('Sample family yearly data for 2025:', yearlyData[2025]);
+      console.log('Sample family yearly data for 2026:', yearlyData[2026]);
       
       const totalTime = performance.now() - startTime;
       console.log(`Total family processing time: ${totalTime.toFixed(2)}ms`);
@@ -734,6 +746,118 @@ async function fetchData(url) {
     }
   }
 
+  /**
+   * Fetches species data using the Report API (histogram endpoint).
+   * This ensures data matches GoaT exactly without manual aggregation.
+   */
+  async function getSpeciesReportData(reportUrl) {
+    try {
+      console.log('Fetching species data from Report API...');
+      const data = await fetchData(reportUrl);
+      return processReportData(data, 'Species');
+    } catch (error) {
+      console.error('Error fetching species report data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetches family data using the Report API (histogram endpoint).
+   * This ensures data matches GoaT exactly without manual aggregation.
+   */
+  async function getFamilyReportData(reportUrl) {
+    try {
+      console.log('Fetching family data from Report API...');
+      const data = await fetchData(reportUrl);
+      return processReportData(data, 'Family');
+    } catch (error) {
+      console.error('Error fetching family report data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Processes Report API response into chart-ready format.
+   * Handles actual counts and YoY growth calculations.
+   */
+  function processReportData(data, dataType) {
+    const histograms = data.report.report.histogram.histograms;
+    const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
+    
+    // Extract years from buckets
+    const category = histograms.buckets.map(d => new Date(d).getFullYear());
+    console.log(`${dataType} Report API - Years:`, category);
+    console.log(`${dataType} Report API - byCat:`, histograms.byCat);
+    
+    // Build actual (non-cumulative) series
+    const series = [];
+    assemblyLevels.forEach(level => {
+      const rawData = histograms.byCat[level] || [];
+      const filledData = fillMissingBins(rawData, category.length);
+      
+      const actualSeries = {
+        name: level,
+        type: "bar",
+        stack: "total",
+        label: { show: false },
+        itemStyle: { color: getAssemblyLevelColor(level) },
+        barGap: '1px',
+        barCategoryGap: '1px',
+        data: filledData
+      };
+      
+      const total = filledData.reduce((sum, val) => sum + val, 0);
+      actualSeries.description = formatNumber(total);
+      series.push(actualSeries);
+    });
+    
+    // Build YoY growth series
+    const percentSeries = [];
+    assemblyLevels.forEach(level => {
+      const rawData = histograms.byCat[level] || [];
+      const filledData = fillMissingBins(rawData, category.length);
+      
+      const growthData = filledData.map((item, index) => {
+        if (index === 0) return item > 0 ? 100 : 0;
+        const lastVal = filledData[index - 1];
+        if (lastVal === 0) return item > 0 ? 100 : 0;
+        return ((item - lastVal) / lastVal * 100).toFixed(2);
+      });
+      
+      const percentSeriesItem = {
+        name: level,
+        type: "bar",
+        stack: "total",
+        label: { show: false },
+        itemStyle: { color: getAssemblyLevelColor(level) },
+        barGap: '1px',
+        barCategoryGap: '1px',
+        data: growthData
+      };
+      
+      percentSeriesItem.description = formatNumber(0);
+      percentSeries.push(percentSeriesItem);
+    });
+    
+    const result = {
+      defaultData: {
+        category,
+        series,
+        tableName: `Count of ${dataType} (Actual)`
+      },
+      percentData: {
+        category,
+        series: percentSeries,
+        tableName: `Count of ${dataType} (YoY Growth)`
+      }
+    };
+    
+    console.log(`${dataType} Report API - Processed result:`, result);
+    return result;
+  }
+
   // Make the functions available globally
   window.getSpeciesSearchData = getSpeciesSearchData;
   window.getFamilySearchData = getFamilySearchData;
+  window.getSpeciesReportData = getSpeciesReportData;
+  window.getFamilyReportData = getFamilyReportData;

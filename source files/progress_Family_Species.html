@@ -227,13 +227,14 @@
             <div class="option">2023</div>
             <div class="option">2024</div>
             <div class="option">2025</div>
+            <div class="option">2026</div>
           </div>
         </div>
       </div>
       <div class="select-group">
         <label class="select-label">End Year</label>
         <div class="custom-select">
-          <div class="select-box">2025</div>
+          <div class="select-box">2026</div>
           <div class="options-container">
             <div class="option">2010</div>
             <div class="option">2011</div>
@@ -251,6 +252,7 @@
             <div class="option">2023</div>
             <div class="option">2024</div>
             <div class="option">2025</div>
+            <div class="option">2026</div>
           </div>
         </div>
       </div>
@@ -282,7 +284,7 @@
       const speciesDataMap = {}
       let activeType = 'Cumulative'
       let startYear = 2010
-      let endYear = 2025
+      let endYear = 2026
       let familyChart = null
       let speciesChart = null
       
@@ -344,7 +346,7 @@
       
       // Helper function to get effective start year based on user selection and data availability
       function getEffectiveStartYear(dataType) {
-        const dataStartYear = 2010; // Data from services.js is already filtered to 2010-2025
+        const dataStartYear = 2010; // Data from services.js is already filtered to 2010-2026
         return Math.max(startYear, dataStartYear);
       }
 
@@ -455,16 +457,16 @@
         showLoadingIndicator('familyProgressContainer');
         showLoadingIndicator('speciesProgressContainer');
         
-        // Family Progress - Load search data with automatic pagination
-        console.log('Starting family data fetch from search endpoint...');
-        const familySearchUrl = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28family%29&result=taxon&includeEstimates=true&taxonomy=ncbi&fields=assembly_date%2Cassembly_level";
+        // Family Progress - Load data from Report API (matches GoaT exactly)
+        console.log('Starting family data fetch from Report API...');
+        const familyReportUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_date%20AND%20bioproject%3DPRJNA533106&rank=family&result=taxon&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&taxonomy=ncbi";
         
-        // Load actual data from search endpoint and calculate cumulative from it
-        console.log('Loading family search data to calculate accurate cumulative...');
-        const familyDataPromise = window.getFamilySearchData(familySearchUrl).then(({defaultData, percentData}) => {
-          console.log('Family search data loaded, calculating cumulative...');
+        // Load data from Report API and calculate cumulative from it
+        console.log('Loading family data from Report API...');
+        const familyDataPromise = window.getFamilyReportData(familyReportUrl).then(({defaultData, percentData}) => {
+          console.log('Family report data loaded, calculating cumulative...');
           
-          // Calculate cumulative from actual data to ensure 2025 is included
+          // Calculate cumulative from actual data
           const cumulativeData = calculateCumulativeFromActual(defaultData);
           
           // Store all three data types
@@ -472,30 +474,30 @@
           familyDataMap['YoY Growth'] = percentData;
           familyDataMap['Cumulative'] = cumulativeData;
           
-          console.log('Family cumulative data calculated from actual data');
+          console.log('Family cumulative data calculated from report data');
           console.log('Sample cumulative data for verification:', cumulativeData);
           
           // Try to initialize charts after family data is loaded
           initializeChartsAfterDataLoaded();
         }).catch(error => {
-          console.error('Error loading family search data:', error);
+          console.error('Error loading family report data:', error);
           // Show error message for family chart
           showErrorMessage('familyProgressContainer', 'family');
         });
 
-        // Species Progress - Load search data with automatic pagination
+        // Species Progress - Load data from Report API (matches GoaT exactly)
         console.log('=== STARTING SPECIES SECTION ===');
-        const speciesSearchUrl = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&fields=assembly_date%2Cassembly_level";
+        const speciesReportUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_date%20AND%20bioproject%3DPRJNA533106&rank=species&result=taxon&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&stacked=true&cumulative=true&xOpts=%2C%2C1%2C%2CAssembly%20date&taxonomy=ncbi";
         
-        console.log('Starting species data fetch from search endpoint...');
-        console.log('Species search URL:', speciesSearchUrl);
+        console.log('Starting species data fetch from Report API...');
+        console.log('Species Report URL:', speciesReportUrl);
         
-        // Load actual data from search endpoint and calculate cumulative from it
-        console.log('Loading species search data to calculate accurate cumulative...');
-        const speciesDataPromise = window.getSpeciesSearchData(speciesSearchUrl).then(({defaultData, percentData}) => {
-          console.log('Species search data loaded, calculating cumulative...');
+        // Load data from Report API and calculate cumulative from it
+        console.log('Loading species data from Report API...');
+        const speciesDataPromise = window.getSpeciesReportData(speciesReportUrl).then(({defaultData, percentData}) => {
+          console.log('Species report data loaded, calculating cumulative...');
           
-          // Calculate cumulative from actual data to ensure 2025 is included
+          // Calculate cumulative from actual data
           const cumulativeData = calculateCumulativeFromActual(defaultData);
           
           // Store all three data types
@@ -503,13 +505,13 @@
           speciesDataMap['YoY Growth'] = percentData;
           speciesDataMap['Cumulative'] = cumulativeData;
           
-          console.log('Species cumulative data calculated from actual data');
+          console.log('Species cumulative data calculated from report data');
           console.log('Sample cumulative data for verification:', cumulativeData);
           
           // Try to initialize charts after species data is loaded
           initializeChartsAfterDataLoaded();
         }).catch(error => {
-          console.error('Error loading species search data:', error);
+          console.error('Error loading species report data:', error);
           // Hide loading indicator on error and show error message
           hideLoadingIndicator('speciesProgressContainer');
           showErrorMessage('speciesProgressContainer', 'species');
@@ -730,7 +732,7 @@
 
       // Function to find the first year with non-zero counts for a specific data type
       function findOptimalStartYearForData(data, dataType) {
-        // Data from services.js is already filtered to 2010-2025
+        // Data from services.js is already filtered to 2010-2026
         const dataStartYear = 2010;
         
         // Get the effective start year based on user selection
@@ -780,7 +782,7 @@
 
       // Function to trim series data to match the user's selected year range
       function trimSeriesToStartYear(series, startYear, containerId) {
-        // Data from services.js is already filtered to 2010-2025
+        // Data from services.js is already filtered to 2010-2026
         const dataStartYear = 2010;
         const skipYears = startYear - dataStartYear;
         
