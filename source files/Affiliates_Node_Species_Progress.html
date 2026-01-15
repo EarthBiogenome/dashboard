@@ -79,6 +79,134 @@
             max-width: 600px;
             text-align: center;
         }
+        /* Modal styles for drill-down */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background-color: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            height: 70vh;
+            max-height: 600px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background-color: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            padding: 0 5px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .modal-close:hover {
+            color: #e74c3c;
+        }
+        .modal-body {
+            flex: 1;
+            padding: 10px;
+            overflow: hidden;
+        }
+        #drilldownChart {
+            width: 100%;
+            height: 100%;
+        }
+        .no-data-message {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 16px;
+            color: #666;
+        }
+        /* Clickable bar hint */
+        .click-hint {
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+            margin-top: -80px;
+            margin-bottom: 5px;
+            font-style: italic;
+            pointer-events: none;
+        }
+        /* Download buttons container */
+        .download-buttons {
+            display: none;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 0px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 100;
+        }
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #fff;
+            background-color: #3498db;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            position: relative;
+            z-index: 101;
+            pointer-events: auto;
+        }
+        .download-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+        .download-btn:active {
+            transform: translateY(0);
+        }
+        .download-btn.csv-btn {
+            background-color: #27ae60;
+        }
+        .download-btn.csv-btn:hover {
+            background-color: #219a52;
+        }
+        .download-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
     </style>
   </head>
   <body>
@@ -89,6 +217,17 @@
        <div class="progress-text">Fetching data...</div>
      </div>
    </div>
+   <div class="click-hint" id="clickHint1" style="display: none;">Click on a project bar to see annual breakdown</div>
+   <div class="download-buttons" id="downloadButtons1">
+     <button type="button" class="download-btn" id="downloadChart1Btn">
+       <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+       Download Chart
+     </button>
+     <button type="button" class="download-btn csv-btn" id="downloadCSV1Btn">
+       <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+       Download Data (CSV)
+     </button>
+   </div>
    
    <div id="chartContainer2">
      <div class="loading">
@@ -96,9 +235,20 @@
        <div class="progress-text">Fetching data...</div>
      </div>
    </div>
+   <div class="click-hint" id="clickHint2" style="display: none;">Click on a project bar to see annual breakdown</div>
+   <div class="download-buttons" id="downloadButtons2">
+     <button type="button" class="download-btn" id="downloadChart2Btn">
+       <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+       Download Chart
+     </button>
+     <button type="button" class="download-btn csv-btn" id="downloadCSV2Btn">
+       <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+       Download Data (CSV)
+     </button>
+   </div>
    
    <!-- Disclaimer positioned with better spacing -->
-   <div id="disclaimer" style="margin-top: -80px; margin-bottom: 50px; text-align: center; color: #333; font-size: 16px; padding: 0px; background-color: #f8f9fa; border-radius: 8px; max-width: 1000px; margin-left: auto; margin-right: auto;">
+   <div id="disclaimer" style="margin-top: 20px; margin-bottom: 80px; text-align: center; color: #333; font-size: 16px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; max-width: 1000px; margin-left: auto; margin-right: auto;">
        <strong>Network Collaboration:</strong> Some assemblies appear across multiple projects, reflecting the collaborative nature of our global research community. <br>Projects without BioprojectID are not listed. 
    </div>
    
@@ -120,9 +270,30 @@
     </div>
     </div>
 
+    <!-- Modal for drill-down annual view -->
+    <div id="drilldownModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="modalTitle">Annual Species Count</h3>
+          <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="drilldownChart"></div>
+        </div>
+      </div>
+    </div>
+
     <script>
         let chartInstance1 = null
         let chartInstance2 = null
+        let drilldownChartInstance = null
+        
+        // Store annual data per project for drill-down
+        const projectAnnualData = {};
+        
+        // Store chart data for CSV export
+        let chart1Data = { categories: [], series: [] };
+        let chart2Data = { categories: [], series: [] };
 
       // Cache for API responses
       const apiCache = new Map();
@@ -165,7 +336,7 @@
         let totalFetched = 0;
 
         while (hasMoreData) {
-          const searchUrl = `https://goat.genomehubs.org/api/v2/search?query=bioproject%3D${projectId}%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=${pageSize}&offset=${offset}&fields=genome_size%2Cassembly_level%2Cassembly_span`;
+          const searchUrl = `https://goat.genomehubs.org/api/v2/search?query=bioproject%3D${projectId}%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=${pageSize}&offset=${offset}&fields=genome_size%2Cassembly_level%2Cassembly_span%2Cassembly_date`;
           
           try {
             const response = await fetchDataWithCache(searchUrl);
@@ -390,22 +561,44 @@
           // Optimized data processing
           results.forEach((projectResult, index) => {
             if (projectResult.results) {
+              const projectName = projectResult.projectName;
+              
+              // Initialize annual data storage for this project
+              if (!projectAnnualData[projectName]) {
+                projectAnnualData[projectName] = {};
+              }
+              
               // Debug logging for lmgp
-              if (projectResult.projectName === 'lmgp') {
+              if (projectName === 'lmgp') {
                 console.log(`🔍 LMGP processing: ${projectResult.results.length} results, error: ${projectResult.error || 'none'}`);
               }
               
               projectResult.results.forEach(item => {
                 const fields = item.result.fields;
                 const assemblyLevel = fields.assembly_level;
+                const assemblyDate = fields.assembly_date;
                 
                 if (assemblyLevel && assemblyLevel.value) {
                   const level = assemblyLevel.value.toLowerCase();
                   
                   if (speciesCounts.hasOwnProperty(level)) {
                     speciesCounts[level][index]++;
-                    // genomes[level][index] += fields.genome_size ? fields.genome_size.value : 0;
-                    // assemblies[level][index] += fields.assembly_span ? fields.assembly_span.value : 0;
+                    
+                    // Collect annual data for drill-down
+                    if (assemblyDate && assemblyDate.value) {
+                      const year = String(assemblyDate.value).substring(0, 4);
+                      if (year && !isNaN(parseInt(year))) {
+                        if (!projectAnnualData[projectName][year]) {
+                          projectAnnualData[projectName][year] = {
+                            'chromosome': 0,
+                            'complete genome': 0,
+                            'contig': 0,
+                            'scaffold': 0
+                          };
+                        }
+                        projectAnnualData[projectName][year][level]++;
+                      }
+                    }
                   }
                 }
               });
@@ -442,8 +635,14 @@
             const { series } = getDefaultStackedBarData(chart.data);
             const chartInstance = initEchart({series: series, categories: validCategories}, chart.containerId, chart.title);
             
-            if (index === 0) chartInstance1 = chartInstance;
+            if (index === 0) {
+              chartInstance1 = chartInstance;
+            }
           });
+          
+          // Show click hint and download buttons for EBP chart
+          document.getElementById('clickHint1').style.display = 'block';
+          document.getElementById('downloadButtons1').style.display = 'flex';
 
           // ===== ERGA CHART DATA FETCHING AND PROCESSING =====
           // Loading indicator already shows "Fetching data..."
@@ -488,15 +687,39 @@
           // Process ERGA data
           ergaResults.forEach((projectResult, index) => {
             if (projectResult.results) {
+              const projectName = projectResult.projectName;
+              
+              // Initialize annual data storage for this project
+              if (!projectAnnualData[projectName]) {
+                projectAnnualData[projectName] = {};
+              }
+              
               projectResult.results.forEach(item => {
                 const fields = item.result.fields;
                 const assemblyLevel = fields.assembly_level;
+                const assemblyDate = fields.assembly_date;
                 
                 if (assemblyLevel && assemblyLevel.value) {
                   const level = assemblyLevel.value.toLowerCase();
                   
                   if (ergaSpeciesCounts.hasOwnProperty(level)) {
                     ergaSpeciesCounts[level][index]++;
+                    
+                    // Collect annual data for drill-down
+                    if (assemblyDate && assemblyDate.value) {
+                      const year = String(assemblyDate.value).substring(0, 4);
+                      if (year && !isNaN(parseInt(year))) {
+                        if (!projectAnnualData[projectName][year]) {
+                          projectAnnualData[projectName][year] = {
+                            'chromosome': 0,
+                            'complete genome': 0,
+                            'contig': 0,
+                            'scaffold': 0
+                          };
+                        }
+                        projectAnnualData[projectName][year][level]++;
+                      }
+                    }
                   }
                 }
               });
@@ -513,6 +736,12 @@
           // Initialize ERGA chart
           const { series: ergaSeries } = getDefaultStackedBarData(ergaChartData.data);
           chartInstance2 = initEchart({series: ergaSeries, categories: ergaValidCategories}, ergaChartData.containerId, ergaChartData.title, 'ERGA Umbrella');
+          
+          // Show click hint and download buttons for ERGA chart
+          document.getElementById('clickHint2').style.display = 'block';
+          document.getElementById('downloadButtons2').style.display = 'flex';
+          
+          console.log('Project annual data collected:', Object.keys(projectAnnualData).length, 'projects');
 
         } catch (error) {
           console.error('Error loading data:', error);
@@ -564,6 +793,13 @@
         data.series.forEach((series, index) => {
           series.data = sortedData[index];
         });
+        
+        // Update stored chart data for CSV export (after sorting)
+        if (containerId === 'chartContainer1') {
+          chart1Data = { categories: sortedCategories.slice(), series: JSON.parse(JSON.stringify(data.series)) };
+        } else if (containerId === 'chartContainer2') {
+          chart2Data = { categories: sortedCategories.slice(), series: JSON.parse(JSON.stringify(data.series)) };
+        }
 
         // Calculate total count and project count for species chart
         let totalCount = 0;
@@ -757,9 +993,336 @@
           series: data.series,
         };
         myChart.setOption(option);
+        
+        // Add click event for drill-down
+        myChart.on('click', function(params) {
+          if (params.name) {
+            showDrilldown(params.name);
+          }
+        });
+        
+        // Change cursor to pointer on bar hover
+        myChart.getZr().on('mousemove', function(params) {
+          const pointInPixel = [params.offsetX, params.offsetY];
+          if (myChart.containPixel('grid', pointInPixel)) {
+            myChart.getZr().setCursorStyle('pointer');
+          } else {
+            myChart.getZr().setCursorStyle('default');
+          }
+        });
       
         return myChart
       }
+
+      // Show drill-down modal with annual data for a project
+      function showDrilldown(projectName) {
+        const annualData = projectAnnualData[projectName];
+        
+        if (!annualData || Object.keys(annualData).length === 0) {
+          alert(`No annual data available for ${projectName}`);
+          return;
+        }
+        
+        // Update modal title
+        document.getElementById('modalTitle').textContent = `Annual Species Count - ${projectName}`;
+        
+        // Show modal
+        document.getElementById('drilldownModal').classList.add('active');
+        
+        // Sort years
+        const sortedYears = Object.keys(annualData).sort();
+        
+        // Prepare series data
+        const seriesData = {
+          'contig': sortedYears.map(year => annualData[year]['contig'] || 0),
+          'scaffold': sortedYears.map(year => annualData[year]['scaffold'] || 0),
+          'chromosome': sortedYears.map(year => annualData[year]['chromosome'] || 0),
+          'complete genome': sortedYears.map(year => annualData[year]['complete genome'] || 0)
+        };
+        
+        // Initialize or update the drill-down chart
+        const chartDom = document.getElementById('drilldownChart');
+        if (drilldownChartInstance) {
+          drilldownChartInstance.dispose();
+        }
+        drilldownChartInstance = echarts.init(chartDom);
+        
+        const option = {
+          title: {
+            text: '',
+            left: 'center',
+            textStyle: {
+              fontSize: 14,
+              fontWeight: 'bold'
+            }
+          },
+          legend: {
+            show: true,
+            selectedMode: false,
+            data: ['contig', 'scaffold', 'chromosome', 'complete genome'],
+            top: '2%',
+            textStyle: {
+              color: '#000',
+              fontSize: 12,
+              fontWeight: 'bold',
+            }
+          },
+          color: ['#ffff33', '#22a884', '#404387', '#7ad151'],
+          grid: {
+            left: '5%',
+            right: '5%',
+            top: '15%',
+            bottom: '15%',
+            containLabel: true
+          },
+          tooltip: {
+            trigger: 'axis',
+            formatter: function(params) {
+              let result = `<strong>Year: ${params[0].name}</strong><br/>`;
+              let total = 0;
+              params.forEach(item => {
+                result += `${item.seriesName}: ${(item.value || 0).toLocaleString()}<br/>`;
+                total += item.value || 0;
+              });
+              result += `<strong>Total: ${total.toLocaleString()}</strong>`;
+              return result;
+            }
+          },
+          xAxis: {
+            type: 'category',
+            data: sortedYears,
+            axisLine: {
+              show: true,
+              lineStyle: { color: '#000', width: 1 }
+            },
+            axisLabel: {
+              show: true,
+              color: '#000',
+              fontSize: 12
+            },
+            name: 'Year',
+            nameLocation: 'middle',
+            nameGap: 30,
+            nameTextStyle: {
+              fontWeight: 'bold',
+              fontSize: 13
+            }
+          },
+          yAxis: {
+            type: 'value',
+            name: 'Count of Species',
+            nameLocation: 'middle',
+            nameRotate: 90,
+            nameGap: 40,
+            nameTextStyle: {
+              fontWeight: 'bold',
+              fontSize: 13
+            },
+            axisLine: {
+              show: true,
+              lineStyle: { color: '#000', width: 1 }
+            },
+            axisLabel: {
+              show: true,
+              color: '#000',
+              fontSize: 12,
+              formatter: value => value.toLocaleString()
+            },
+            splitLine: {
+              show: true,
+              lineStyle: { color: '#ccc' }
+            }
+          },
+          series: [
+            {
+              name: 'contig',
+              type: 'bar',
+              stack: 'total',
+              data: seriesData['contig'],
+              itemStyle: { color: '#ffff33' }
+            },
+            {
+              name: 'scaffold',
+              type: 'bar',
+              stack: 'total',
+              data: seriesData['scaffold'],
+              itemStyle: { color: '#22a884' }
+            },
+            {
+              name: 'chromosome',
+              type: 'bar',
+              stack: 'total',
+              data: seriesData['chromosome'],
+              itemStyle: { color: '#404387' }
+            },
+            {
+              name: 'complete genome',
+              type: 'bar',
+              stack: 'total',
+              data: seriesData['complete genome'],
+              itemStyle: { color: '#7ad151' }
+            }
+          ]
+        };
+        
+        drilldownChartInstance.setOption(option);
+        
+        // Resize chart when window resizes
+        window.addEventListener('resize', function() {
+          if (drilldownChartInstance) {
+            drilldownChartInstance.resize();
+          }
+        });
+      }
+
+      // Close the modal
+      function closeModal() {
+        document.getElementById('drilldownModal').classList.remove('active');
+        if (drilldownChartInstance) {
+          drilldownChartInstance.dispose();
+          drilldownChartInstance = null;
+        }
+      }
+
+      // Close modal when clicking outside
+      document.addEventListener('click', function(event) {
+        const modal = document.getElementById('drilldownModal');
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          closeModal();
+        }
+      });
+
+      // Download chart as PNG image
+      function downloadChartImage(chartNum) {
+        const chart = chartNum === 1 ? chartInstance1 : chartInstance2;
+        const chartName = chartNum === 1 ? 'EBP_Affiliates_Species_Count' : 'ERGA_Umbrella_Species_Count';
+        
+        if (!chart) {
+          alert('Chart not available. Please wait for data to load.');
+          return;
+        }
+        
+        // Get chart as base64 image
+        const url = chart.getDataURL({
+          type: 'png',
+          pixelRatio: 2,
+          backgroundColor: '#fff'
+        });
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // Download data as CSV with annual totals
+      function downloadCSV(chartNum) {
+        const chartData = chartNum === 1 ? chart1Data : chart2Data;
+        const chartName = chartNum === 1 ? 'EBP_Affiliates_Species_Data' : 'ERGA_Umbrella_Species_Data';
+        
+        if (!chartData || !chartData.categories || chartData.categories.length === 0) {
+          alert('Data not available. Please wait for data to load.');
+          return;
+        }
+        
+        // Collect all unique years from all projects
+        const allYears = new Set();
+        chartData.categories.forEach(projectName => {
+          const annualData = projectAnnualData[projectName];
+          if (annualData) {
+            Object.keys(annualData).forEach(year => allYears.add(year));
+          }
+        });
+        // Sort years in descending order (newest first)
+        const sortedYears = Array.from(allYears).sort((a, b) => b - a);
+        
+        // Build CSV content
+        // Header row - Total columns first, then year columns (descending)
+        let headerRow = 'Project,Contig,Scaffold,Chromosome,Complete Genome,Total';
+        sortedYears.forEach(year => {
+          headerRow += `,${year}`;
+        });
+        let csvContent = headerRow + '\n';
+        
+        // Find series by name
+        const findSeriesData = (name) => {
+          const series = chartData.series.find(s => s.name === name);
+          return series ? series.data : [];
+        };
+        
+        const contigData = findSeriesData('contig');
+        const scaffoldData = findSeriesData('scaffold');
+        const chromosomeData = findSeriesData('chromosome');
+        const completeGenomeData = findSeriesData('complete genome');
+        
+        // Data rows
+        chartData.categories.forEach((projectName, index) => {
+          const contig = contigData[index] || 0;
+          const scaffold = scaffoldData[index] || 0;
+          const chromosome = chromosomeData[index] || 0;
+          const completeGenome = completeGenomeData[index] || 0;
+          const total = contig + scaffold + chromosome + completeGenome;
+          
+          // Escape project name if it contains commas
+          const escapedName = projectName.includes(',') ? `"${projectName}"` : projectName;
+          
+          // Start with total counts
+          let row = `${escapedName},${contig},${scaffold},${chromosome},${completeGenome},${total}`;
+          
+          // Add annual totals
+          const annualData = projectAnnualData[projectName] || {};
+          sortedYears.forEach(year => {
+            const yearData = annualData[year] || {};
+            const yearTotal = (yearData['contig'] || 0) + (yearData['scaffold'] || 0) + 
+                              (yearData['chromosome'] || 0) + (yearData['complete genome'] || 0);
+            row += `,${yearTotal}`;
+          });
+          
+          csvContent += row + '\n';
+        });
+        
+        // Create and trigger download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    </script>
+    
+    <script>
+      // Set up download button listeners after DOM loads
+      document.addEventListener('DOMContentLoaded', function() {
+        // Chart 1 (EBP Affiliates) buttons
+        document.getElementById('downloadChart1Btn').addEventListener('click', function() {
+          downloadChartImage(1);
+        });
+        document.getElementById('downloadCSV1Btn').addEventListener('click', function() {
+          downloadCSV(1);
+        });
+        
+        // Chart 2 (ERGA) buttons
+        document.getElementById('downloadChart2Btn').addEventListener('click', function() {
+          downloadChartImage(2);
+        });
+        document.getElementById('downloadCSV2Btn').addEventListener('click', function() {
+          downloadCSV(2);
+        });
+      });
     </script>
   </body>
 </html>
