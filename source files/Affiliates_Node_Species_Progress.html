@@ -573,6 +573,17 @@
                 console.log(`🔍 LMGP processing: ${projectResult.results.length} results, error: ${projectResult.error || 'none'}`);
               }
               
+              // Debug logging for dtol to investigate annual data discrepancy
+              if (projectName === 'dtol' && projectResult.results.length > 0) {
+                console.log(`🔍 DTOL: Total species = ${projectResult.results.length}`);
+                // Log first few items to see assembly_date structure
+                const sampleItems = projectResult.results.slice(0, 3);
+                sampleItems.forEach((item, idx) => {
+                  const ad = item.result.fields.assembly_date;
+                  console.log(`  Sample ${idx + 1} assembly_date:`, ad);
+                });
+              }
+              
               projectResult.results.forEach(item => {
                 const fields = item.result.fields;
                 const assemblyLevel = fields.assembly_level;
@@ -585,8 +596,14 @@
                     speciesCounts[level][index]++;
                     
                     // Collect annual data for drill-down
+                    // Each species should only count once - use the first/primary assembly date
                     if (assemblyDate && assemblyDate.value) {
-                      const year = String(assemblyDate.value).substring(0, 4);
+                      // Handle case where value might be an array (multiple assemblies)
+                      let dateValue = assemblyDate.value;
+                      if (Array.isArray(dateValue)) {
+                        dateValue = dateValue[0]; // Use first date (usually earliest)
+                      }
+                      const year = String(dateValue).substring(0, 4);
                       if (year && !isNaN(parseInt(year))) {
                         if (!projectAnnualData[projectName][year]) {
                           projectAnnualData[projectName][year] = {
@@ -596,6 +613,7 @@
                             'scaffold': 0
                           };
                         }
+                        // Count each species once (matching the main chart)
                         projectAnnualData[projectName][year][level]++;
                       }
                     }
@@ -689,7 +707,12 @@
             if (projectResult.results) {
               const projectName = projectResult.projectName;
               
-              // Initialize annual data storage for this project
+              // Check if this project was already processed in EBP affiliates
+              // If so, skip annual data collection to avoid double-counting
+              const alreadyProcessed = projectAnnualData.hasOwnProperty(projectName) && 
+                                       Object.keys(projectAnnualData[projectName]).length > 0;
+              
+              // Initialize annual data storage for this project (only if not already processed)
               if (!projectAnnualData[projectName]) {
                 projectAnnualData[projectName] = {};
               }
@@ -705,9 +728,14 @@
                   if (ergaSpeciesCounts.hasOwnProperty(level)) {
                     ergaSpeciesCounts[level][index]++;
                     
-                    // Collect annual data for drill-down
-                    if (assemblyDate && assemblyDate.value) {
-                      const year = String(assemblyDate.value).substring(0, 4);
+                    // Only collect annual data if this project wasn't already processed
+                    // This prevents double-counting for projects that appear in both EBP and ERGA
+                    if (!alreadyProcessed && assemblyDate && assemblyDate.value) {
+                      let dateValue = assemblyDate.value;
+                      if (Array.isArray(dateValue)) {
+                        dateValue = dateValue[0];
+                      }
+                      const year = String(dateValue).substring(0, 4);
                       if (year && !isNaN(parseInt(year))) {
                         if (!projectAnnualData[projectName][year]) {
                           projectAnnualData[projectName][year] = {
