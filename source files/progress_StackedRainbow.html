@@ -71,7 +71,9 @@
           data.forEach((item, index) => {
             if(index % 2 == 1) {
               const i = Math.floor(index / 2)
-              item.data[i].value = item.data[i].value - data[index - 1].data[i].value
+              // Use inverted index to match the inverted data positioning
+              const invertedI = 5 - i;
+              item.data[invertedI].value = item.data[invertedI].value - data[index - 1].data[invertedI].value
             }
           })
           option.series = data
@@ -117,34 +119,47 @@
         const chartDom = document.getElementById("legendContainer");
         const myChart = echarts.init(chartDom);
         const offsetX = chartDom.clientWidth / 2;
-        const reverseLegends = legends.reverse()
+        // For display: species (outer) on left, phylum (inner) on right
+        // This positions outer arc labels/totals on left, inner arc labels/totals on right
+        // legends come in [species, genus, family, order, class, phylum] order - use as is
+        const displayLegends = [...legends];
         const names = []
         const totals = []
         const EBP = []
         const INSDC = []
         const contrasts = []
         
-        // Define individual offsets for each taxonomic rank
-        const nameOffsets = {
-          'phylum': 0,
-          'class': 0, 
-          'order': -5,
-          'family': -10,
-          'genus': -15,
-          'species': -22
+        // Define individual offsets to align labels under their corresponding arcs
+        // Species (outer, widest) on left, phylum (inner, narrowest) on right
+        // Positive = shift right, Negative = shift left
+        const labelOffsets = {
+          'species': -45,  // outer arc - shift left towards edge
+          'genus': -50,    // shift left
+          'family': -55,     // middle position
+          'order': -55,     // slight shift right
+          'class': -60,     // shift right
+          'phylum': -70     // inner arc - shift right towards center
+        };
+
+        // Define individual offsets for totals (separate from labels)
+        // Adjust these to fine-tune total positioning under each arc
+        const totalOffsets = {
+          'species': -35,  // outer arc
+          'genus': -40,
+          'family': -50,
+          'order': -55,
+          'class': -65,
+          'phylum': -70     // inner arc
         };
         
-        reverseLegends.forEach(item => {
+        // Build names array from displayLegends (species → phylum, left to right)
+        displayLegends.forEach(item => {
           names.push({
             type: 'total',
             text: item.name,
             color: item.color,
-            offset: nameOffsets[item.name] || 0  // Apply custom offset if available
-          })
-          totals.push({
-            type: 'total',
-            text: item.total,
-            color: '#000000'
+            labelOffset: labelOffsets[item.name] || 0,  // Label position offset
+            totalOffset: totalOffsets[item.name] || 0   // Total position offset
           })
           EBP.push({
             type: 'rect',
@@ -160,6 +175,16 @@
             type: 'text',
             text: `${(item.contrast * 100).toFixed(1)}%`,
             color: item.color
+          })
+        })
+
+        // Build totals array from reversed order (phylum → species) to maintain correct positioning
+        const reversedLegends = [...displayLegends].reverse();
+        reversedLegends.forEach(item => {
+          totals.push({
+            type: 'total',
+            text: item.total,
+            color: '#000000'
           })
         })
         EBP.push({
@@ -184,7 +209,7 @@
             bounding: 'all',
             children: []
           }
-          const width = Math.floor(document.getElementById('chartContainer').clientHeight / reverseLegends.length)
+          const width = Math.floor(document.getElementById('chartContainer').clientHeight / displayLegends.length)
           group.forEach((item, index) => {
             if(item.type == 'text') {
               const text = getGraphicOption('text', item)
@@ -199,10 +224,12 @@
               groupOption.children.push(text)
             } else if(item.type == 'total') {
               const text = getGraphicOption('text', item)
-              text.left = index * width + (item.offset || 0)  // Apply custom offset here
+              text.left = index * width + (item.labelOffset || 0)  // Apply label offset
               groupOption.children.push(text)
-              const total = getGraphicOption('text', totals[totals.length - 1 - index])
-              total.left = index * width + document.getElementById('chartContainer').clientHeight + width / 2
+              // Totals: now ordered species (left) to phylum (right)
+              const total = getGraphicOption('text', totals[index])
+              // Apply total offset (can be different from label offset)
+              total.left = index * width + document.getElementById('chartContainer').clientHeight + width / 2 + (item.totalOffset || 0)
               groupOption.children.push(total)
             }
           })
@@ -233,8 +260,8 @@
       }
 
       function renderTaxaPanel(legends) {
-        // Display order: phyla (top) to species (bottom)
-        const displayOrder = ['phylum', 'class', 'order', 'family', 'genus', 'species'];
+        // Display order in panel: species (top/outer) to phylum (bottom/inner) - matches inverted visual
+        const displayOrder = ['species', 'genus', 'family', 'order', 'class', 'phylum'];
         const pluralLabels = {
           'phylum': 'phylum',
           'class': 'class',
@@ -276,8 +303,9 @@
           formatStackedUmbrellaData(url1, url2, annimationDelay).then(({
             stackedData, legends
           }) => {
-            const species = stackedData.filter(item => (item.name == 'species'))
-            species.forEach((item, index) => {
+            // Adjust label offsets for inverted layout (phylum inner, species outer)
+            const phylum = stackedData.filter(item => (item.name == 'phylum'))
+            phylum.forEach((item, index) => {
               if(index == 0) {
                 item.label.offset = [0, -2]
               } else {

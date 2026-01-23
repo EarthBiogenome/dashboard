@@ -112,10 +112,12 @@ async function fetchData(url) {
           show: false
         }
       }]
-      arr[index].value = d.data[0].value
-      arr[index].description = `${sourceName}-${d.name}: ${d.data[0].description}`
-      arr[index].label.show = true
-      arr[index].label.rotate = 0
+      // Invert index to place phylum inner (index 0) and species outer (index 5)
+      const invertedIndex = 5 - index;
+      arr[invertedIndex].value = d.data[0].value
+      arr[invertedIndex].description = `${sourceName}-${d.name}: ${d.data[0].description}`
+      arr[invertedIndex].label.show = true
+      arr[invertedIndex].label.rotate = 0
       d.data = arr
       // d.stack = index
       d.stack  = 'a'
@@ -139,11 +141,13 @@ async function fetchData(url) {
         //   }
         // })
         INSDC.forEach((item, index) => {
-          let ratio = item.data[index].value / EBP[index].data[index].value
-          if(EBP[index].data[index].value < 5) {
-            EBP[index].data[index].value = EBP[index].data[index].value + 1
+          // Use inverted index to match the inverted data positioning
+          const invertedIndex = 5 - index;
+          let ratio = item.data[invertedIndex].value / EBP[index].data[invertedIndex].value
+          if(EBP[index].data[invertedIndex].value < 5) {
+            EBP[index].data[invertedIndex].value = EBP[index].data[invertedIndex].value + 1
             ratio = Math.min(ratio, 3)
-            item.data[index].value = EBP[index].data[index].value * ratio
+            item.data[invertedIndex].value = EBP[index].data[invertedIndex].value * ratio
           }
           // item.data[index].value = item.data[index].value - EBP[index].data[index].value
           // item.animationDelay = function() {
