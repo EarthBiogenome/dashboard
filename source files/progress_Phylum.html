@@ -82,6 +82,12 @@
     <script>
       let phylumChart = null;
       
+      // Format number with commas - defined globally for use in multiple functions
+      function formatNumber(num) {
+        if (num === undefined || num === null) return '0';
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+      
       window.onload = function () {
         const phylumUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=bioproject%3DPRJNA533106%20AND%20tax_tree%28eukaryota%29&rank=species&result=taxon&cat=phylum%5B10%5D%2B&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&xOpts=PRJNA533106%2C%2C1%2C%2C&caption=Number%20of%20eukaryotic%20species%20sequenced%20by%20EBP%20by%20phylum&taxonomy=ncbi&includeEstimates=true";
         const totalSpeciesUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&fields=bioproject&size=100&offset=0&names=&ranks=phylum";
@@ -198,12 +204,6 @@
             console.log('Processed chart data:', chartData);
             console.log('Categories:', sortedCategories);
             console.log('Values:', sortedValues);
-            
-            // Format number with commas
-            const formatNumber = (num) => {
-              if (num === undefined || num === null) return '0';
-              return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            };
 
             const breakdownText = sortedCategories.map((category, index) => {
               const value = sortedValues[index];
@@ -217,7 +217,12 @@
               <div class="breakdown">${breakdownText}</div>
             `;
             
-            phylumChart = initEchart(chartData, 'phylumProgressContainer', totalSpecies, sortedCategories, sortedValues);
+            // Calculate dynamic Y-axis max based on the maximum value
+            const maxValue = Math.max(...sortedValues);
+            // Round up to the next nice interval (multiple of 600 for clean labels)
+            const dynamicMax = Math.ceil(maxValue / 600) * 600;
+            
+            phylumChart = initEchart(chartData, 'phylumProgressContainer', totalSpecies, sortedCategories, sortedValues, dynamicMax);
           });
         }).catch(error => {
           console.error('Error:', error);
@@ -230,7 +235,7 @@
         }, 100);
       };
 
-      function initEchart(data, containerId, totalSpecies, categories, values) {
+      function initEchart(data, containerId, totalSpecies, categories, values, yAxisMax) {
         const chartDom = document.getElementById(containerId);
         if (!chartDom) {
           throw new Error(`Container ${containerId} not found`);
@@ -341,8 +346,8 @@
               show: false
             },
             min: 0,
-            max: 1800,
-            interval: 600,
+            max: yAxisMax || 1800,
+            interval: (yAxisMax || 1800) / 3,
             axisTick: {
               show: true,
               alignWithLabel: true
