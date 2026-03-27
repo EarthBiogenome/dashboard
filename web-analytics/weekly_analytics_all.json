@@ -1,14 +1,14 @@
 {
   "metadata": {
     "description": "Consolidated weekly web analytics data for EBP Dashboard",
-    "total_weeks": 32,
+    "total_weeks": 34,
     "date_range": {
       "first_week": "2025-W01",
-      "last_week": "2026-W10",
+      "last_week": "2026-W12",
       "first_collection": "2025-12-29",
-      "last_collection": "2026-03-02"
+      "last_collection": "2026-03-16"
     },
-    "last_updated": "2026-03-09T04:23:03.939910+00:00"
+    "last_updated": "2026-03-23T04:33:31.267412+00:00"
   },
   "weeks": [
     {
@@ -4486,6 +4486,66 @@
         "period": "2026-03-02 to 2026-03-02",
         "days_of_data": 6,
         "engagement_quality": "High"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2026-W11",
+        "collection_date": "2026-03-09",
+        "week_start": "2026-03-09",
+        "collected_at": "2026-03-16T04:44:34.999157+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 24,
+        "total_users": 11,
+        "new_users": 2,
+        "screen_page_views": 28,
+        "avg_bounce_rate": 0.27,
+        "avg_session_duration": 788.2062627571429,
+        "avg_engagement_rate": 0.73,
+        "countries_reached": 4,
+        "days_collected": 5
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2026-03-09 to 2026-03-09",
+        "days_of_data": 5,
+        "engagement_quality": "High"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2026-W12",
+        "collection_date": "2026-03-16",
+        "week_start": "2026-03-16",
+        "collected_at": "2026-03-23T04:33:31.266271+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 21,
+        "total_users": 15,
+        "new_users": 6,
+        "screen_page_views": 17,
+        "avg_bounce_rate": 0.4992063492063492,
+        "avg_session_duration": 167.25658900952382,
+        "avg_engagement_rate": 0.5007936507936508,
+        "countries_reached": 5,
+        "days_collected": 6
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2026-03-16 to 2026-03-16",
+        "days_of_data": 6,
+        "engagement_quality": "Medium"
       }
     }
   ]
