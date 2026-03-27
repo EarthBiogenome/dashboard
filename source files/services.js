@@ -788,8 +788,8 @@ async function fetchData(url) {
     const histograms = data.report.report.histogram.histograms;
     const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
     
-    // Extract years from buckets
-    const category = histograms.buckets.map(d => new Date(d).getFullYear());
+    // Extract years from buckets (use UTC to avoid timezone shifting Jan 1 dates to prior year)
+    const category = histograms.buckets.map(d => new Date(d).getUTCFullYear());
     console.log(`${dataType} Report API - Years:`, category);
     console.log(`${dataType} Report API - byCat:`, histograms.byCat);
     

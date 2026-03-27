@@ -395,7 +395,7 @@
 
       // Helper function to recalculate cumulative data for filtered year range
       function recalculateCumulativeForYearRange(actualData, startYear, endYear) {
-        const dataStartYear = 2010;
+        const dataStartYear = (actualData.category && actualData.category.length > 0) ? actualData.category[0] : 2010;
         const startIndex = startYear - dataStartYear;
         const endIndex = endYear - dataStartYear;
         
@@ -487,7 +487,7 @@
 
         // Species Progress - Load data from Report API (matches GoaT exactly)
         console.log('=== STARTING SPECIES SECTION ===');
-        const speciesReportUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_date%20AND%20bioproject%3DPRJNA533106&rank=species&result=taxon&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&stacked=true&cumulative=true&xOpts=%2C%2C1%2C%2CAssembly%20date&taxonomy=ncbi";
+        const speciesReportUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_date%20AND%20bioproject%3DPRJNA533106&rank=species&result=taxon&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&stacked=true&xOpts=%2C%2C1%2C%2CAssembly%20date&taxonomy=ncbi";
         
         console.log('Starting species data fetch from Report API...');
         console.log('Species Report URL:', speciesReportUrl);
@@ -613,8 +613,8 @@
           console.log(`Recalculated cumulative data for Species: ${speciesStartYear}-${endYear}`);
         } else {
           // For Actual and YoY Growth, trim the existing data
-          familySeries = trimSeriesToStartYear(familyDataMap[type].series, familyStartYear, 'familyProgressContainer');
-          speciesSeries = trimSeriesToStartYear(speciesDataMap[type].series, speciesStartYear, 'speciesProgressContainer');
+          familySeries = trimSeriesToStartYear(familyDataMap[type].series, familyStartYear, 'familyProgressContainer', familyDataMap['Actual'].category[0]);
+          speciesSeries = trimSeriesToStartYear(speciesDataMap[type].series, speciesStartYear, 'speciesProgressContainer', speciesDataMap['Actual'].category[0]);
         }
         
         // Apply consistent ordering to series data
@@ -732,20 +732,20 @@
 
       // Function to find the first year with non-zero counts for a specific data type
       function findOptimalStartYearForData(data, dataType) {
-        // Data from services.js is already filtered to 2010-2026
-        const dataStartYear = 2010;
-        
+        const dataStartYear = (data && data.category && data.category.length > 0) ? data.category[0] : 2010;
+
         // Get the effective start year based on user selection
         const effectiveStartYear = getEffectiveStartYear(dataType);
-        
+
         if (!data || !data.series || data.series.length === 0) {
           console.log(`No data available for ${dataType}, using effective start year: ${effectiveStartYear}`);
           return effectiveStartYear;
         }
-        
+
         // Find the first year where this data type has non-zero counts, starting from effective start year
         for (let year = effectiveStartYear; year <= endYear; year++) {
           const yearIndex = year - dataStartYear;
+          if (yearIndex < 0) continue;
           
           // Check if this year index exists in the data and has non-zero values
           for (let series of data.series) {
@@ -781,23 +781,16 @@
       }
 
       // Function to trim series data to match the user's selected year range
-      function trimSeriesToStartYear(series, startYear, containerId) {
-        // Data from services.js is already filtered to 2010-2026
-        const dataStartYear = 2010;
-        const skipYears = startYear - dataStartYear;
-        
-        console.log(`Trimming ${containerId}: dataStartYear=${dataStartYear}, userStartYear=${startYear}, skipYears=${skipYears}`);
-        
-        // Only skip years if the user wants to start later than 2010
-        if (skipYears > 0) {
-          return series.map(s => ({
-            ...s,
-            data: s.data.slice(skipYears) // Remove data points before the user's start year
-          }));
-        } else {
-          // If user wants to start from 2010 or earlier, return original series
-          return series;
-        }
+      function trimSeriesToStartYear(series, startYear, containerId, dataStartYear = 2010) {
+        const startIndex = Math.max(0, startYear - dataStartYear);
+        const endIndex = endYear - dataStartYear + 1; // +1 because slice end is exclusive
+
+        console.log(`Trimming ${containerId}: dataStartYear=${dataStartYear}, userStartYear=${startYear}, endYear=${endYear}, startIndex=${startIndex}, endIndex=${endIndex}`);
+
+        return series.map(s => ({
+          ...s,
+          data: s.data.slice(startIndex, endIndex)
+        }));
       }
 
       function initEchart(data, containerId, yLabel) {
@@ -814,7 +807,7 @@
         const yearRange = Array.from({length: endYear - chartStartYear + 1}, (_, i) => chartStartYear + i);
 
         // Trim series data to match the optimal start year
-        const trimmedSeries = trimSeriesToStartYear(data.series, chartStartYear, containerId);
+        const trimmedSeries = trimSeriesToStartYear(data.series, chartStartYear, containerId, data.category[0]);
 
         // Apply consistent ordering and colors to series data using helper function
         const seriesWithColors = applyConsistentOrdering(trimmedSeries, containerId);
@@ -991,24 +984,15 @@
         selectBox.textContent = option.textContent;
         selectContainer.classList.remove('active');
         
-        // Determine which dropdown was clicked based on the select container
-        const optionsCount = selectContainer.querySelector('.options-container').children.length;
-        
-        if (optionsCount === 3) {
-          // Data type dropdown (Cumulative, Actual, YoY Growth)
+        // Determine which dropdown was clicked based on its label
+        const label = selectContainer.parentElement.querySelector('.select-label').textContent.trim();
+
+        if (label === 'Data Type') {
           checkoutChart(option.textContent);
-        } else if (optionsCount === 16) {
-          // Year dropdown - determine if it's start or end year based on position
-          const allSelectGroups = document.querySelectorAll('.select-group');
-          const clickedSelectGroup = selectContainer.parentElement;
-          
-          if (clickedSelectGroup === allSelectGroups[1]) {
-            // Start Year dropdown
-            checkoutStartYear(option.textContent);
-          } else if (clickedSelectGroup === allSelectGroups[2]) {
-            // End Year dropdown
-            checkoutEndYear(option.textContent);
-          }
+        } else if (label === 'Start Year') {
+          checkoutStartYear(option.textContent);
+        } else if (label === 'End Year') {
+          checkoutEndYear(option.textContent);
         }
       });
     });
