@@ -411,18 +411,19 @@
             ...actualSeries,
             data: []
           };
-          
-          // Calculate cumulative sum for the filtered range
+
+          // Accumulate from the very start of all data so pre-display years are included in totals
           let cumSum = 0;
-          const filteredData = actualSeries.data.slice(startIndex, endIndex + 1);
-          
-          filteredData.forEach(value => {
+          actualSeries.data.forEach((value, i) => {
             cumSum += value;
-            cumulativeSeries.data.push(cumSum);
+            if (i >= startIndex && i <= endIndex) {
+              cumulativeSeries.data.push(cumSum);
+            }
           });
-          
-          // Update description with total for this range
-          cumulativeSeries.description = formatNumber(cumSum);
+
+          // Description shows the cumulative total at the last displayed year
+          const lastValue = cumulativeSeries.data[cumulativeSeries.data.length - 1] || 0;
+          cumulativeSeries.description = formatNumber(lastValue);
           cumulativeData.series.push(cumulativeSeries);
         });
         
