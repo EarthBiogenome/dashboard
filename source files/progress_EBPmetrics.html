@@ -430,6 +430,31 @@
         padding-bottom: 30px;
       }
 
+      /* Notes section */
+      .notes-section {
+        width: 100%;
+        margin: 0 auto 80px auto;
+        padding: 14px 18px;
+        background-color: #f8f9fa;
+        border-left: 4px solid #2E7D8F;
+        border-radius: 4px;
+        font-size: 13px;
+        color: #444;
+        line-height: 1.6;
+      }
+
+      .notes-section p {
+        margin: 0 0 8px 0;
+      }
+
+      .notes-section p:last-child {
+        margin-bottom: 0;
+      }
+
+      .notes-section strong {
+        color: #2E7D8F;
+      }
+
       /* Footer styles */
       #footer {
         position: fixed;
@@ -441,7 +466,7 @@
         padding: 5px;
         z-index: 9999;
         box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-        font-size: 14px;  
+        font-size: 14px;
       }
     </style>
   </head>
@@ -452,6 +477,12 @@
         <div id="bottomChartContainer"></div>
       </div>
       <div id="legendContainer"></div>
+      <div class="notes-section">
+      <p><strong>Notes:</strong></p>
+      <p>This chart shows the number of taxa at each taxonomic rank for which at least one genome assembly in GoaT meets the proxy EBP quality thresholds of contig N50 &ge; 1&thinsp;Mb and scaffold N50 &ge; 10&thinsp;Mb. These thresholds are used as an approximation of the EBP standard metrics, which additionally require high gene completeness (BUSCO scores) and other quality indicators; counts here therefore represent a subset of assemblies that partially fulfil EBP standards, not a fully certified assessment. Totals will consequently differ from assembly counts reported in other sections of this dashboard.</p>
+      <p><strong>EBP contribution</strong> refers to taxa where at least one qualifying assembly is directly linked to the EBP umbrella BioProject (NCBI BioProject PRJNA533106). <strong>Non-EBP contribution</strong> is the remainder &mdash; taxa where the quality threshold is met exclusively by assemblies from non-EBP projects.</p>
+      <p>For taxa where assemblies meeting the quality thresholds were produced by <em>both</em> EBP and non-EBP projects, the taxon is counted once under <strong>EBP contribution</strong>. It therefore does not appear in the Non-EBP count.</p>
+      </div>
     </div>
     <div id="footer">
         <div id="copyright">Data source: Genomes on a Tree (GoaT). Used with permission.</div>
