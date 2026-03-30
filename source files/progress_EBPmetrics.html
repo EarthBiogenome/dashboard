@@ -405,7 +405,7 @@
     <style>
       .charts-container {
         width: 80%;
-        margin: 0px auto 60px auto;
+        margin: 0px auto 15px auto;
       }
       
       #topChartContainer {
@@ -432,7 +432,7 @@
 
       /* Notes section */
       .notes-section {
-        width: 100%;
+        width: 80%;
         margin: 0 auto 80px auto;
         padding: 14px 18px;
         background-color: #f8f9fa;
@@ -453,6 +453,15 @@
 
       .notes-section strong {
         color: #2E7D8F;
+      }
+
+      .notes-section a {
+        color: #0563C1;
+        text-decoration: underline;
+      }
+
+      .notes-section a:hover {
+        color: #003d8f;
       }
 
       /* Footer styles */
@@ -479,7 +488,7 @@
       <div id="legendContainer"></div>
       <div class="notes-section">
       <p><strong>Notes:</strong></p>
-      <p>This chart shows the number of taxa at each taxonomic rank for which at least one genome assembly in GoaT meets the proxy EBP quality thresholds of contig N50 &ge; 1&thinsp;Mb and scaffold N50 &ge; 10&thinsp;Mb. These thresholds are used as an approximation of the EBP standard metrics, which additionally require high gene completeness (BUSCO scores) and other quality indicators; counts here therefore represent a subset of assemblies that partially fulfil EBP standards, not a fully certified assessment. Totals will consequently differ from assembly counts reported in other sections of this dashboard.</p>
+      <p>This chart shows the number of taxa at each taxonomic rank for which at least one genome assembly in GoaT meets the proxy EBP quality thresholds. The EBP standard criteria shown here reflect GoaT's relaxed interpretation of EBP assembly standards, based on available data. This assessment uses a subset of the metrics recommended in the EBP Scientific Subcommittee's <a href="https://www.earthbiogenome.org/report-on-assembly-standards" target="_blank">Report on Assembly Standards</a>, specifically: assembly level, contig and scaffold N50, and the percentage of sequences assigned to chromosomes. Counts here therefore represent a subset of assemblies that partially fulfil EBP standards, not a fully certified assessment. Totals will consequently differ from assembly counts reported in other sections of this dashboard. See the <a href="https://github.com/genomehubs/goat-data/wiki/5.1-Earth-Biogenome-Project-(EBP)-FAQs#how-are-ebp-standard-criteria-and-dates-calculated" target="_blank">GoaT FAQs</a> for details on how these categories are calculated.</p>
       <p><strong>EBP contribution</strong> refers to taxa where at least one qualifying assembly is directly linked to the EBP umbrella BioProject (NCBI BioProject PRJNA533106). <strong>Non-EBP contribution</strong> is the remainder &mdash; taxa where the quality threshold is met exclusively by assemblies from non-EBP projects.</p>
       <p>For taxa where assemblies meeting the quality thresholds were produced by <em>both</em> EBP and non-EBP projects, the taxon is counted once under <strong>EBP contribution</strong>. It therefore does not appear in the Non-EBP count.</p>
       </div>
