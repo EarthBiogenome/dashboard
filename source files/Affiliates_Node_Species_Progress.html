@@ -30,6 +30,25 @@
         .container {
           padding-bottom: 0px;  /* Increased to ensure disclaimer is visible above footer */
         }
+        /* Notes section */
+        .chartNote {
+          width: 85%;
+          max-width: 1400px;
+          margin: 0 auto 80px auto;
+          padding: 12px 18px;
+          background: #f8f9fa;
+          border-left: 3px solid #aaa;
+          border-radius: 4px;
+          font-size: 12px;
+          color: #555;
+          line-height: 1.6;
+        }
+        .chartNote p {
+          margin: 0 0 6px 0;
+        }
+        .chartNote p:last-child {
+          margin-bottom: 0;
+        }
         /* Footer styles */
         #footer {
             position: fixed;
@@ -247,9 +266,9 @@
      </button>
    </div>
    
-   <!-- Disclaimer positioned with better spacing -->
-   <div id="disclaimer" style="margin-top: 20px; margin-bottom: 80px; text-align: center; color: #333; font-size: 16px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; max-width: 1000px; margin-left: auto; margin-right: auto;">
-       <strong>Network Collaboration:</strong> Some assemblies appear across multiple projects, reflecting the collaborative nature of our global research community. <br>Projects without BioprojectID are not listed. 
+   <!-- Notes -->
+   <div id="disclaimer" class="chartNote">
+     <p><strong>Notes:</strong> Some assemblies appear across multiple projects, reflecting the collaborative nature of the global research community. Projects without a BioProject ID are not listed.</p>
    </div>
    
    <!-- <div id="chartContainer2">
