@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="copyright" content="Data source: Genomes on a Tree (GoaT). Used with permission." />
+    <meta name="author" content="Fang Chen" />
+    <title>Progress_StackedRainbow</title>
+    <script src="./echarts.min.js"></script>
+    <script src="./utils.js"></script>
+    <script src="./services.js"></script>
+    <script>
+      // Data address
+      const url =
+        "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=%2A%2AEBP%20Umbrella%2A%2A%20-%20EBP%20taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=HvJvG3Tffp";
+      
+      // Initialize chart
+        function initEchart(data, annimationDelay ) {
+        const chartDom = document.getElementById("chartContainer");
+        const myChart = echarts.init(chartDom);
+        const option = {
+          polar: {
+            radius: [30, "200%"],
+            center: ["50%", "99.9%"],
+          },
+          angleAxis: {
+            min: 0,
+            max: 100,
+            startAngle: 180,
+            endAngle: 0,
+            show: false,
+          },
+          radiusAxis: {
+            type: "category",
+            data: ["phylum", "class", "order", "family", "genus", "species"],
+            show: false,
+          },
+          legend: {show: false, selectedMode: false, position: "top", top: 60, left: "center"},
+          tooltip: {
+            formatter: function(params) {
+                const description = params.data.description;
+                return `<div>${description}</div>`;
+            },
+            textStyle: { // Set tooltip text style
+                color: 'rgba(0, 0, 0, 0.85)', // Text color
+                fontFamily: 'sans-serif', // Font family
+                fontSize: 10, // Font size
+                fontWeight: 'normal', // Font weight
+                // You can also set other text styles such as lineHeight, backgroundColor, borderColor, etc.
+            }
+          },
+
+          series: [],
+        };
+       setTimeout(() => {
+        const originData = data.map((item, index) => {
+            return {
+              ...item,
+              data: item.data.map(d => ({...data, value: 0, label: {show: false}}))
+            }
+          })
+          option.series = originData
+        myChart.setOption(option);
+       }, 0)
+        setTimeout(() => {
+          const INSDCData = data.filter((_,index) => (index % 2 == 1))
+          option.series = INSDCData
+          myChart.setOption(option);
+        }, annimationDelay)
+        setTimeout(() => {
+          data.forEach((item, index) => {
+            if(index % 2 == 1) {
+              const i = Math.floor(index / 2)
+              // Use inverted index to match the inverted data positioning
+              const invertedI = 5 - i;
+              item.data[invertedI].value = item.data[invertedI].value - data[index - 1].data[invertedI].value
+            }
+          })
+          option.series = data
+          myChart.setOption(option);
+        }, annimationDelay * 2)
+      }
+
+      function getGraphicOption(type, data) {
+        if(type == 'text') {
+          return {
+              type: 'text',
+              z: 100,
+              left: 0, // Adjust text positioning
+              top: 0,
+              style: {
+                text: `${data.text}`,
+                textAlign: 'center',
+                textVerticalAlign: 'middle',
+                fontSize: 10,
+                fill: data.color
+              }
+          }
+        } else if(type == 'rect') {
+          return {
+            type: "rect",
+            left: 0 , // Adjust text positioning
+            top: 0,
+            shape: {
+              width: 16, // Color block width
+              height: 10, // Color block height
+              r: 3, // Border radius
+            },
+            style: {
+              fill: data.color, // Color of Series 1, corresponding to the color in the series configuration
+              stroke: null, // No border display
+            },
+            silent: true, // No mouse event response
+          }
+        }
+      }
+
+      function initLegendChart(legends, annimationDelay ) {
+        const chartDom = document.getElementById("legendContainer");
+        const myChart = echarts.init(chartDom);
+        const offsetX = chartDom.clientWidth / 2;
+        // For display: species (outer) on left, phylum (inner) on right
+        // This positions outer arc labels/totals on left, inner arc labels/totals on right
+        // legends come in [species, genus, family, order, class, phylum] order - use as is
+        const displayLegends = [...legends];
+        const names = []
+        const totals = []
+        const EBP = []
+        const INSDC = []
+        const contrasts = []
+        
+        // Define individual offsets to align labels under their corresponding arcs
+        // Species (outer, widest) on left, phylum (inner, narrowest) on right
+        // Positive = shift right, Negative = shift left
+        const labelOffsets = {
+          'species': -45,  // outer arc - shift left towards edge
+          'genus': -50,    // shift left
+          'family': -55,     // middle position
+          'order': -55,     // slight shift right
+          'class': -60,     // shift right
+          'phylum': -70     // inner arc - shift right towards center
+        };
+
+        // Define individual offsets for totals (separate from labels)
+        // Adjust these to fine-tune total positioning under each arc
+        const totalOffsets = {
+          'species': -35,  // outer arc
+          'genus': -40,
+          'family': -50,
+          'order': -55,
+          'class': -65,
+          'phylum': -70     // inner arc
+        };
+        
+        // Build names array from displayLegends (species → phylum, left to right)
+        displayLegends.forEach(item => {
+          names.push({
+            type: 'total',
+            text: item.name,
+            color: item.color,
+            labelOffset: labelOffsets[item.name] || 0,  // Label position offset
+            totalOffset: totalOffsets[item.name] || 0   // Total position offset
+          })
+          EBP.push({
+            type: 'rect',
+            text: item.data[0].num,
+            color: item.data[0].color
+          })
+          INSDC.push({
+            type: 'rect',
+            text: item.data[1].num,
+            color: item.data[1].color
+          })
+          contrasts.push({
+            type: 'text',
+            text: `${(item.contrast * 100).toFixed(1)}%`,
+            color: item.color
+          })
+        })
+
+        // Build totals array from reversed order (phylum → species) to maintain correct positioning
+        const reversedLegends = [...displayLegends].reverse();
+        reversedLegends.forEach(item => {
+          totals.push({
+            type: 'total',
+            text: item.total,
+            color: '#000000'
+          })
+        })
+        EBP.push({
+          type: 'text',
+          text: 'Assemblies by EBP affiliates',
+          color: '#000',
+          description: true
+        })
+        INSDC.push({
+          type: 'text',
+          text: 'Assemblies in INSDC',
+          color: '#000',
+          description: true
+        })
+        // const renders = [names, INSDC, EBP , contrasts]
+        const renders = [names]
+        const myGraphics = renders.map((group, index) => {
+          const groupOption = {
+            type: 'group',
+            top: (index) * 20 + 10,
+            left: offsetX - document.getElementById('chartContainer').clientHeight + 10,
+            bounding: 'all',
+            children: []
+          }
+          const width = Math.floor(document.getElementById('chartContainer').clientHeight / displayLegends.length)
+          group.forEach((item, index) => {
+            if(item.type == 'text') {
+              const text = getGraphicOption('text', item)
+              text.left = index * width + (item.description ? 60 : 0)
+              groupOption.children.push(text)
+            } else if(item.type == 'rect') {
+              const rect = getGraphicOption('rect', item)
+              const text = getGraphicOption('text', item)
+              rect.left = index * width
+              text.left = index * width + 18
+              groupOption.children.push(rect)
+              groupOption.children.push(text)
+            } else if(item.type == 'total') {
+              const text = getGraphicOption('text', item)
+              text.left = index * width + (item.labelOffset || 0)  // Apply label offset
+              groupOption.children.push(text)
+              // Totals: now ordered species (left) to phylum (right)
+              const total = getGraphicOption('text', totals[index])
+              // Apply total offset (can be different from label offset)
+              total.left = index * width + document.getElementById('chartContainer').clientHeight + width / 2 + (item.totalOffset || 0)
+              groupOption.children.push(total)
+            }
+          })
+
+          return groupOption
+        })
+            
+            let len = renders.length
+            let count = 1
+            const myOption = {
+              graphic: myGraphics.slice(0, count++),
+              series: []
+            }
+            myChart.setOption(myOption)
+            let timer = setInterval(() => {
+              if(count > len) {
+                clearInterval(timer)
+
+                return
+              }
+              const myOption = {
+                graphic: myGraphics.slice(0, count++),
+                series: []
+              }
+              myChart.setOption(myOption)
+            }, 0)
+            
+      }
+
+      function renderTaxaPanel(legends) {
+        // Display order in panel: species (top/outer) to phylum (bottom/inner) - matches inverted visual
+        const displayOrder = ['species', 'genus', 'family', 'order', 'class', 'phylum'];
+        const pluralLabels = {
+          'phylum': 'phylum',
+          'class': 'class',
+          'order': 'order',
+          'family': 'family',
+          'genus': 'genus',
+          'species': 'species'
+        };
+        const displayLegends = displayOrder.map(level => legends.find(l => l.name === level)).filter(Boolean);
+
+        // Build HTML
+        let html = `
+          <div class="taxa-panel-inner">
+            <div class="taxa-row" style="font-size:0.85em; color:#888;">
+              <span class="taxa-label"></span>
+              <span class="taxa-value insdc">INSDC</span>
+              <span class="taxa-value ebp">EBP</span>
+            </div>
+        `;
+        displayLegends.forEach(l => {
+          html += `
+            <div class="taxa-row">
+              <span class="taxa-label">${pluralLabels[l.name]}</span>
+              <span class="taxa-value insdc">${Number(l.data[1].num).toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+              <span class="taxa-value ebp">${Number(l.data[0].num).toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+            </div>
+          `;
+        });
+        html += '</div>';
+        document.getElementById('taxaPanel').innerHTML = html;
+      }
+
+      window.onload = function () {
+        // Request data
+
+          const url1 = 'https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=%2A%2AEBP%20Umbrella%2A%2A%20-%20EBP%20taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=8EWp2aVcZB'
+          const url2 = 'https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=assembly_span&excludeMissing%5B0%5D=assembly_span&caption=%2A%2AAll%20INSDC%20taxa%2A%2A%20-%20Taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=R8LGXM94GW'
+          const annimationDelay = 3000 //ms
+          formatStackedUmbrellaData(url1, url2, annimationDelay).then(({
+            stackedData, legends
+          }) => {
+            // Adjust label offsets for inverted layout (phylum inner, species outer)
+            const phylum = stackedData.filter(item => (item.name == 'phylum'))
+            phylum.forEach((item, index) => {
+              if(index == 0) {
+                item.label.offset = [0, -2]
+              } else {
+                item.label.offset = [0, -10]
+              }
+            })
+            
+            // Draw chart
+            initEchart(stackedData, annimationDelay )
+            initLegendChart(legends, annimationDelay)
+            renderTaxaPanel(legends)
+          })
+      };
+    </script>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: #fff;
+      }
+      .container {
+        width: 100vw;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      #chartContainer {
+        width: 90vw;
+        max-width: 1400px;
+        height: 60vh;
+        min-height: 350px;
+        max-height: 900px;
+        margin-top: 40px;
+      }
+      #legendContainer {
+        width: 90vw;
+        max-width: 1400px;
+        height: 30px;
+        position: relative;
+      }
+      .chart-title {
+        text-align: center;
+        font-size: 1.6vw;
+        font-weight: 700;
+        color: #333;
+        margin: 15px auto 5px auto;
+        max-width: 90vw;
+        line-height: 1.4;
+        width: 100%;
+        display: block;
+      }
+      #taxaPanel {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 10px 12px;
+        z-index: 1000;
+        min-width: 120px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 12px;
+        max-width: 170px;
+      }
+      .taxa-panel-inner {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .taxa-row {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        font-size: 1em;
+      }
+      .taxa-value {
+        font-weight: bold;
+        min-width: 36px;
+        text-align: right;
+        font-size: 1em;
+      }
+      .taxa-value.ebp {
+        color: #222;
+      }
+      .taxa-value.insdc {
+        color: #222;
+      }
+      .taxa-label {
+        color: #444;
+        font-size: 1em;
+        min-width: 60px;
+        text-align: left;
+        margin-left: 0;
+        text-transform: lowercase;
+      }
+      /* Footer styles */
+      #footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background-color: rgba(248, 249, 250, 0.95);
+        color: #333;
+        text-align: center;
+        padding: 5px;
+        z-index: 9999;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="chart-title">Eukaryotic assemblies in INSDC databases and the fraction contributed by EBP </div>
+      <div id="chartContainer"></div>
+      <div id="legendContainer"></div>
+      <div id="taxaPanel"></div>
+    </div>
+    <div id="footer">
+        <div id="copyright">Data source: <a href="https://goat.genomehubs.org" target="_blank" rel="noopener noreferrer">Genomes on a Tree (GoaT)</a>. Used with permission.</div>
+    </div>
+  </body>
+</html>
