@@ -5,18 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="./favicon.jpg">
     <title>Earth BioGenome Project - Dashboard</title>
-    
+
     <!-- Google Analytics 4 -->
-    <!-- Replace YOUR_GA4_MEASUREMENT_ID with your actual GA4 Measurement ID -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N9WF546FSK"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        
-        // Configure GA4 with enhanced measurement
+
         gtag('config', 'G-N9WF546FSK', {
-            // Enhanced measurement settings
             enhanced_measurements: {
                 scrolls: true,
                 outbound_clicks: true,
@@ -24,171 +21,107 @@
                 video_engagement: false,
                 file_downloads: true
             },
-            // Custom parameters
             custom_map: {
                 'custom_parameter_1': 'dashboard_category',
                 'custom_parameter_2': 'visualization_type'
             }
         });
-        
-        // Track page load
+
         gtag('event', 'page_load', {
             event_category: 'dashboard',
             event_label: 'main_dashboard',
             value: 1
         });
     </script>
-    
-    <!-- Add Font Awesome -->
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg:            #ffffff;
+            --bg-alt:        #f4f6f4;
+            --bg-card:       #ffffff;
+            --bg-card-hover: #f7faf8;
+            --accent:        #0d7a47;
+            --accent-light:  #e5f3ec;
+            --accent-mid:    #16a34a;
+            --text:          #111827;
+            --text-dim:      #4b5563;
+            --text-muted:    #9ca3af;
+            --border:        #e5e7eb;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            line-height: 1.6;
         }
 
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .header-container {
-            max-width: 1200px;
-            margin: 0 auto;
+        /* ── Header ─────────────────────────────────────── */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 0.9rem 2rem;
             display: flex;
             align-items: center;
-            padding: 0 2rem;
         }
 
         .logo {
             display: flex;
             align-items: center;
             text-decoration: none;
-            color: #333;
+            color: var(--text);
+            gap: 0.75rem;
         }
 
-        .logo img {
-            height: 50px;
-            margin-right: 1rem;
-        }
+        .logo img { height: 38px; }
 
-        .logo h1 {
-            font-size: 1.8rem;
+        .logo span {
+            font-size: 1.05rem;
             font-weight: 700;
-            color: #2c3e50;
+            color: var(--text);
+            letter-spacing: -0.01em;
         }
 
-        .main-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .category {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .category-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .links-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .link {
-            display: flex;
-            align-items: center;
-            padding: 1.5rem;
-            background: white;
-            border-radius: 12px;
-            text-decoration: none;
-            color: #333;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .link:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        }
-
-        .link i {
-            font-size: 2rem;
-            margin-right: 1rem;
-            color: #667eea;
-            min-width: 40px;
-        }
-
-        .link-content {
-            flex: 1;
-        }
-
-        .link-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #2c3e50;
-        }
-
-        .link-description {
-            font-size: 0.9rem;
-            color: #6c757d;
-            line-height: 1.4;
-        }
-
-        .footer {
-            background: rgba(52, 58, 64, 0.95);
-            color: white;
-            text-align: center;
-            padding: 1rem;
-            margin-top: 3rem;
-        }
-
-        /* Progress Bar Styles */
+        /* ── Progress Section ────────────────────────────── */
         .progress-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 2rem 2.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            background: var(--bg-alt);
+            border-bottom: 1px solid var(--border);
+            padding: 2.25rem 2rem 2rem;
         }
 
-        .progress-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 1.5rem;
+        .progress-inner {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .progress-header {
+            margin-bottom: 2rem;
+        }
+
+        .progress-headline {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 0.3rem;
             text-align: center;
         }
 
+        .progress-subline {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        /* ── Progress Charts ─────────────────────────────── */
         .progress-chart {
             display: flex;
             align-items: flex-start;
@@ -205,17 +138,16 @@
             align-items: center;
             justify-content: flex-end;
             gap: 0.5rem;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--text);
             min-width: 100px;
             height: 44px;
-            margin-top: 0;
         }
 
         .progress-label i {
-            font-size: 1.4rem;
-            color: #667eea;
+            font-size: 1.3rem;
+            color: var(--accent);
         }
 
         .progress-bar-container {
@@ -224,21 +156,19 @@
             flex-direction: column;
         }
 
-        .progress-bar-wrapper {
-            position: relative;
-        }
+        .progress-bar-wrapper { position: relative; }
 
         .progress-bar {
             display: flex;
             height: 44px;
-            background: linear-gradient(180deg, #e8e8e8 0%, #d4d4d4 100%);
+            background: #d8e6de;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
         }
 
         .progress-completed {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-mid) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -247,50 +177,39 @@
             font-weight: 600;
             transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
             min-width: 0;
-            box-shadow: 2px 0 8px rgba(102, 126, 234, 0.4);
+            box-shadow: 2px 0 8px rgba(13, 122, 71, 0.3);
             position: relative;
         }
 
         .progress-completed::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 50%;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+            background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
             border-radius: 8px 8px 0 0;
         }
 
         .progress-completed-text {
             white-space: nowrap;
             padding: 0 15px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.15);
             position: relative;
             z-index: 1;
         }
 
-        .progress-incomplete {
-            background: transparent;
-            flex: 1;
-        }
+        .progress-incomplete { background: transparent; flex: 1; }
 
         .progress-axis {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 0;
-            padding: 0;
             position: relative;
             height: 35px;
         }
 
         .progress-axis-line {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 1px;
-            background: linear-gradient(90deg, #999 0%, #999 100%);
+            background: #bbb;
         }
 
         .progress-axis-tick {
@@ -306,117 +225,221 @@
             content: '';
             width: 1px;
             height: 8px;
-            background-color: #888;
+            background-color: #999;
         }
 
         .progress-axis-label {
-            font-size: 0.85rem;
-            color: #555;
+            font-size: 0.82rem;
+            color: var(--text-dim);
             font-weight: 500;
             margin-top: 4px;
         }
 
-        .progress-loading {
+        /* ── Catalog ─────────────────────────────────────── */
+        .catalog {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 2rem 4rem;
+        }
+
+        .catalog-heading {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .category {
+            margin-bottom: 2.75rem;
+        }
+
+        .category-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .category-title::before {
+            content: '';
+            display: block;
+            width: 3px;
+            height: 1.05rem;
+            background: var(--accent);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .links-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.875rem;
+        }
+
+        .link {
+            display: flex;
+            align-items: flex-start;
+            padding: 1.1rem 1.2rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text);
+            border: 1px solid var(--border);
+            gap: 0.9rem;
+            transition: background 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+        }
+
+        .link:hover {
+            background: var(--bg-card-hover);
+            border-color: #a3c9b5;
+            box-shadow: 0 4px 16px rgba(13, 122, 71, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .link-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 7px;
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .link-icon i {
+            font-size: 0.95rem;
+            color: var(--accent);
+        }
+
+        .link-content { flex: 1; min-width: 0; }
+
+        .link-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+            line-height: 1.35;
+        }
+
+        .link-description {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            line-height: 1.45;
+        }
+
+        .link-arrow {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            align-self: center;
+            flex-shrink: 0;
+            transition: color 0.18s, transform 0.18s;
+        }
+
+        .link:hover .link-arrow {
+            color: var(--accent);
+            transform: translateX(3px);
+        }
+
+        /* ── Footer ──────────────────────────────────────── */
+        footer {
+            border-top: 1px solid var(--border);
             text-align: center;
-            color: #666;
-            font-style: italic;
-            padding: 1rem;
+            padding: 1.25rem 1rem;
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
         }
 
-        /* Progress bar entrance animation */
-        @keyframes progressFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .progress-section {
-            animation: progressFadeIn 0.6s ease-out;
-        }
-
-        @media (max-width: 768px) {
-            .header-container {
-                padding: 0 1rem;
-            }
-
-            .logo h1 {
-                font-size: 1.4rem;
-            }
-
-            .logo img {
-                height: 40px;
-            }
-
-            .main-content {
-                padding: 1rem;
-            }
-
-            .links-container {
-                grid-template-columns: 1fr;
-            }
-
-            .link {
-                padding: 1rem;
-            }
-
-            .progress-section {
-                padding: 1.5rem 1rem;
-            }
-
-            .progress-title {
-                font-size: 1.4rem;
-            }
-
-            .progress-chart {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .progress-label {
-                margin-bottom: 0;
-            }
-
-            .progress-bar-container {
-                width: 100%;
-            }
-
-            .progress-bar {
-                height: 38px;
-            }
-
-            .progress-completed {
-                font-size: 0.9rem;
-            }
-
-            .progress-axis-label {
-                font-size: 0.75rem;
-            }
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width: 640px) {
+            .progress-section { padding: 1.75rem 1.25rem 1rem; }
+            .progress-headline { font-size: 1.3rem; }
+            .progress-chart { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .progress-label { height: auto; min-width: unset; }
+            .progress-bar-container { width: 100%; }
+            .progress-bar { height: 38px; }
+            .progress-completed { font-size: 0.9rem; }
+            .progress-axis-label { font-size: 0.75rem; }
+            .links-container { grid-template-columns: 1fr; }
+            .catalog { padding: 2rem 1.25rem 3rem; }
+            .site-header { padding: 0.75rem 1.25rem; }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-container">
-            <a href="index.html" class="logo">
-                <img src="favicon.jpg" alt="Earth BioGenome Project Logo">
-                <h1>EBP Dashboard</h1>
-            </a>
-        </div>
+
+    <header class="site-header">
+        <a href="index.html" class="logo">
+            <img src="favicon.jpg" alt="Earth BioGenome Project Logo">
+            <span>EBP Dashboard</span>
+        </a>
     </header>
 
-    <main class="main-content">
-        <div id="content-container">
-            <!-- Dynamic content will be loaded here -->
+    <section class="progress-section">
+        <div class="progress-inner">
+            <div class="progress-header">
+                <h1 class="progress-headline">EBP Phase I Progress</h1>
+            </div>
+
+            <div class="progress-chart">
+                <div class="progress-label">
+                    <i class="fas fa-dna"></i>
+                    <span>Species</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar">
+                            <div class="progress-completed" id="progress-completed" style="width: 0%;">
+                                <span class="progress-completed-text" id="progress-text">Loading...</span>
+                            </div>
+                            <div class="progress-incomplete"></div>
+                        </div>
+                    </div>
+                    <div class="progress-axis" id="progress-axis">
+                        <div class="progress-axis-line"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-chart">
+                <div class="progress-label">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Families</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar">
+                            <div class="progress-completed" id="progress-family-completed" style="width: 0%;">
+                                <span class="progress-completed-text" id="progress-family-text">Loading...</span>
+                            </div>
+                            <div class="progress-incomplete"></div>
+                        </div>
+                    </div>
+                    <div class="progress-axis" id="progress-family-axis">
+                        <div class="progress-axis-line"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main>
+        <div class="catalog">
+            <p class="catalog-heading">Explore Visualizations</p>
+            <div id="content-container"></div>
         </div>
     </main>
 
-    <footer class="footer">
+    <footer>
         <p>© 2025 THE EARTH BIOGENOME PROJECT</p>
     </footer>
 
@@ -429,10 +452,8 @@
             }
         }
 
-        // Track session start time for duration calculation
         const sessionStartTime = Date.now();
 
-        // Track visualization clicks
         function trackVisualizationClick(category, name, file) {
             trackEvent('visualization_click', {
                 event_category: 'dashboard_interaction',
@@ -444,7 +465,6 @@
             });
         }
 
-        // Track hover events with debouncing
         let hoverTimeout;
         function trackHover(category, name) {
             clearTimeout(hoverTimeout);
@@ -455,10 +475,9 @@
                     custom_parameter_1: category,
                     value: 1
                 });
-            }, 500); // Track hover after 500ms
+            }, 500);
         }
 
-        // Track category engagement
         function trackCategoryView(categoryName) {
             trackEvent('category_view', {
                 event_category: 'dashboard_navigation',
@@ -467,7 +486,6 @@
             });
         }
 
-        // Track session duration on page unload
         window.addEventListener('beforeunload', function() {
             const sessionDuration = Math.round((Date.now() - sessionStartTime) / 1000);
             trackEvent('session_duration', {
@@ -477,47 +495,27 @@
             });
         });
 
-        // Track scroll depth
         let maxScrollDepth = 0;
         window.addEventListener('scroll', function() {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const windowHeight = window.innerHeight;
             const documentHeight = document.documentElement.scrollHeight;
             const scrollDepth = Math.round((scrollTop + windowHeight) / documentHeight * 100);
-            
+
             if (scrollDepth > maxScrollDepth) {
                 maxScrollDepth = scrollDepth;
-                
-                // Track milestone scroll depths
                 if (scrollDepth >= 25 && scrollDepth < 50 && maxScrollDepth < 50) {
-                    trackEvent('scroll_depth', {
-                        event_category: 'user_engagement',
-                        event_label: '25_percent',
-                        value: 25
-                    });
+                    trackEvent('scroll_depth', { event_category: 'user_engagement', event_label: '25_percent', value: 25 });
                 } else if (scrollDepth >= 50 && scrollDepth < 75 && maxScrollDepth < 75) {
-                    trackEvent('scroll_depth', {
-                        event_category: 'user_engagement',
-                        event_label: '50_percent',
-                        value: 50
-                    });
+                    trackEvent('scroll_depth', { event_category: 'user_engagement', event_label: '50_percent', value: 50 });
                 } else if (scrollDepth >= 75 && scrollDepth < 100 && maxScrollDepth < 100) {
-                    trackEvent('scroll_depth', {
-                        event_category: 'user_engagement',
-                        event_label: '75_percent',
-                        value: 75
-                    });
+                    trackEvent('scroll_depth', { event_category: 'user_engagement', event_label: '75_percent', value: 75 });
                 } else if (scrollDepth >= 100) {
-                    trackEvent('scroll_depth', {
-                        event_category: 'user_engagement',
-                        event_label: '100_percent',
-                        value: 100
-                    });
+                    trackEvent('scroll_depth', { event_category: 'user_engagement', event_label: '100_percent', value: 100 });
                 }
             }
         });
 
-        // Enhanced device and performance tracking
         function trackDeviceInfo() {
             const deviceInfo = {
                 screen_resolution: `${screen.width}x${screen.height}`,
@@ -529,7 +527,6 @@
                 platform: navigator.platform,
                 connection_type: navigator.connection ? navigator.connection.effectiveType : 'unknown'
             };
-
             trackEvent('device_info', {
                 event_category: 'technical_metrics',
                 event_label: 'device_specifications',
@@ -537,14 +534,12 @@
             });
         }
 
-        // Track page performance
         window.addEventListener('load', function() {
             setTimeout(() => {
                 if (window.performance && window.performance.timing) {
                     const timing = window.performance.timing;
                     const loadTime = timing.loadEventEnd - timing.navigationStart;
                     const domContentLoaded = timing.domContentLoadedEventEnd - timing.navigationStart;
-                    
                     trackEvent('page_performance', {
                         event_category: 'technical_metrics',
                         event_label: 'load_time',
@@ -553,34 +548,27 @@
                         value: Math.round(loadTime / 1000)
                     });
                 }
-                
-                // Track device info after page load
                 trackDeviceInfo();
             }, 1000);
         });
 
-        // Load dashboard content with tracking
+        // Build catalog from config
         const container = document.getElementById('content-container');
 
         pages.forEach(category => {
-            // Track category creation
             trackCategoryView(category.category);
 
-            // Create category container
             const categoryDiv = document.createElement('div');
             categoryDiv.classList.add('category');
 
-            // Add category title
             const titleH2 = document.createElement('h2');
             titleH2.classList.add('category-title');
             titleH2.textContent = category.category;
             categoryDiv.appendChild(titleH2);
 
-            // Create links container
             const linksContainer = document.createElement('div');
             linksContainer.classList.add('links-container');
 
-            // Add links for this category with tracking
             category.pages.forEach(page => {
                 const link = document.createElement('a');
                 link.classList.add('link');
@@ -588,18 +576,9 @@
                 link.target = '_blank';
                 link.title = page.description;
 
-                // Add click tracking
-                link.addEventListener('click', function(e) {
-                    trackVisualizationClick(category.category, page.name, page.file);
-                });
-
-                // Add hover tracking
-                link.addEventListener('mouseenter', function() {
-                    trackHover(category.category, page.name);
-                });
-
-                // Add focus tracking for accessibility
-                link.addEventListener('focus', function() {
+                link.addEventListener('click', () => trackVisualizationClick(category.category, page.name, page.file));
+                link.addEventListener('mouseenter', () => trackHover(category.category, page.name));
+                link.addEventListener('focus', () => {
                     trackEvent('visualization_focus', {
                         event_category: 'accessibility',
                         event_label: page.name,
@@ -608,28 +587,29 @@
                     });
                 });
 
-                // Add icon
+                const iconWrapper = document.createElement('div');
+                iconWrapper.classList.add('link-icon');
                 const icon = document.createElement('i');
                 icon.className = `fas ${page.icon}`;
-                link.appendChild(icon);
+                iconWrapper.appendChild(icon);
+                link.appendChild(iconWrapper);
 
-                // Add content container
                 const content = document.createElement('div');
                 content.classList.add('link-content');
-
-                // Add title
                 const title = document.createElement('div');
                 title.classList.add('link-title');
                 title.textContent = page.name;
-                content.appendChild(title);
-
-                // Add description
                 const description = document.createElement('div');
                 description.classList.add('link-description');
                 description.textContent = page.description;
+                content.appendChild(title);
                 content.appendChild(description);
-
                 link.appendChild(content);
+
+                const arrow = document.createElement('i');
+                arrow.classList.add('fas', 'fa-arrow-right', 'link-arrow');
+                link.appendChild(arrow);
+
                 linksContainer.appendChild(link);
             });
 
@@ -637,7 +617,6 @@
             container.appendChild(categoryDiv);
         });
 
-        // Track dashboard load completion
         trackEvent('dashboard_loaded', {
             event_category: 'dashboard',
             event_label: 'content_ready',
@@ -646,81 +625,12 @@
             value: 1
         });
 
-        // EBP Phase I Progress Bar
+        // Progress data
         const PHASE_I_GOAL = 10000;
         const SPECIES_API_URL = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=1";
-        // Arc report URLs for family counts (same source as progress_StackedRainbow.html)
         const EBP_ARC_URL = "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=EBP%20taxa&taxonomy=ncbi&result=taxon&queryId=8EWp2aVcZB";
         const INSDC_ARC_URL = "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=assembly_span&excludeMissing%5B0%5D=assembly_span&caption=INSDC%20taxa&taxonomy=ncbi&result=taxon&queryId=R8LGXM94GW";
 
-        /**
-         * Creates and inserts the progress bar HTML above the first category
-         */
-        function createProgressBar() {
-            const progressSection = document.createElement('div');
-            progressSection.classList.add('progress-section');
-            progressSection.id = 'progress-section';
-            
-            progressSection.innerHTML = `
-                <div class="progress-title">EBP Phase I Progress</div>
-                <div class="progress-chart">
-                    <div class="progress-label">
-                        <i class="fas fa-dna"></i>
-                        <span>Species</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-wrapper">
-                            <div class="progress-bar">
-                                <div class="progress-completed" id="progress-completed" style="width: 0%;">
-                                    <span class="progress-completed-text" id="progress-text">Loading...</span>
-                                </div>
-                                <div class="progress-incomplete" id="progress-incomplete"></div>
-                            </div>
-                        </div>
-                        <div class="progress-axis" id="progress-axis">
-                            <div class="progress-axis-line"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="progress-chart">
-                    <div class="progress-label">
-                        <i class="fas fa-layer-group"></i>
-                        <span>Families</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-wrapper">
-                            <div class="progress-bar">
-                                <div class="progress-completed" id="progress-family-completed" style="width: 0%;">
-                                    <span class="progress-completed-text" id="progress-family-text">Loading...</span>
-                                </div>
-                                <div class="progress-incomplete" id="progress-family-incomplete"></div>
-                            </div>
-                        </div>
-                        <div class="progress-axis" id="progress-family-axis">
-                            <div class="progress-axis-line"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Insert before the first category
-            const firstCategory = container.querySelector('.category');
-            if (firstCategory) {
-                container.insertBefore(progressSection, firstCategory);
-            } else {
-                container.appendChild(progressSection);
-            }
-            
-            // Create axis ticks for species bar
-            createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
-        }
-
-        /**
-         * Creates axis tick marks for a progress bar.
-         * @param {string} axisContainerId - ID of the axis container element
-         * @param {number} max - Maximum value (scale)
-         * @param {number[]} tickValues - Array of tick values to display
-         */
         function createAxisTicks(axisContainerId, max, tickValues) {
             const axisContainer = document.getElementById(axisContainerId);
             if (!axisContainer) return;
@@ -737,53 +647,36 @@
             });
         }
 
-        /**
-         * Fetches species count from GoaT API and updates the progress bar
-         */
         async function fetchSpeciesCount() {
             try {
                 const response = await fetch(SPECIES_API_URL);
-                if (!response.ok) {
-                    throw new Error(`HTTP error: ${response.status}`);
-                }
-                
+                if (!response.ok) throw new Error('HTTP error: ' + response.status);
                 const data = await response.json();
                 const speciesCount = data.status && data.status.hits ? data.status.hits : 0;
-                
                 updateProgressBar(speciesCount);
-                
             } catch (error) {
                 console.error('Error fetching species count:', error);
                 document.getElementById('progress-text').textContent = 'Data unavailable';
             }
         }
 
-        /**
-         * Updates the progress bar with the species count
-         */
         function updateProgressBar(count) {
             const percentage = Math.min((count / PHASE_I_GOAL) * 100, 100);
-            const completedBar = document.getElementById('progress-completed');
-            const progressText = document.getElementById('progress-text');
-            completedBar.style.width = `${percentage}%`;
-            progressText.textContent = `${count.toLocaleString()} (${percentage.toFixed(1)}%)`;
+            document.getElementById('progress-completed').style.width = `${percentage}%`;
+            document.getElementById('progress-text').textContent = `${count.toLocaleString()} (${percentage.toFixed(1)}%)`;
+            createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
         }
 
-        /**
-         * Fetches EBP and INSDC arc reports, extracts family counts, updates family progress bar.
-         * Uses same data source as progress_StackedRainbow.html.
-         */
         async function fetchFamilyCounts() {
             try {
                 const [ebpRes, insdcRes] = await Promise.all([
                     fetch(EBP_ARC_URL).then(r => r.ok ? r.json() : null),
                     fetch(INSDC_ARC_URL).then(r => r.ok ? r.json() : null)
                 ]);
-                const ebpFamily = ebpRes?.report?.report?.arc?.find(item => item.rank === 'family');
+                const ebpFamily   = ebpRes?.report?.report?.arc?.find(item => item.rank === 'family');
                 const insdcFamily = insdcRes?.report?.report?.arc?.find(item => item.rank === 'family');
-                const ebpCount = Math.max(0, Number(ebpFamily?.x) || 0);
-                // Arc report: x = count with assemblies, y = total eukaryotic taxa at this rank
-                const totalCount = Math.max(1, Number(insdcFamily?.y) || 10359);
+                const ebpCount    = Math.max(0, Number(ebpFamily?.x) || 0);
+                const totalCount  = Math.max(1, Number(insdcFamily?.y) || 10359);
                 updateFamilyProgressBar(ebpCount, totalCount);
             } catch (error) {
                 console.error('Error fetching family counts:', error);
@@ -791,27 +684,16 @@
             }
         }
 
-        /**
-         * Updates the family progress bar and axis. Uses the actual total as axis max
-         * so the goal is not misinterpreted (total is dynamic, not a rounded number).
-         */
         function updateFamilyProgressBar(ebpCount, totalCount) {
             const total = Math.max(totalCount, 1);
             const percentage = Math.min((ebpCount / total) * 100, 100);
-            const completedBar = document.getElementById('progress-family-completed');
-            const progressText = document.getElementById('progress-family-text');
-            completedBar.style.width = `${percentage}%`;
-            progressText.textContent = `${ebpCount.toLocaleString()} (${percentage.toFixed(1)}%)`;
-
+            document.getElementById('progress-family-completed').style.width = `${percentage}%`;
+            document.getElementById('progress-family-text').textContent = `${ebpCount.toLocaleString()} (${percentage.toFixed(1)}%)`;
             const tickValues = [0, 2000, 4000, 6000, 8000];
-            if (total > 0 && tickValues[tickValues.length - 1] !== total) {
-                tickValues.push(total);
-            }
+            if (total > 0 && tickValues[tickValues.length - 1] !== total) tickValues.push(total);
             createAxisTicks('progress-family-axis', total, tickValues);
         }
 
-        // Initialize progress bar
-        createProgressBar();
         fetchSpeciesCount();
         fetchFamilyCounts();
     </script>

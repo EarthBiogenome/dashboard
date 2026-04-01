@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:goat.genomehubs.org)"
+      "WebFetch(domain:goat.genomehubs.org)",
+      "WebFetch(domain:www.earthbiogenome.org)"
     ]
   }
 }
