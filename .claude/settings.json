@@ -4,7 +4,27 @@
       "WebFetch(domain:goat.genomehubs.org)",
       "WebFetch(domain:www.earthbiogenome.org)",
       "Bash(gh api repos/EarthBiogenome/dashboard/pages)",
-      "WebFetch(domain:earthbiogenome.github.io)"
+      "WebFetch(domain:earthbiogenome.github.io)",
+      "Bash(gh pr view --json number,headRepository)",
+      "Bash(where gh)",
+      "Bash(claude mcp add github -- npx -y @modelcontextprotocol/server-github)",
+      "Bash(claude mcp list)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports\\.claude\\skills\\style-check"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(echo \"$CLAUDE_TOOL_RESULT\" | python -c \"import sys,json; d=json.load(sys.stdin); print(d.get('filePath',''))\" 2>/dev/null); if echo \"$FILE\" | grep -q '\\.py$'; then python -m py_compile \"$FILE\" && echo 'Python syntax OK'; fi"
+          }
+        ]
+      }
     ]
   }
 }
