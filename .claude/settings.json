@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:goat.genomehubs.org)",
-      "WebFetch(domain:www.earthbiogenome.org)"
+      "WebFetch(domain:www.earthbiogenome.org)",
+      "Bash(gh api repos/EarthBiogenome/dashboard/pages)",
+      "WebFetch(domain:earthbiogenome.github.io)"
     ]
   }
 }
