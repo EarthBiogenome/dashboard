@@ -48,16 +48,8 @@ All visualization HTML files live in [source files/](source files/). Each file i
 2. Add an entry to the `pages` array in `config.js` with `name`, `file`, `description`, `icon` (Font Awesome class), and `category`
 3. The landing page reads `config.js` and auto-renders the card
 
-### Color Palette (viridis-inspired, used across charts)
-```js
-["#440154", "#404387", "#2a788e", "#22a884", "#7ad151", "#ff4500"]
-```
-Assembly level colors are defined in `services.js`: contig=`#ffff33`, scaffold=`#22a884`, chromosome=`#404387`, complete genome=`#7ad151`.
-
-### UI Theme
-- Primary green: `#0d7a47`
-- Font Awesome 6.4.0 loaded from CDN
-- No CSS framework on main dashboard (Bootstrap 4 only in `geoMap/`)
+### UI Theme & Colors
+See `STYLE_SPEC.md` for the full color palette, typography, spacing, footer rules, and per-file checklist. No CSS framework on main dashboard (Bootstrap 4 only in `geoMap/`).
 
 ## Dependencies
 - **D3.js v6** — bundled as `source files/d3.v6.js`
