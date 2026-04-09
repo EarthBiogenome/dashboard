@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Fang Chen" />
+    <title>EBP Species Progress</title>
+    <script src="../config.js"></script>
+    <script src="./echarts.min.js"></script>
+    <script src="./utils.js"></script>
+    <script src="./services.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+      .page-title {
+        text-align: center;
+        font-weight: bold;
+        margin: 5vh 0 2vh 0;
+        color: #333;
+        letter-spacing: 1px;
+        font-size: 2.0vw;
+      }
+      #chartContainer {
+        width: 80%;
+        aspect-ratio: 16/9;
+        min-height: 300px;
+        max-height: 70vh;
+        margin: 0 auto 2vh auto;
+      }
+      #footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        left: 0;
+        background-color: rgba(248, 249, 250, 0.95);
+        color: #333;
+        text-align: center;
+        padding: 5px;
+        z-index: 9999;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        font-size: 14px;
+      }
+      @media (max-width: 900px) {
+        #chartContainer { width: 100%; }
+        .page-title { font-size: 4vw; }
+      }
+      @media (min-width: 2000px) {
+        #chartContainer { max-width: 1200px; max-height: 60vh; }
+        .page-title { font-size: 1.5vw; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="page-title">Annual EBP Species Progress</h1>
+    <div id="chartContainer"></div>
+
+    <div id="footer">
+      <div id="copyright">Data source: <a href="https://goat.genomehubs.org" target="_blank" rel="noopener noreferrer">Genomes on a Tree (GoaT)</a>. Used with permission.</div>
+    </div>
+
+    <script>
+      const endYear = 2026;
+      const dataStartYear = 2010;
+
+      function showLoadingIndicator() {
+        const container = document.getElementById('chartContainer');
+        container.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:Arial,sans-serif;color:#333;background-color:#f9f9f9;border-radius:8px;">
+            <div style="width:60px;height:60px;border:6px solid #e3e3e3;border-top:6px solid #3498db;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px;"></div>
+            <div style="font-size:16px;color:#666;">Fetching data...</div>
+          </div>
+          <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
+        `;
+      }
+
+      function showErrorMessage() {
+        const container = document.getElementById('chartContainer');
+        container.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;font-family:Arial,sans-serif;color:#e74c3c;background-color:#fdf2f2;border-radius:8px;border:1px solid #f8d7da;">
+            <div style="font-size:18px;margin-bottom:10px;font-weight:bold;">Failed to load species data</div>
+            <div style="font-size:14px;color:#721c24;text-align:center;">Please try refreshing the page</div>
+          </div>
+        `;
+      }
+
+      function findOptimalStartYear(data) {
+        const actualDataStartYear = (data.category && data.category.length > 0) ? data.category[0] : dataStartYear;
+        for (let year = dataStartYear; year <= endYear; year++) {
+          const idx = year - actualDataStartYear;
+          if (idx < 0) continue;
+          for (let s of data.series) {
+            if (s.data && idx < s.data.length && s.data[idx] > 0) return year;
+          }
+        }
+        return dataStartYear;
+      }
+
+      function initChart(data) {
+        const chartDom = document.getElementById('chartContainer');
+        const myChart = echarts.init(chartDom);
+
+        const actualDataStartYear = (data.category && data.category.length > 0) ? data.category[0] : dataStartYear;
+        const chartStartYear = findOptimalStartYear(data);
+        const yearRange = Array.from({length: endYear - chartStartYear + 1}, (_, i) => chartStartYear + i);
+
+        const startIndex = Math.max(0, chartStartYear - actualDataStartYear);
+        const endIndex = endYear - actualDataStartYear + 1;
+
+        const assemblyLevelColors = {
+          'contig': '#ffff33',
+          'scaffold': '#22a884',
+          'chromosome': '#404387',
+          'complete genome': '#7ad151'
+        };
+
+        const seriesWithColors = data.series.map(s => ({
+          ...s,
+          data: s.data.slice(startIndex, endIndex),
+          itemStyle: { color: assemblyLevelColors[s.name] || '#cccccc' }
+        }));
+
+        const legendOrder = seriesWithColors.map(s => s.name);
+        const orderedColors = legendOrder.map(name => assemblyLevelColors[name] || '#cccccc');
+
+        const option = {
+          legend: {
+            show: true,
+            selectedMode: false,
+            data: legendOrder,
+            textStyle: { color: '#000', fontSize: 12, fontWeight: 'bold' }
+          },
+          color: orderedColors,
+          grid: { left: '7%', right: '2%', bottom: '3%', containLabel: true },
+          yAxis: {
+            type: 'value',
+            name: 'Count of Species (Actual)',
+            nameLocation: 'middle',
+            nameRotate: 90,
+            nameGap: 45,
+            nameTextStyle: { fontWeight: 'bold', fontSize: 14 },
+            axisLine: { show: true, lineStyle: { color: '#000', width: 1 } },
+            axisLabel: { show: true, color: '#000', fontSize: 12, margin: 5,
+              formatter: function(value) { return value.toLocaleString(); }
+            },
+            splitLine: { show: true, lineStyle: { color: '#ccc' } }
+          },
+          xAxis: {
+            type: 'category',
+            data: yearRange,
+            axisLine: { show: true, lineStyle: { color: '#000', width: 1 } },
+            axisLabel: {
+              show: true, color: '#000', fontSize: 12,
+              interval: function(index, value) { return parseInt(value) % 2 === 0; }
+            },
+            splitLine: { show: false }
+          },
+          tooltip: {
+            trigger: 'axis',
+            formatter: function(params) {
+              var total = params.reduce((sum, item) => sum + (item.value || 0), 0);
+              var lines = params.map(item => item.seriesName + ': ' + item.value.toLocaleString()).join('<br/>');
+              return 'Total: ' + total.toLocaleString() + '<br/>' + lines;
+            }
+          },
+          series: seriesWithColors
+        };
+
+        myChart.setOption(option);
+        window.addEventListener('resize', function() { myChart.resize(); });
+      }
+
+      function calculateCumulative(data) {
+        return {
+          ...data,
+          series: data.series.map(s => {
+            let cumSum = 0;
+            return {
+              ...s,
+              data: s.data.map(v => { cumSum += v; return cumSum; })
+            };
+          })
+        };
+      }
+
+      window.onload = function() {
+        showLoadingIndicator();
+
+        const speciesReportUrl = 'https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_date%20AND%20bioproject%3DPRJNA533106&rank=species&result=taxon&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&stacked=true&xOpts=%2C%2C1%2C%2CAssembly%20date&taxonomy=ncbi';
+
+        window.getSpeciesReportData(speciesReportUrl)
+          .then(({defaultData}) => {
+            initChart(defaultData);
+          })
+          .catch(error => {
+            console.error('Error loading species data:', error);
+            showErrorMessage();
+          });
+      };
+
+      // Add copyright notice with fallback
+      try {
+        const copyrightElement = document.getElementById('copyright');
+        if (window.copyright && window.copyright.notice) {
+          copyrightElement.textContent = copyright.notice;
+        }
+      } catch (e) {}
+    </script>
+  </body>
+</html>

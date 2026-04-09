@@ -266,6 +266,10 @@
         <div id="speciesProgressContainer" class="chart-container"></div>
       </div>
       <div class="column">
+        <!-- Assembly Span Progress -->
+        <div id="assemblySpanProgressContainer" class="chart-container"></div>
+      </div>
+      <div class="column">
         <!-- Family Progress -->
         <!-- <div id="familyProgressContainer1" class="chart-container"></div>
         <div id="familyProgressContainer2" class="chart-container"></div>
@@ -282,11 +286,13 @@
       console.log('=== SCRIPT LOADING ===');
       const familyDataMap = {}
       const speciesDataMap = {}
+      const assemblySpanDataMap = {}
       let activeType = 'Cumulative'
       let startYear = 2010
       let endYear = 2026
       let familyChart = null
       let speciesChart = null
+      let assemblySpanChart = null
       
       // Test function to run directly in console
       function testSpeciesAPI() {
@@ -434,29 +440,143 @@
       window.testSpeciesAPI = testSpeciesAPI;
       window.testFamilyAPI = testFamilyAPI;
       window.clearCache = clearCache;
-      // Function to initialize both charts after all data is loaded
+      // Function to initialize all three charts after all data is loaded
       function initializeChartsAfterDataLoaded() {
-        // Check if both datasets are available
-        if (familyDataMap[activeType] && speciesDataMap[activeType]) {
-          console.log('Both datasets loaded, initializing charts with optimal start year...');
-          
-          // Now we can calculate the optimal start year with both datasets available
-          familyChart = initEchart(familyDataMap[activeType], 'familyProgressContainer', `Count of Families (${activeType})`);
+        // Check if all three datasets are available
+        if (familyDataMap[activeType] && speciesDataMap[activeType] && assemblySpanDataMap[activeType]) {
+          console.log('All three datasets loaded, initializing charts...');
+
           speciesChart = initEchart(speciesDataMap[activeType], 'speciesProgressContainer', `Count of Species (${activeType})`);
-          
-          // Hide loading indicators for both charts after they are created
-          hideLoadingIndicator('familyProgressContainer');
+          assemblySpanChart = initEchart(assemblySpanDataMap[activeType], 'assemblySpanProgressContainer', `Assembly Span (${activeType})`);
+          familyChart = initEchart(familyDataMap[activeType], 'familyProgressContainer', `Count of Families (${activeType})`);
+
           hideLoadingIndicator('speciesProgressContainer');
+          hideLoadingIndicator('assemblySpanProgressContainer');
+          hideLoadingIndicator('familyProgressContainer');
         }
+      }
+
+      // Fetch all species records with assembly_span via paginated Search API
+      async function fetchAllSpeciesForSpan() {
+        const pageSize = 5000;
+        let offset = 0;
+        let allResults = [];
+        let hasMoreData = true;
+
+        while (hasMoreData) {
+          const url = `https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=${pageSize}&offset=${offset}&fields=assembly_date%2Cassembly_level%2Cassembly_span`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const data = await response.json();
+
+          if (data.results && data.results.length > 0) {
+            allResults = allResults.concat(data.results);
+            if (data.results.length >= pageSize) {
+              offset += pageSize;
+            } else {
+              hasMoreData = false;
+            }
+          } else {
+            hasMoreData = false;
+          }
+
+          // Safety cap
+          if (offset > 50000) {
+            console.warn('fetchAllSpeciesForSpan: stopped after 50,000 records');
+            break;
+          }
+        }
+
+        console.log(`fetchAllSpeciesForSpan: loaded ${allResults.length} records`);
+        return allResults;
+      }
+
+      // Build { category, series, tableName } for assembly span from raw Search API results
+      function buildAssemblySpanData(results) {
+        const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
+        const colors = {
+          'contig': '#ffff33',
+          'scaffold': '#22a884',
+          'chromosome': '#404387',
+          'complete genome': '#7ad151'
+        };
+        const years = Array.from({length: 2026 - 2010 + 1}, (_, i) => 2010 + i);
+
+        // Accumulate span values per level per year
+        const spanByLevelByYear = {};
+        assemblyLevels.forEach(level => {
+          spanByLevelByYear[level] = {};
+          years.forEach(y => { spanByLevelByYear[level][y] = 0; });
+        });
+
+        results.forEach(item => {
+          const fields = item.result.fields;
+          const assemblyLevel = fields.assembly_level;
+          const assemblySpan = fields.assembly_span;
+          const assemblyDate = fields.assembly_date;
+
+          if (!assemblyLevel || !assemblyLevel.value) return;
+          if (!assemblySpan || !assemblySpan.value) return;
+          if (!assemblyDate || !assemblyDate.value) return;
+
+          const level = assemblyLevel.value.toLowerCase();
+          if (!spanByLevelByYear.hasOwnProperty(level)) return;
+
+          const year = new Date(assemblyDate.value).getUTCFullYear();
+          if (year < 2010 || year > 2026) return;
+
+          spanByLevelByYear[level][year] += assemblySpan.value;
+        });
+
+        const series = assemblyLevels.map(level => {
+          const data = years.map(y => spanByLevelByYear[level][y]);
+          const total = data.reduce((sum, v) => sum + v, 0);
+          return {
+            name: level,
+            type: 'bar',
+            stack: 'total',
+            label: { show: false },
+            itemStyle: { color: colors[level] },
+            barGap: '1px',
+            barCategoryGap: '1px',
+            data,
+            description: formatNumber(total)
+          };
+        });
+
+        return { category: years, series, tableName: 'Assembly Span (Actual)' };
+      }
+
+      // Build YoY growth series for assembly span
+      function buildAssemblySpanYoYData(actualData) {
+        const percentSeries = actualData.series.map(s => {
+          const growthData = s.data.map((val, i) => {
+            if (i === 0) return val > 0 ? 100 : 0;
+            const prev = s.data[i - 1];
+            if (prev === 0) return val > 0 ? 100 : 0;
+            return parseFloat(((val - prev) / prev * 100).toFixed(2));
+          });
+          return {
+            ...s,
+            data: growthData,
+            description: formatNumber(0)
+          };
+        });
+        return {
+          category: actualData.category,
+          series: percentSeries,
+          tableName: 'Assembly Span (YoY Growth)'
+        };
       }
 
       window.onload = function () {
         console.log('=== WINDOW.ONLOAD STARTED ===');
         console.log('Active type:', activeType);
         
-        // Show loading indicators for both charts
+        // Show loading indicators for all three charts
         showLoadingIndicator('familyProgressContainer');
         showLoadingIndicator('speciesProgressContainer');
+        showLoadingIndicator('assemblySpanProgressContainer');
         
         // Family Progress - Load data from Report API (matches GoaT exactly)
         console.log('Starting family data fetch from Report API...');
@@ -497,18 +617,18 @@
         console.log('Loading species data from Report API...');
         const speciesDataPromise = window.getSpeciesReportData(speciesReportUrl).then(({defaultData, percentData}) => {
           console.log('Species report data loaded, calculating cumulative...');
-          
+
           // Calculate cumulative from actual data
           const cumulativeData = calculateCumulativeFromActual(defaultData);
-          
+
           // Store all three data types
           speciesDataMap['Actual'] = defaultData;
           speciesDataMap['YoY Growth'] = percentData;
           speciesDataMap['Cumulative'] = cumulativeData;
-          
+
           console.log('Species cumulative data calculated from report data');
           console.log('Sample cumulative data for verification:', cumulativeData);
-          
+
           // Try to initialize charts after species data is loaded
           initializeChartsAfterDataLoaded();
         }).catch(error => {
@@ -516,6 +636,28 @@
           // Hide loading indicator on error and show error message
           hideLoadingIndicator('speciesProgressContainer');
           showErrorMessage('speciesProgressContainer', 'species');
+        });
+
+        // Assembly Span Progress - Load via paginated Search API
+        console.log('Starting assembly span data fetch from Search API...');
+        const spanDataPromise = fetchAllSpeciesForSpan().then(results => {
+          console.log('Assembly span data loaded, building chart data...');
+
+          const defaultData = buildAssemblySpanData(results);
+          const percentData = buildAssemblySpanYoYData(defaultData);
+          const cumulativeData = calculateCumulativeFromActual(defaultData);
+
+          assemblySpanDataMap['Actual'] = defaultData;
+          assemblySpanDataMap['YoY Growth'] = percentData;
+          assemblySpanDataMap['Cumulative'] = cumulativeData;
+
+          console.log('Assembly span data ready');
+
+          // Try to initialize charts after assembly span data is loaded
+          initializeChartsAfterDataLoaded();
+        }).catch(error => {
+          console.error('Error loading assembly span data:', error);
+          showErrorMessage('assemblySpanProgressContainer', 'assembly span');
         });
       };
 
@@ -551,27 +693,27 @@
       function checkoutStartYear(year) {
         const newStartYear = parseInt(year);
         if(startYear === newStartYear) return;
-        
+
         startYear = newStartYear;
         validateYearRange();
         console.log(`Start year changed to: ${startYear}`);
-        
+
         // Reinitialize charts with new year range
-        if (familyChart && speciesChart) {
+        if (familyChart && speciesChart && assemblySpanChart) {
           switchToView(activeType);
         }
       }
-      
+
       function checkoutEndYear(year) {
         const newEndYear = parseInt(year);
         if(endYear === newEndYear) return;
-        
+
         endYear = newEndYear;
         validateYearRange();
         console.log(`End year changed to: ${endYear}`);
-        
+
         // Reinitialize charts with new year range
-        if (familyChart && speciesChart) {
+        if (familyChart && speciesChart && assemblySpanChart) {
           switchToView(activeType);
         }
       }
@@ -579,51 +721,58 @@
       function switchToView(type) {
         const familyOption = familyChart.getOption();
         const speciesOption = speciesChart.getOption();
+        const assemblySpanOption = assemblySpanChart.getOption();
         familyOption.yAxis[0].name = `Count of Families (${type})`;
         speciesOption.yAxis[0].name = `Count of Species (${type})`;
-        
+        assemblySpanOption.yAxis[0].name = `Assembly Span (${type})`;
+
         // Update activeType before calculating start year
         activeType = type;
-        
+
         // Calculate optimal start year for each chart independently
         const familyStartYear = findOptimalStartYearForData(familyDataMap[type], 'Family');
         const speciesStartYear = findOptimalStartYearForData(speciesDataMap[type], 'Species');
-        
-        console.log(`Switching to ${type}: Family starts ${familyStartYear}, Species starts ${speciesStartYear}, End year: ${endYear}`);
-        
+        const assemblySpanStartYear = findOptimalStartYearForData(assemblySpanDataMap[type], 'AssemblySpan');
+
+        console.log(`Switching to ${type}: Family starts ${familyStartYear}, Species starts ${speciesStartYear}, AssemblySpan starts ${assemblySpanStartYear}, End year: ${endYear}`);
+
         // Generate year ranges for each chart using the selected end year
         const familyYearRange = Array.from({length: endYear - familyStartYear + 1}, (_, i) => familyStartYear + i);
         const speciesYearRange = Array.from({length: endYear - speciesStartYear + 1}, (_, i) => speciesStartYear + i);
-        
+        const assemblySpanYearRange = Array.from({length: endYear - assemblySpanStartYear + 1}, (_, i) => assemblySpanStartYear + i);
+
         // Update x-axis data with independent year ranges
         familyOption.xAxis[0].data = familyYearRange;
         speciesOption.xAxis[0].data = speciesYearRange;
-        
+        assemblySpanOption.xAxis[0].data = assemblySpanYearRange;
+
         // Get the appropriate data based on type
-        let familySeries, speciesSeries;
-        
+        let familySeries, speciesSeries, assemblySpanSeries;
+
         if (type === 'Cumulative') {
           // Recalculate cumulative data for the selected year range
           const familyCumulativeData = recalculateCumulativeForYearRange(familyDataMap['Actual'], familyStartYear, endYear);
           const speciesCumulativeData = recalculateCumulativeForYearRange(speciesDataMap['Actual'], speciesStartYear, endYear);
-          
+          const assemblySpanCumulativeData = recalculateCumulativeForYearRange(assemblySpanDataMap['Actual'], assemblySpanStartYear, endYear);
+
           familySeries = familyCumulativeData.series;
           speciesSeries = speciesCumulativeData.series;
-          
-          console.log(`Recalculated cumulative data for Family: ${familyStartYear}-${endYear}`);
-          console.log(`Recalculated cumulative data for Species: ${speciesStartYear}-${endYear}`);
+          assemblySpanSeries = assemblySpanCumulativeData.series;
         } else {
           // For Actual and YoY Growth, trim the existing data
           familySeries = trimSeriesToStartYear(familyDataMap[type].series, familyStartYear, 'familyProgressContainer', familyDataMap['Actual'].category[0]);
           speciesSeries = trimSeriesToStartYear(speciesDataMap[type].series, speciesStartYear, 'speciesProgressContainer', speciesDataMap['Actual'].category[0]);
+          assemblySpanSeries = trimSeriesToStartYear(assemblySpanDataMap[type].series, assemblySpanStartYear, 'assemblySpanProgressContainer', assemblySpanDataMap['Actual'].category[0]);
         }
-        
+
         // Apply consistent ordering to series data
         familyOption.series = applyConsistentOrdering(familySeries, 'familyProgressContainer');
         speciesOption.series = applyConsistentOrdering(speciesSeries, 'speciesProgressContainer');
-        
+        assemblySpanOption.series = applyConsistentOrdering(assemblySpanSeries, 'assemblySpanProgressContainer');
+
         familyChart.setOption(familyOption);
         speciesChart.setOption(speciesOption);
+        assemblySpanChart.setOption(assemblySpanOption);
       }
       
       // Helper function to format numbers (used in calculateCumulativeFromActual)
@@ -799,7 +948,8 @@
         const myChart = echarts.init(chartDom);
 
         // Determine optimal start year for this specific chart
-        const dataType = containerId === 'familyProgressContainer' ? 'Family' : 'Species';
+        const dataType = containerId === 'familyProgressContainer' ? 'Family' :
+                         containerId === 'assemblySpanProgressContainer' ? 'AssemblySpan' : 'Species';
         const chartStartYear = findOptimalStartYearForData(data, dataType);
         
         console.log(`${dataType} chart using start year: ${chartStartYear}, end year: ${endYear}`);
@@ -870,6 +1020,12 @@
               color: "#000",
               fontSize: 12,
               margin: 5, // Move labels closer to the axis
+              formatter: function(value) {
+                if (containerId === 'assemblySpanProgressContainer') {
+                  return (value / 1e12).toFixed(1) + 'T';
+                }
+                return value.toLocaleString();
+              }
             },
             splitLine: {
               show: true,
@@ -1023,6 +1179,7 @@
     window.addEventListener('resize', function() {
       if (familyChart) familyChart.resize();
       if (speciesChart) speciesChart.resize();
+      if (assemblySpanChart) assemblySpanChart.resize();
     });
     </script>
   </body>

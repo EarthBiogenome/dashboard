@@ -24,7 +24,6 @@
             border-radius: 15px;
             padding: 1.5rem 2rem;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            animation: progressFadeIn 0.6s ease-out;
         }
 
         .progress-title {
@@ -40,10 +39,6 @@
             align-items: flex-start;
             gap: 1.5rem;
             margin-top: 1rem;
-        }
-
-        .progress-chart + .progress-chart {
-            margin-top: 1.25rem;
         }
 
         .progress-label {
@@ -121,6 +116,10 @@
         }
 
         .progress-axis {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0;
+            padding: 0;
             position: relative;
             height: 35px;
         }
@@ -131,7 +130,7 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: #999;
+            background: linear-gradient(90deg, #999 0%, #999 100%);
         }
 
         .progress-axis-tick {
@@ -158,35 +157,64 @@
         }
 
         @keyframes progressFadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-section {
+            animation: progressFadeIn 0.6s ease-out;
         }
 
         @media (max-width: 768px) {
-            .progress-section { padding: 1rem; }
-            .progress-title { font-size: 1.2rem; }
+            .progress-section {
+                padding: 1rem;
+            }
+
+            .progress-title {
+                font-size: 1.2rem;
+            }
+
             .progress-chart {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 1rem;
             }
-            .progress-label { justify-content: flex-start; height: auto; }
-            .progress-bar-container { width: 100%; }
-            .progress-bar { height: 38px; }
-            .progress-completed { font-size: 0.9rem; }
-            .progress-axis-label { font-size: 0.75rem; }
+
+            .progress-label {
+                justify-content: flex-start;
+            }
+
+            .progress-bar-container {
+                width: 100%;
+            }
+
+            .progress-bar {
+                height: 38px;
+            }
+
+            .progress-completed {
+                font-size: 0.9rem;
+            }
+
+            .progress-axis-label {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="progress-section">
+    <div class="progress-section" id="progress-section">
         <div class="progress-title">EBP Phase I Progress</div>
-
-        <!-- Species bar -->
         <div class="progress-chart">
             <div class="progress-label">
                 <i class="fas fa-dna"></i>
-                <span>Species</span>
+                <span>Genomes</span>
             </div>
             <div class="progress-bar-container">
                 <div class="progress-bar-wrapper">
@@ -194,31 +222,10 @@
                         <div class="progress-completed" id="progress-completed" style="width: 0%;">
                             <span class="progress-completed-text" id="progress-text">Loading...</span>
                         </div>
-                        <div class="progress-incomplete"></div>
+                        <div class="progress-incomplete" id="progress-incomplete"></div>
                     </div>
                 </div>
                 <div class="progress-axis" id="progress-axis">
-                    <div class="progress-axis-line"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Families bar -->
-        <div class="progress-chart">
-            <div class="progress-label">
-                <i class="fas fa-layer-group"></i>
-                <span>Families</span>
-            </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-wrapper">
-                    <div class="progress-bar">
-                        <div class="progress-completed" id="progress-family-completed" style="width: 0%;">
-                            <span class="progress-completed-text" id="progress-family-text">Loading...</span>
-                        </div>
-                        <div class="progress-incomplete"></div>
-                    </div>
-                </div>
-                <div class="progress-axis" id="progress-family-axis">
                     <div class="progress-axis-line"></div>
                 </div>
             </div>
@@ -228,65 +235,64 @@
     <script>
         const PHASE_I_GOAL = 10000;
         const SPECIES_API_URL = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=1";
-        const EBP_ARC_URL    = "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=EBP%20taxa&taxonomy=ncbi&result=taxon&queryId=8EWp2aVcZB";
-        const INSDC_ARC_URL  = "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=assembly_span&excludeMissing%5B0%5D=assembly_span&caption=INSDC%20taxa&taxonomy=ncbi&result=taxon&queryId=R8LGXM94GW";
 
-        function createAxisTicks(axisContainerId, max, tickValues) {
-            const axisContainer = document.getElementById(axisContainerId);
-            if (!axisContainer) return;
-            axisContainer.querySelectorAll('.progress-axis-tick').forEach(el => el.remove());
+        /**
+         * Creates axis tick marks from 0 to 10,000
+         */
+        function createAxisTicks() {
+            const axisContainer = document.getElementById('progress-axis');
+            const tickValues = [0, 2000, 4000, 6000, 8000, 10000];
+            
             tickValues.forEach(value => {
                 const tick = document.createElement('div');
                 tick.classList.add('progress-axis-tick');
-                tick.style.left = `${(value / max) * 100}%`;
+                tick.style.left = `${(value / PHASE_I_GOAL) * 100}%`;
+                
                 const label = document.createElement('span');
                 label.classList.add('progress-axis-label');
                 label.textContent = value.toLocaleString();
                 tick.appendChild(label);
+                
                 axisContainer.appendChild(tick);
             });
         }
 
+        /**
+         * Fetches species count from GoaT API and updates the progress bar
+         */
         async function fetchSpeciesCount() {
             try {
                 const response = await fetch(SPECIES_API_URL);
-                if (!response.ok) throw new Error('HTTP error: ' + response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error: ${response.status}`);
+                }
+                
                 const data = await response.json();
-                const count = data.status && data.status.hits ? data.status.hits : 0;
-                const percentage = Math.min((count / PHASE_I_GOAL) * 100, 100);
-                document.getElementById('progress-completed').style.width = `${percentage}%`;
-                document.getElementById('progress-text').textContent = `${count.toLocaleString()} (${percentage.toFixed(1)}%)`;
-                createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
+                const speciesCount = data.status && data.status.hits ? data.status.hits : 0;
+                
+                updateProgressBar(speciesCount);
+                
             } catch (error) {
                 console.error('Error fetching species count:', error);
                 document.getElementById('progress-text').textContent = 'Data unavailable';
             }
         }
 
-        async function fetchFamilyCounts() {
-            try {
-                const [ebpRes, insdcRes] = await Promise.all([
-                    fetch(EBP_ARC_URL).then(r => r.ok ? r.json() : null),
-                    fetch(INSDC_ARC_URL).then(r => r.ok ? r.json() : null)
-                ]);
-                const ebpFamily   = ebpRes?.report?.report?.arc?.find(item => item.rank === 'family');
-                const insdcFamily = insdcRes?.report?.report?.arc?.find(item => item.rank === 'family');
-                const ebpCount    = Math.max(0, Number(ebpFamily?.x) || 0);
-                const totalCount  = Math.max(1, Number(insdcFamily?.y) || 10359);
-                const percentage  = Math.min((ebpCount / totalCount) * 100, 100);
-                document.getElementById('progress-family-completed').style.width = `${percentage}%`;
-                document.getElementById('progress-family-text').textContent = `${ebpCount.toLocaleString()} (${percentage.toFixed(1)}%)`;
-                const tickValues = [0, 2000, 4000, 6000, 8000];
-                if (tickValues[tickValues.length - 1] !== totalCount) tickValues.push(totalCount);
-                createAxisTicks('progress-family-axis', totalCount, tickValues);
-            } catch (error) {
-                console.error('Error fetching family counts:', error);
-                document.getElementById('progress-family-text').textContent = 'Data unavailable';
-            }
+        /**
+         * Updates the progress bar with the species count
+         */
+        function updateProgressBar(count) {
+            const percentage = Math.min((count / PHASE_I_GOAL) * 100, 100);
+            const completedBar = document.getElementById('progress-completed');
+            const progressText = document.getElementById('progress-text');
+            
+            completedBar.style.width = `${percentage}%`;
+            progressText.textContent = `${count.toLocaleString()} (${percentage.toFixed(1)}%)`;
         }
 
+        // Initialize
+        createAxisTicks();
         fetchSpeciesCount();
-        fetchFamilyCounts();
     </script>
 </body>
 </html>
