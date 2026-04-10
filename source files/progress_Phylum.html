@@ -127,6 +127,26 @@
         color: #666;
         white-space: pre-line;
       }
+      #inscdPhylumInfoBox {
+        width: 220px;
+        margin-right: 0px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        font-size: 18px;
+        margin-top: -80px;
+      }
+      #inscdPhylumInfoBox .total-species {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 14px;
+      }
+      #inscdPhylumInfoBox .breakdown {
+        font-size: 16px;
+        color: #666;
+        white-space: pre-line;
+      }
     </style>
   </head>
   <body>
@@ -135,8 +155,14 @@
       <div id="phylumInfoBox"></div>
       <div id="phylumProgressContainer" class="chart-container"></div>
     </div>
-    <div class="chartNote">
-      <p><strong>What is shown:</strong> Number of eukaryotic species with at least one genome assembly submitted under the EBP umbrella bioproject (NCBI BioProject PRJNA533106), grouped by the top 10 phyla ranked by species count. All remaining phyla are aggregated into "Other".</p>
+    <div class="chart-section">
+      <div class="container">
+        <div id="inscdPhylumInfoBox">
+          <div class="total-species">Total INSDC Species: Loading...</div>
+          <div class="breakdown" style="color:#888;">Loading chart data...</div>
+        </div>
+        <div id="inscdPhylumProgressContainer" class="chart-container"></div>
+      </div>
     </div>
     <div class="chart-section">
       <div class="container">
@@ -146,9 +172,9 @@
         </div>
         <div id="totalPhylumProgressContainer" class="chart-container"></div>
       </div>
-      <div class="chartNote">
-        <p><strong>What is shown:</strong> Total number of eukaryotic species recognised in NCBI taxonomy, grouped by the top 10 phyla ranked by species count. All remaining phyla are aggregated into "Other". This chart provides the denominator context for the EBP coverage chart above.</p>
-      </div>
+    </div>
+    <div class="chartNote">
+      <p>The <strong>top chart</strong> shows eukaryotic species with a genome assembly under the EBP umbrella bioproject (NCBI BioProject PRJNA533106); the <strong>middle chart</strong> shows eukaryotic species with any genome assembly deposited in INSDC regardless of project affiliation; and the <strong>bottom chart</strong> shows all eukaryotic species recognised in NCBI taxonomy, serving as the denominator for the charts above. All three charts display the top 10 phyla by species count, with remaining phyla aggregated into "Other".</p>
     </div>
 
     <div id="footer">
@@ -222,6 +248,50 @@
           categories,
           series: [{ name: 'Species Count', type: 'bar', data: coloredData, barWidth: '95%', barGap: '-100%' }]
         };
+      }
+
+      function loadInscdPhylumChart() {
+        const inscdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29&taxonomy=ncbi&includeEstimates=true&size=1";
+        const inscdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29&rank=species&result=taxon&cat=phylum%5B10%5D%2B&taxonomy=ncbi&includeEstimates=true";
+        const inscdInfoBox = document.getElementById('inscdPhylumInfoBox');
+        Promise.all([
+          fetchData(inscdSearchUrl),
+          fetchData(inscdHistogramUrl)
+        ]).then((inscdResults) => {
+          if (!inscdResults || inscdResults.length !== 2) return;
+          const [inscdSearchData, inscdHistogramData] = inscdResults;
+          let inscdSpecies = 0;
+          if (inscdSearchData && inscdSearchData.status && typeof inscdSearchData.status.hits === 'number') {
+            inscdSpecies = inscdSearchData.status.hits;
+          }
+          const inscdCats = inscdHistogramData?.report?.report?.histogram?.cats || [];
+          const { categories: inscdCategories, values: inscdValues } = processPhylumCats(inscdCats, inscdSpecies);
+          const inscdChartData = buildPhylumChartData(inscdCategories, inscdValues);
+          const inscdBreakdownText = inscdCategories.map((category, index) => {
+            const value = inscdValues[index];
+            if (value === undefined || value === null) return `${category}: 0`;
+            return `${category}: ${formatNumber(value)}`;
+          }).join('<br>');
+          if (inscdInfoBox) {
+            inscdInfoBox.innerHTML = `
+              <div class="total-species">Total INSDC Species: ${formatNumber(inscdSpecies)}</div>
+              <div class="breakdown">${inscdBreakdownText}</div>
+            `;
+          }
+          const inscdMaxValue = Math.max(...inscdValues, 1);
+          const inscdDynamicMax = Math.ceil(inscdMaxValue / 600) * 600;
+          initEchart(inscdChartData, 'inscdPhylumProgressContainer', inscdSpecies, inscdCategories, inscdValues, inscdDynamicMax, 'Sequenced eukaryotic species in INSDC by phylum');
+          loadTotalPhylumChart();
+        }).catch((err) => {
+          console.error('INSCD phylum chart load failed:', err);
+          if (inscdInfoBox) {
+            inscdInfoBox.innerHTML = `
+              <div class="total-species">Total Species: —</div>
+              <div class="breakdown" style="color:#888;">Data unavailable</div>
+            `;
+          }
+          loadTotalPhylumChart();
+        });
       }
 
       function loadTotalPhylumChart() {
@@ -334,7 +404,7 @@
             
             phylumChart = initEchart(chartData, 'phylumProgressContainer', totalSpecies, sortedCategories, sortedValues, dynamicMax, 'Number of eukaryotic species sequenced by EBP by phylum');
 
-            loadTotalPhylumChart();
+            loadInscdPhylumChart();
           });
         }).catch(error => {
           console.error('Error:', error);
