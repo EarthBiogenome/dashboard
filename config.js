@@ -34,7 +34,7 @@ const pages = [
       },
       {
         name: "Progress by Phylum Groups",
-        file: "./source files/progress_Phylum.html",
+        file: "./source files/progress_Phylum_3panels.html",
         description: "Number of eukaryotic species sequenced by EBP grouped by phylum",
         icon: "fa-chart-column"
       },
