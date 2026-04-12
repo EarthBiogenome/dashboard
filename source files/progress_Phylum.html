@@ -131,7 +131,7 @@
       </button>
     </div>
     <div class="chartNote">
-      <p><strong>Notes:</strong> Each bar shows the number of sequenced eukaryotic species in that phylum, stacked by source. Each phylum has its own color: the <strong>dark shade</strong> represents species sequenced under EBP, and the <strong>light shade</strong> of the same color represents additional species with any genome assembly deposited in INSDC but not under EBP. Hover over a bar for species counts. The chart displays the top 10 phyla from the EBP dataset; remaining phyla are aggregated into "Other". Use <strong>Download Chart</strong> to save the chart as a PNG image, or <strong>Download Data (CSV)</strong> to export the full phylum breakdown — the CSV includes up to 70 individual phyla with EBP, INSDC, and total species counts, with "Other" fully decomposed into named phyla.</p>
+      <p><strong>Notes:</strong> Each bar shows the number of sequenced eukaryotic species in that phylum, stacked by source. Each phylum has its own color: the <strong>dark shade</strong> represents species sequenced under EBP, and the <strong>light shade</strong> of the same color represents additional species with any genome assembly deposited in INSDC but not under EBP. Hover over a bar for species counts. The chart displays the top 10 phyla from the EBP dataset; remaining phyla are aggregated into "Other". Use <strong>Download Chart</strong> to save the chart as a PNG image, or <strong>Download Data (CSV)</strong> to export the full phylum breakdown — the CSV includes all eukaryotic phyla with EBP, INSDC, and total species counts.</p>
     </div>
 
     <div id="footer">
@@ -361,7 +361,7 @@
           const inscdTotal = (inscdSearch?.status?.hits) || 0;
           const totalTotal = (totalSearch?.status?.hits) || 0;
 
-          // Build full maps (70 phyla) used for both chart and CSV
+          // Build full maps (up to 200 phyla) used for both chart and CSV
           const ebpMapFull = processPhylumCats(ebpHisto?.report?.report?.histogram?.cats || [], ebpTotal, 200);
           const inscdMapFull = processPhylumCats(inscdHisto?.report?.report?.histogram?.cats || [], inscdTotal, 200);
           const totalMap = processPhylumCats(totalHisto?.report?.report?.histogram?.cats || [], totalTotal, 200);
