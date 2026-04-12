@@ -335,13 +335,13 @@
 
       window.onload = function () {
         const ebpSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&fields=bioproject&size=100&offset=0&names=&ranks=phylum";
-        const ebpHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=bioproject%3DPRJNA533106%20AND%20tax_tree%28eukaryota%29&rank=species&result=taxon&cat=phylum%5B70%5D%2B&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&xOpts=PRJNA533106%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true";
+        const ebpHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=bioproject%3DPRJNA533106%20AND%20tax_tree%28eukaryota%29&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&xOpts=PRJNA533106%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true";
         const inscdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29&taxonomy=ncbi&includeEstimates=true&size=1";
-        const inscdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29&rank=species&result=taxon&cat=phylum%5B70%5D%2B&taxonomy=ncbi&includeEstimates=true";
+        const inscdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29&rank=species&result=taxon&cat=phylum%5B200%5D%2B&taxonomy=ncbi&includeEstimates=true";
         const totalSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%282759%5BEukaryota%5D%29&taxonomy=ncbi&includeEstimates=true&size=1";
-        const totalHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree%28eukaryota%29&rank=species&result=taxon&cat=phylum%5B70%5D%2B&taxonomy=ncbi&includeEstimates=true";
+        const totalHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree%28eukaryota%29&rank=species&result=taxon&cat=phylum%5B200%5D%2B&taxonomy=ncbi&includeEstimates=true";
 
-        const allPhylaUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28phylum%29&taxonomy=ncbi&includeEstimates=true&size=100";
+        const allPhylaUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28phylum%29&taxonomy=ncbi&includeEstimates=true&size=200";
         Promise.allSettled([
           fetchData(ebpSearchUrl),
           fetchData(ebpHistogramUrl),
@@ -362,9 +362,9 @@
           const totalTotal = (totalSearch?.status?.hits) || 0;
 
           // Build full maps (70 phyla) used for both chart and CSV
-          const ebpMapFull = processPhylumCats(ebpHisto?.report?.report?.histogram?.cats || [], ebpTotal, 70);
-          const inscdMapFull = processPhylumCats(inscdHisto?.report?.report?.histogram?.cats || [], inscdTotal, 70);
-          const totalMap = processPhylumCats(totalHisto?.report?.report?.histogram?.cats || [], totalTotal, 70);
+          const ebpMapFull = processPhylumCats(ebpHisto?.report?.report?.histogram?.cats || [], ebpTotal, 200);
+          const inscdMapFull = processPhylumCats(inscdHisto?.report?.report?.histogram?.cats || [], inscdTotal, 200);
+          const totalMap = processPhylumCats(totalHisto?.report?.report?.histogram?.cats || [], totalTotal, 200);
 
           // Chart uses top 10 from EBP
           const ebpTop10Entries = Object.entries(ebpMapFull)
