@@ -179,18 +179,18 @@
         return map;
       }
 
-      // Base colors per phylum — dark shade for EBP, light shade for INSDC-only
-      const phylumBaseColors = [
-        '#7b0000', '#004d40', '#1a237e', '#4a148c', '#bf360c',
-        '#006064', '#1b5e20', '#880e4f', '#3e2723', '#0d47a1',
-        '#33691e', '#4e342e'
+      // Position-based color palette — bar 1 gets color[0], bar 2 gets color[1], etc.
+      // Colors span the full hue wheel to stay visually distinct even after the 55% white
+      // blend used for the INSDC light shade.
+      const colorPalette = [
+        '#4B1979', '#3B3B98', '#218cbe', '#38ada9', '#b8e994', '#f6e58d', '#ffbe76', '#e17055', '#6ab04c', '#1a5276', '#8e44ad'
       ];
       function getPhylumDarkColor(idx) {
-        return phylumBaseColors[idx % phylumBaseColors.length];
+        return colorPalette[idx % colorPalette.length];
       }
       function getPhylumLightColor(idx) {
         // Lighten the base color by blending toward white at 55%
-        const hex = phylumBaseColors[idx % phylumBaseColors.length].replace('#', '');
+        const hex = colorPalette[idx % colorPalette.length].replace('#', '');
         const r = parseInt(hex.slice(0, 2), 16);
         const g = parseInt(hex.slice(2, 4), 16);
         const b = parseInt(hex.slice(4, 6), 16);
