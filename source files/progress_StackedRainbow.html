@@ -10,13 +10,9 @@
     <script src="./utils.js"></script>
     <script src="./services.js"></script>
     <script>
-      // Data address
-      const url =
-        "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=%2A%2AEBP%20Umbrella%2A%2A%20-%20EBP%20taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=HvJvG3Tffp";
-      
-      // Initialize chart
-        function initEchart(data, annimationDelay ) {
-        const chartDom = document.getElementById("chartContainer");
+      // Initialize a polar arc chart into a given container element id
+      function initEchart(containerId, data, annimationDelay) {
+        const chartDom = document.getElementById(containerId);
         const myChart = echarts.init(chartDom);
         const option = {
           polar: {
@@ -41,247 +37,180 @@
                 const description = params.data.description;
                 return `<div>${description}</div>`;
             },
-            textStyle: { // Set tooltip text style
-                color: 'rgba(0, 0, 0, 0.85)', // Text color
-                fontFamily: 'sans-serif', // Font family
-                fontSize: 10, // Font size
-                fontWeight: 'normal', // Font weight
-                // You can also set other text styles such as lineHeight, backgroundColor, borderColor, etc.
+            textStyle: {
+                color: 'rgba(0, 0, 0, 0.85)',
+                fontFamily: 'sans-serif',
+                fontSize: 10,
+                fontWeight: 'normal',
             }
           },
-
           series: [],
         };
-       setTimeout(() => {
-        const originData = data.map((item, index) => {
+        setTimeout(() => {
+          const originData = data.map((item) => {
             return {
               ...item,
-              data: item.data.map(d => ({...data, value: 0, label: {show: false}}))
+              data: item.data.map(d => ({...d, value: 0, label: {show: false}}))
             }
-          })
-          option.series = originData
-        myChart.setOption(option);
-       }, 0)
-        setTimeout(() => {
-          const INSDCData = data.filter((_,index) => (index % 2 == 1))
-          option.series = INSDCData
+          });
+          option.series = originData;
           myChart.setOption(option);
-        }, annimationDelay)
+        }, 0);
+        setTimeout(() => {
+          const INSDCData = data.filter((_, index) => (index % 2 == 1));
+          option.series = INSDCData;
+          myChart.setOption(option);
+        }, annimationDelay);
         setTimeout(() => {
           data.forEach((item, index) => {
-            if(index % 2 == 1) {
-              const i = Math.floor(index / 2)
-              // Use inverted index to match the inverted data positioning
+            if (index % 2 == 1) {
+              const i = Math.floor(index / 2);
               const invertedI = 5 - i;
-              item.data[invertedI].value = item.data[invertedI].value - data[index - 1].data[invertedI].value
+              item.data[invertedI].value = item.data[invertedI].value - data[index - 1].data[invertedI].value;
             }
-          })
-          option.series = data
+          });
+          option.series = data;
           myChart.setOption(option);
-        }, annimationDelay * 2)
+        }, annimationDelay * 2);
       }
 
       function getGraphicOption(type, data) {
-        if(type == 'text') {
+        if (type == 'text') {
           return {
-              type: 'text',
-              z: 100,
-              left: 0, // Adjust text positioning
-              top: 0,
-              style: {
-                text: `${data.text}`,
-                textAlign: 'center',
-                textVerticalAlign: 'middle',
-                fontSize: 10,
-                fill: data.color
-              }
-          }
-        } else if(type == 'rect') {
+            type: 'text',
+            z: 100,
+            left: 0,
+            top: 0,
+            style: {
+              text: `${data.text}`,
+              textAlign: 'center',
+              textVerticalAlign: 'middle',
+              fontSize: 10,
+              fill: data.color
+            }
+          };
+        } else if (type == 'rect') {
           return {
             type: "rect",
-            left: 0 , // Adjust text positioning
+            left: 0,
             top: 0,
-            shape: {
-              width: 16, // Color block width
-              height: 10, // Color block height
-              r: 3, // Border radius
-            },
-            style: {
-              fill: data.color, // Color of Series 1, corresponding to the color in the series configuration
-              stroke: null, // No border display
-            },
-            silent: true, // No mouse event response
-          }
+            shape: { width: 16, height: 10, r: 3 },
+            style: { fill: data.color, stroke: null },
+            silent: true,
+          };
         }
       }
 
-      function initLegendChart(legends, annimationDelay ) {
-        const chartDom = document.getElementById("legendContainer");
+      function initLegendChart(containerId, legends, annimationDelay, chartContainerId) {
+        const chartDom = document.getElementById(containerId);
         const myChart = echarts.init(chartDom);
         const offsetX = chartDom.clientWidth / 2;
-        // For display: species (outer) on left, phylum (inner) on right
-        // This positions outer arc labels/totals on left, inner arc labels/totals on right
-        // legends come in [species, genus, family, order, class, phylum] order - use as is
+        const refChartId = chartContainerId || 'chartContainer';
         const displayLegends = [...legends];
-        const names = []
-        const totals = []
-        const EBP = []
-        const INSDC = []
-        const contrasts = []
-        
-        // Define individual offsets to align labels under their corresponding arcs
-        // Species (outer, widest) on left, phylum (inner, narrowest) on right
-        // Positive = shift right, Negative = shift left
-        const labelOffsets = {
-          'species': -45,  // outer arc - shift left towards edge
-          'genus': -50,    // shift left
-          'family': -55,     // middle position
-          'order': -55,     // slight shift right
-          'class': -60,     // shift right
-          'phylum': -70     // inner arc - shift right towards center
-        };
+        const names = [];
+        const totals = [];
+        const EBP = [];
+        const INSDC = [];
+        const contrasts = [];
 
-        // Define individual offsets for totals (separate from labels)
-        // Adjust these to fine-tune total positioning under each arc
+        const labelOffsets = {
+          'species': -45,
+          'genus': -50,
+          'family': -55,
+          'order': -55,
+          'class': -60,
+          'phylum': -70
+        };
         const totalOffsets = {
-          'species': -35,  // outer arc
+          'species': -35,
           'genus': -40,
           'family': -50,
           'order': -55,
           'class': -65,
-          'phylum': -70     // inner arc
+          'phylum': -70
         };
-        
-        // Build names array from displayLegends (species → phylum, left to right)
+
         displayLegends.forEach(item => {
           names.push({
             type: 'total',
             text: item.name,
             color: item.color,
-            labelOffset: labelOffsets[item.name] || 0,  // Label position offset
-            totalOffset: totalOffsets[item.name] || 0   // Total position offset
-          })
-          EBP.push({
-            type: 'rect',
-            text: item.data[0].num,
-            color: item.data[0].color
-          })
-          INSDC.push({
-            type: 'rect',
-            text: item.data[1].num,
-            color: item.data[1].color
-          })
-          contrasts.push({
-            type: 'text',
-            text: `${(item.contrast * 100).toFixed(1)}%`,
-            color: item.color
-          })
-        })
+            labelOffset: labelOffsets[item.name] || 0,
+            totalOffset: totalOffsets[item.name] || 0
+          });
+          EBP.push({ type: 'rect', text: item.data[0].num, color: item.data[0].color });
+          INSDC.push({ type: 'rect', text: item.data[1].num, color: item.data[1].color });
+          contrasts.push({ type: 'text', text: `${(item.contrast * 100).toFixed(1)}%`, color: item.color });
+        });
 
-        // Build totals array from reversed order (phylum → species) to maintain correct positioning
         const reversedLegends = [...displayLegends].reverse();
         reversedLegends.forEach(item => {
-          totals.push({
-            type: 'total',
-            text: item.total,
-            color: '#000000'
-          })
-        })
-        EBP.push({
-          type: 'text',
-          text: 'Assemblies by EBP affiliates',
-          color: '#000',
-          description: true
-        })
-        INSDC.push({
-          type: 'text',
-          text: 'Assemblies in INSDC',
-          color: '#000',
-          description: true
-        })
-        // const renders = [names, INSDC, EBP , contrasts]
-        const renders = [names]
+          totals.push({ type: 'total', text: item.total, color: '#000000' });
+        });
+
+        EBP.push({ type: 'text', text: 'Assemblies by EBP affiliates', color: '#000', description: true });
+        INSDC.push({ type: 'text', text: 'Assemblies in INSDC', color: '#000', description: true });
+
+        const renders = [names];
         const myGraphics = renders.map((group, index) => {
           const groupOption = {
             type: 'group',
             top: (index) * 20 + 10,
-            left: offsetX - document.getElementById('chartContainer').clientHeight + 10,
+            left: offsetX - document.getElementById(refChartId).clientHeight + 10,
             bounding: 'all',
             children: []
-          }
-          const width = Math.floor(document.getElementById('chartContainer').clientHeight / displayLegends.length)
+          };
+          const width = Math.floor(document.getElementById(refChartId).clientHeight / displayLegends.length);
           group.forEach((item, index) => {
-            if(item.type == 'text') {
-              const text = getGraphicOption('text', item)
-              text.left = index * width + (item.description ? 60 : 0)
-              groupOption.children.push(text)
-            } else if(item.type == 'rect') {
-              const rect = getGraphicOption('rect', item)
-              const text = getGraphicOption('text', item)
-              rect.left = index * width
-              text.left = index * width + 18
-              groupOption.children.push(rect)
-              groupOption.children.push(text)
-            } else if(item.type == 'total') {
-              const text = getGraphicOption('text', item)
-              text.left = index * width + (item.labelOffset || 0)  // Apply label offset
-              groupOption.children.push(text)
-              // Totals: now ordered species (left) to phylum (right)
-              const total = getGraphicOption('text', totals[index])
-              // Apply total offset (can be different from label offset)
-              total.left = index * width + document.getElementById('chartContainer').clientHeight + width / 2 + (item.totalOffset || 0)
-              groupOption.children.push(total)
+            if (item.type == 'text') {
+              const text = getGraphicOption('text', item);
+              text.left = index * width + (item.description ? 60 : 0);
+              groupOption.children.push(text);
+            } else if (item.type == 'rect') {
+              const rect = getGraphicOption('rect', item);
+              const text = getGraphicOption('text', item);
+              rect.left = index * width;
+              text.left = index * width + 18;
+              groupOption.children.push(rect);
+              groupOption.children.push(text);
+            } else if (item.type == 'total') {
+              const text = getGraphicOption('text', item);
+              text.left = index * width + (item.labelOffset || 0);
+              groupOption.children.push(text);
+              const total = getGraphicOption('text', totals[index]);
+              total.left = index * width + document.getElementById(refChartId).clientHeight + width / 2 + (item.totalOffset || 0);
+              groupOption.children.push(total);
             }
-          })
+          });
+          return groupOption;
+        });
 
-          return groupOption
-        })
-            
-            let len = renders.length
-            let count = 1
-            const myOption = {
-              graphic: myGraphics.slice(0, count++),
-              series: []
-            }
-            myChart.setOption(myOption)
-            let timer = setInterval(() => {
-              if(count > len) {
-                clearInterval(timer)
-
-                return
-              }
-              const myOption = {
-                graphic: myGraphics.slice(0, count++),
-                series: []
-              }
-              myChart.setOption(myOption)
-            }, 0)
-            
+        let len = renders.length;
+        let count = 1;
+        const myOption = { graphic: myGraphics.slice(0, count++), series: [] };
+        myChart.setOption(myOption);
+        let timer = setInterval(() => {
+          if (count > len) { clearInterval(timer); return; }
+          myChart.setOption({ graphic: myGraphics.slice(0, count++), series: [] });
+        }, 0);
       }
 
-      function renderTaxaPanel(legends) {
-        // Display order in panel: species (top/outer) to phylum (bottom/inner) - matches inverted visual
+      function buildTaxaPanelHtml(legendsData) {
         const displayOrder = ['species', 'genus', 'family', 'order', 'class', 'phylum'];
         const pluralLabels = {
-          'phylum': 'phylum',
-          'class': 'class',
-          'order': 'order',
-          'family': 'family',
-          'genus': 'genus',
-          'species': 'species'
+          'phylum': 'phylum', 'class': 'class', 'order': 'order',
+          'family': 'family', 'genus': 'genus', 'species': 'species'
         };
-        const displayLegends = displayOrder.map(level => legends.find(l => l.name === level)).filter(Boolean);
-
-        // Build HTML
+        const display = displayOrder.map(level => legendsData.find(l => l.name === level)).filter(Boolean);
         let html = `
           <div class="taxa-panel-inner">
-            <div class="taxa-row" style="font-size:0.85em; color:#888;">
+            <div class="taxa-row header-row">
               <span class="taxa-label"></span>
-              <span class="taxa-value insdc">INSDC</span>
-              <span class="taxa-value ebp">EBP</span>
+              <span class="taxa-col-header">INSDC</span>
+              <span class="taxa-col-header">EBP</span>
             </div>
         `;
-        displayLegends.forEach(l => {
+        display.forEach(l => {
           html += `
             <div class="taxa-row">
               <span class="taxa-label">${pluralLabels[l.name]}</span>
@@ -291,33 +220,70 @@
           `;
         });
         html += '</div>';
-        document.getElementById('taxaPanel').innerHTML = html;
+        return html;
+      }
+
+      function renderTaxaPanels(legends, qualityLegends) {
+        document.getElementById('taxaPanel1').innerHTML = buildTaxaPanelHtml(legends);
+        document.getElementById('taxaPanel2').innerHTML = buildTaxaPanelHtml(qualityLegends);
       }
 
       window.onload = function () {
-        // Request data
+        const url1 = 'https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=%2A%2AEBP%20Umbrella%2A%2A%20-%20EBP%20taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=8EWp2aVcZB';
+        const url2 = 'https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=assembly_span&excludeMissing%5B0%5D=assembly_span&caption=%2A%2AAll%20INSDC%20taxa%2A%2A%20-%20Taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=R8LGXM94GW';
 
-          const url1 = 'https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=%2A%2AEBP%20Umbrella%2A%2A%20-%20EBP%20taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=8EWp2aVcZB'
-          const url2 = 'https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=assembly_span&excludeMissing%5B0%5D=assembly_span&caption=%2A%2AAll%20INSDC%20taxa%2A%2A%20-%20Taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=R8LGXM94GW'
-          const annimationDelay = 3000 //ms
-          formatStackedUmbrellaData(url1, url2, annimationDelay).then(({
-            stackedData, legends
-          }) => {
-            // Adjust label offsets for inverted layout (phylum inner, species outer)
-            const phylum = stackedData.filter(item => (item.name == 'phylum'))
-            phylum.forEach((item, index) => {
-              if(index == 0) {
-                item.label.offset = [0, -2]
-              } else {
-                item.label.offset = [0, -10]
-              }
-            })
-            
-            // Draw chart
-            initEchart(stackedData, annimationDelay )
-            initLegendChart(legends, annimationDelay)
-            renderTaxaPanel(legends)
-          })
+        // EBP quality metrics URLs (search API, returns status.hits count per rank)
+        const qualityRanks = ['phylum', 'class', 'order', 'family', 'genus', 'species'];
+        const qualityTotalUrls = qualityRanks.map(rank =>
+          `https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20tax_rank%28${rank}%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=contig_n50&excludeMissing%5B1%5D=scaffold_n50&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0`
+        );
+        const qualityEbpUrls = qualityRanks.map(rank =>
+          `https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20bioproject%3DPRJNA533106%20AND%20tax_rank%28${rank}%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0`
+        );
+
+        const annimationDelay = 3000; // ms
+
+        // Fetch all data in parallel: chart 1, quality metrics counts, and raw arc totals for denominator
+        Promise.all([
+          formatStackedUmbrellaData(url1, url2, annimationDelay),
+          Promise.all(qualityTotalUrls.map(u => fetch(u).then(r => r.json()))),
+          Promise.all(qualityEbpUrls.map(u => fetch(u).then(r => r.json()))),
+          fetchData(url2)
+        ]).then(([{ stackedData, legends }, qualityTotalResults, qualityEbpResults, url2Data]) => {
+
+          // Grey background denominator: total eukaryotic taxa per rank from the arc report
+          const totalByRank = {};
+          url2Data.report.report.arc.forEach(item => {
+            totalByRank[item.rank] = item.y;
+          });
+
+          // Quality-filtered hit counts per rank
+          const insdcHits = {};
+          const ebpHits = {};
+          qualityRanks.forEach((rank, i) => {
+            insdcHits[rank] = qualityTotalResults[i].status.hits;
+            ebpHits[rank]   = qualityEbpResults[i].status.hits;
+          });
+
+          const { stackedData: qualityStackedData, legends: qualityLegends } =
+            formatQualityMetricsArcData(totalByRank, insdcHits, ebpHits);
+
+          // Adjust phylum label offsets (same as chart 1)
+          [stackedData, qualityStackedData].forEach(sd => {
+            sd.filter(item => item.name == 'phylum').forEach((item, index) => {
+              item.label.offset = index == 0 ? [0, -2] : [0, -10];
+            });
+          });
+
+          // Draw both charts
+          initEchart('chartContainer', stackedData, annimationDelay);
+          initLegendChart('legendContainer', legends, annimationDelay, 'chartContainer');
+          initEchart('chartContainer2', qualityStackedData, annimationDelay);
+          initLegendChart('legendContainer2', qualityLegends, annimationDelay, 'chartContainer2');
+
+          // Separate taxa panels, one per chart
+          renderTaxaPanels(legends, qualityLegends);
+        });
       };
     </script>
     <style>
@@ -327,7 +293,7 @@
         width: 100vw;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         background: #fff;
@@ -336,24 +302,17 @@
         width: 100vw;
         max-width: 1600px;
         margin: 0 auto;
-        padding-bottom: 10px;
+        padding-bottom: 60px;
         display: flex;
         flex-direction: column;
         align-items: center;
       }
-      #chartContainer {
-        width: 90vw;
-        max-width: 1400px;
-        height: 60vh;
-        min-height: 350px;
-        max-height: 900px;
-        margin-top: 40px;
-      }
-      #legendContainer {
-        width: 90vw;
-        max-width: 1400px;
-        height: 30px;
+      .chart-block {
+        width: 100%;
         position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
       }
       .chart-title {
         text-align: center;
@@ -366,8 +325,33 @@
         width: 100%;
         display: block;
       }
-      #taxaPanel {
-        position: fixed;
+      .chartContainer {
+        width: 90vw;
+        max-width: 1400px;
+        height: 60vh;
+        min-height: 350px;
+        max-height: 900px;
+        margin-top: 40px;
+      }
+      #chartContainer, #chartContainer2 {
+        height: 48vh;
+        margin-top: 20px;
+      }
+      .legendContainer {
+        width: 90vw;
+        max-width: 1400px;
+        height: 30px;
+        position: relative;
+      }
+      .chart-divider {
+        width: 90vw;
+        max-width: 1400px;
+        border: none;
+        border-top: 1px solid #e0e0e0;
+        margin: 20px 0 0 0;
+      }
+      .taxaPanel {
+        position: absolute;
         top: 16px;
         left: 16px;
         background: #fff;
@@ -375,15 +359,15 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         padding: 10px 12px;
         z-index: 1000;
-        min-width: 120px;
+        min-width: 140px;
         font-family: 'Segoe UI', Arial, sans-serif;
         font-size: 12px;
-        max-width: 170px;
+        max-width: 185px;
       }
       .taxa-panel-inner {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 3px;
       }
       .taxa-row {
         display: flex;
@@ -391,16 +375,21 @@
         gap: 6px;
         font-size: 1em;
       }
+      .header-row {
+        margin-bottom: 2px;
+      }
+      .taxa-col-header {
+        font-size: 0.85em;
+        color: #888;
+        min-width: 36px;
+        text-align: right;
+        font-weight: normal;
+      }
       .taxa-value {
         font-weight: bold;
         min-width: 36px;
         text-align: right;
         font-size: 1em;
-      }
-      .taxa-value.ebp {
-        color: #222;
-      }
-      .taxa-value.insdc {
         color: #222;
       }
       .taxa-label {
@@ -411,10 +400,10 @@
         margin-left: 0;
         text-transform: lowercase;
       }
-      #chartNote {
+      .chartNote {
         width: 90vw;
         max-width: 1400px;
-        margin: 40px auto 20px auto;
+        margin: 20px auto 10px auto;
         padding: 12px 18px;
         background: #f8f9fa;
         border-left: 3px solid #aaa;
@@ -423,12 +412,82 @@
         color: #555;
         line-height: 1.6;
       }
-      #chartNote p {
+      .chartNote p {
         margin: 0 0 6px 0;
       }
-      #chartNote p:last-child {
+      .chartNote p:last-child {
         margin-bottom: 0;
       }
+      /* Scroll-down pill */
+      #scrollHint {
+        position: fixed;
+        bottom: 36px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(50, 50, 50, 0.78);
+        color: #fff;
+        font-size: 13px;
+        padding: 7px 18px 7px 14px;
+        border-radius: 20px;
+        cursor: pointer;
+        z-index: 9998;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: opacity 0.4s;
+        user-select: none;
+      }
+      #scrollHint.hidden { opacity: 0; pointer-events: none; }
+      #scrollHint .arrow {
+        display: inline-block;
+        animation: bounce 1.2s infinite;
+      }
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(4px); }
+      }
+
+      /* Section nav dots */
+      #sectionNav {
+        position: fixed;
+        top: 50%;
+        right: 18px;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 9998;
+      }
+      .nav-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ccc;
+        cursor: pointer;
+        position: relative;
+        transition: background 0.3s, transform 0.3s;
+      }
+      .nav-dot.active {
+        background: #444;
+        transform: scale(1.35);
+      }
+      .nav-dot .nav-label {
+        position: absolute;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(50,50,50,0.82);
+        color: #fff;
+        font-size: 11px;
+        white-space: nowrap;
+        padding: 3px 8px;
+        border-radius: 4px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      .nav-dot:hover .nav-label { opacity: 1; }
+
       /* Footer styles */
       #footer {
         position: fixed;
@@ -446,14 +505,87 @@
   </head>
   <body>
     <div class="container">
-      <div class="chart-title">Eukaryotic assemblies in INSDC databases and the fraction contributed by EBP </div>
-      <div id="chartContainer"></div>
-      <div id="legendContainer"></div>
-      <div id="taxaPanel"></div>
-      <div id="chartNote">
-        <p><strong>Notes:</strong> Each arc represents one taxonomic rank (species through phylum); the light grey background shows the total eukaryotic taxa in NCBI taxonomy, the colored segment shows taxa with any INSDC assembly, and the darker overlap shows taxa with at least one EBP-affiliated assembly (NCBI BioProject PRJNA533106). Coverage counts taxa with at least one submitted assembly regardless of quality, reflecting taxonomic breadth rather than assembly completeness.</p>
+
+      <!-- Chart 1: Any assembly coverage -->
+      <div id="chart1Block" class="chart-block">
+        <div id="taxaPanel1" class="taxaPanel"></div>
+        <div class="chart-title">Eukaryotic assemblies in INSDC databases and the fraction contributed by EBP </div>
+        <div id="chartContainer" class="chartContainer"></div>
+        <div id="legendContainer" class="legendContainer"></div>
+        <div class="chartNote">
+          <p><strong>Notes:</strong> Each arc represents one taxonomic rank (species through phylum); the light grey background shows the total eukaryotic taxa in NCBI taxonomy, the colored segment shows taxa with any INSDC assembly, and the darker overlap shows taxa with at least one EBP-affiliated assembly (NCBI BioProject PRJNA533106). Coverage counts taxa with at least one submitted assembly regardless of quality, reflecting taxonomic breadth rather than assembly completeness.</p>
+        </div>
+      </div>
+
+      <hr class="chart-divider" />
+
+      <!-- Chart 2: Quality-filtered assembly coverage -->
+      <div id="chart2Block" class="chart-block">
+        <div id="taxaPanel2" class="taxaPanel"></div>
+        <div class="chart-title">Eukaryotic assemblies meeting EBP-standard metrics</div>
+        <div id="chartContainer2" class="chartContainer"></div>
+        <div id="legendContainer2" class="legendContainer"></div>
+        <div class="chartNote">
+          <p><strong>Notes:</strong> This chart shows the number of taxa at each taxonomic rank for which at least one genome assembly in GoaT meets the proxy EBP quality thresholds. The EBP standard criteria shown here reflect GoaT's relaxed interpretation of EBP assembly standards, based on available data. This assessment uses a subset of the metrics recommended in the EBP Scientific Subcommittee's <a href="https://www.earthbiogenome.org/report-on-assembly-standards" target="_blank">Report on Assembly Standards</a>, specifically: contig N50 ≥1 Mb and scaffold N50 ≥10 Mb. The grey background is identical to the chart above (total eukaryotic taxa), making the two charts directly comparable. See the <a href="https://github.com/genomehubs/goat-data/wiki/5.1-Earth-Biogenome-Project-(EBP)-FAQs#how-are-ebp-standard-criteria-and-dates-calculated" target="_blank">GoaT FAQs</a> for details on how these categories are calculated.</p>
+          <p><strong>EBP contribution</strong> refers to taxa where at least one qualifying assembly is directly linked to the EBP umbrella BioProject (NCBI BioProject PRJNA533106). <strong>INSDC (non-EBP)</strong> is the remainder — taxa where the quality threshold is met exclusively by assemblies from non-EBP projects.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scroll hint pill -->
+    <div id="scrollHint" onclick="document.getElementById('chart2Block').scrollIntoView({behavior:'smooth'})">
+      <span class="arrow">↓</span> EBP Quality Metrics
+    </div>
+
+    <!-- Section nav dots -->
+    <div id="sectionNav">
+      <div class="nav-dot active" data-target="chart1Block">
+        <span class="nav-label">Any assembly</span>
+      </div>
+      <div class="nav-dot" data-target="chart2Block">
+        <span class="nav-label">Quality assembly</span>
       </div>
     </div>
+
+    <script>
+      (function () {
+        const hint   = document.getElementById('scrollHint');
+        const dots   = document.querySelectorAll('.nav-dot');
+        const blocks = [
+          document.getElementById('chart1Block'),
+          document.getElementById('chart2Block')
+        ];
+
+        function onScroll() {
+          // Fade hint once chart 2 block starts entering the viewport
+          const chart2Top = blocks[1].getBoundingClientRect().top;
+          if (chart2Top < window.innerHeight * 0.85) {
+            hint.classList.add('hidden');
+          } else {
+            hint.classList.remove('hidden');
+          }
+
+          // Highlight the dot whose block occupies more of the viewport
+          let activeIndex = 0;
+          blocks.forEach((block, i) => {
+            const rect = block.getBoundingClientRect();
+            if (rect.top <= window.innerHeight / 2) activeIndex = i;
+          });
+          dots.forEach((dot, i) => dot.classList.toggle('active', i === activeIndex));
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+
+        dots.forEach(dot => {
+          dot.addEventListener('click', () => {
+            document.getElementById(dot.dataset.target)
+              .scrollIntoView({ behavior: 'smooth' });
+          });
+        });
+      })();
+    </script>
+
     <div id="footer">
         <div id="copyright">Data source: <a href="https://goat.genomehubs.org" target="_blank" rel="noopener noreferrer">Genomes on a Tree (GoaT)</a>. Used with permission.</div>
     </div>

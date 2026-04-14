@@ -183,6 +183,85 @@ async function fetchData(url) {
     
   }
 
+  // Format EBP quality metrics data into stacked arc chart format.
+  // totalByRank: object keyed by rank name with total eukaryotic taxa count (denominator, same as StackedRainbow grey background).
+  // ebpHits / insdcHits: objects keyed by rank name with quality-filtered counts.
+  function formatQualityMetricsArcData(totalByRank, insdcHits, ebpHits) {
+    // Same color arrays as formatStackedUmbrellaData — reversed before passing to handleStackedFormat
+    const EBPColors   = ["#440154", "#404387", "#2a788e", "#22a884", "#7ad151", "#ff4500"];
+    const INSDCColors = ["#6d3f9b", "#6e6d9b", "#55b4c6", "#4ad6a4", "#b3e093", "#ff8c42"];
+    // ranks in same order as formatDataUmbrella output (phylum first, species last), then .reverse()
+    const ranks = ["phylum", "class", "order", "family", "genus", "species"];
+
+    const EBPUmbrellaData = ranks.map((rank) => {
+      const total  = totalByRank[rank];
+      const ebp    = ebpHits[rank];
+      const arcPct = total > 0 ? Math.floor((ebp / total) * 1000 + 0.5) / 10 : 0;
+      return {
+        name: rank,
+        type: 'bar',
+        data: [{ value: arcPct, description: `${Number(ebp).toLocaleString('en-US')}/${Number(total).toLocaleString('en-US')}` }],
+        total: total,
+        num: ebp,
+        coordinateSystem: 'polar',
+        showBackground: true,
+        backgroundStyle: { color: '#cccccc' },
+        label: { show: true, position: 'middle', formatter: `${arcPct}%`, textStyle: { color: '#fff', fontSize: 10 } }
+      };
+    }).reverse();
+
+    const INSDCUmbrellaData = ranks.map((rank) => {
+      const total  = totalByRank[rank];
+      const insdc  = insdcHits[rank];
+      const arcPct = total > 0 ? Math.floor((insdc / total) * 1000 + 0.5) / 10 : 0;
+      return {
+        name: rank,
+        type: 'bar',
+        data: [{ value: arcPct, description: `${Number(insdc).toLocaleString('en-US')}/${Number(total).toLocaleString('en-US')}` }],
+        total: total,
+        num: insdc,
+        coordinateSystem: 'polar',
+        showBackground: true,
+        backgroundStyle: { color: '#cccccc' },
+        label: { show: true, position: 'middle', formatter: `${arcPct}%`, textStyle: { color: '#fff', fontSize: 10 } }
+      };
+    }).reverse();
+
+    // Mirror formatStackedUmbrellaData exactly: reverse color arrays before passing to handleStackedFormat
+    const EBP   = handleStackedFormat(EBPUmbrellaData,   EBPColors.reverse(),   'EBP-quality');
+    const INSDC = handleStackedFormat(INSDCUmbrellaData, INSDCColors.reverse(), 'INSDC-quality');
+
+    // Subtract EBP arc from INSDC arc so they stack correctly (same logic as formatStackedUmbrellaData)
+    INSDC.forEach((item, index) => {
+      const invertedIndex = 5 - index;
+      let ratio = item.data[invertedIndex].value / EBP[index].data[invertedIndex].value;
+      if (EBP[index].data[invertedIndex].value < 5) {
+        EBP[index].data[invertedIndex].value = EBP[index].data[invertedIndex].value + 1;
+        ratio = Math.min(ratio, 3);
+        item.data[invertedIndex].value = EBP[index].data[invertedIndex].value * ratio;
+      }
+    });
+
+    // After .reverse() above, EBPColors/INSDCColors are now in reversed order — same as formatStackedUmbrellaData
+    const legends = [];
+    const len = EBPUmbrellaData.length;
+    for (let i = 0; i < len; i++) {
+      legends.push({
+        name: EBPUmbrellaData[i].name,
+        color: EBPColors[i],
+        data: [
+          { name: 'EBP-quality',   num: EBPUmbrellaData[i].num,   color: EBPColors[i]   },
+          { name: 'INSDC-quality', num: INSDCUmbrellaData[i].num, color: INSDCColors[i] }
+        ],
+        contrast: INSDCUmbrellaData[i].num > 0 ? EBPUmbrellaData[i].num / INSDCUmbrellaData[i].num : 0,
+        total: formatNumber(EBPUmbrellaData[i].total)
+      });
+    }
+
+    const stackedData = EBP.map((_, index) => [EBP[index], INSDC[index]]).flat();
+    return { stackedData, legends };
+  }
+
   // 获取柱状图所需数据
   function getStackedBarData(url) {
       return new Promise(resolve => {

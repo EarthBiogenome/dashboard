@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="copyright" content="Data source: Genomes on a Tree (GoaT). Used with permission." />
+    <meta name="author" content="Fang Chen" />
+    <title>EBP Contribution to Assemblies Meeting EBP Metrics</title>
+    <script src="../config.js"></script>
+    <script src="./echarts.min.js"></script>
+    <script src="./utils.js"></script>
+    <script src="./services.js"></script>
+    <script>
+      // Initialize top chart (Phylum, Class, Order)
+      function initTopChart(data, annimationDelay) {
+        console.log('Initializing top chart with data:', data);
+        const chartDom = document.getElementById("topChartContainer");
+        const myChart = echarts.init(chartDom);
+        const option = {
+          title: {
+            text: 'Eukaryotic assemblies meeting EBP-standard metrics',
+            left: 'center',
+            top: -5,
+            textStyle: {
+              fontSize: 20,
+              fontWeight: 'bold'
+            }
+          },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'shadow'
+            },
+            formatter: function(params) {
+              const ebp = params[0].value;
+              const nonEbp = params[1].value;
+              const total = ebp + nonEbp;
+              const ebpPercentage = ((ebp / total) * 100).toFixed(1);
+              const nonEbpPercentage = ((nonEbp / total) * 100).toFixed(1);
+              return `<b>${params[0].name}</b><br/>` +
+                     `Total: ${total}<br/>` +
+                     `EBP contribution: ${ebp} (${ebpPercentage}%)<br/>` +
+                     `INSDC (Non-EBP): ${nonEbp} (${nonEbpPercentage}%)`;
+            },
+            textStyle: {
+              fontSize: 14
+            },
+            extraCssText: 'box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);'
+          },
+          legend: { show: false },
+          grid: {
+            left: '10%',    
+            right: '15%',   
+            bottom: '0%',
+            top: '15%',
+            containLabel: true
+          },
+          xAxis: {
+            type: 'value',
+            min: 0,
+            max: 'dataMax',
+            position: 'bottom',  // Position x-axis at the bottom
+            interval: 100,  // Set tick interval to 100
+            axisLine: { show: true },
+            axisLabel: {
+              formatter: function(value) {
+                // Only show values that are multiples of 100
+                if (value % 100 === 0) {
+                  return value;
+                }
+                return '';  // Hide non-multiple values
+              },
+              margin: 10,
+              fontSize: 14,
+            },
+            splitLine: {
+              show: false
+            },
+            axisTick: {
+              show: true,
+              alignWithLabel: true
+            }
+          },
+          yAxis: {
+            type: 'category',
+            data: ['Order', 'Class', 'Phylum'],
+            axisLine: { show: true },
+            axisTick: { show: false },
+            axisLabel: {
+              fontSize: 14,
+              fontWeight: 'bold',
+              margin: 16
+            }
+          },
+          series: data
+        };
+
+        myChart.setOption(option);
+      }
+
+      // Initialize bottom chart (Family, Genus, Species)
+      function initBottomChart(data, annimationDelay) {
+        console.log('Initializing bottom chart with data:', data);
+        const chartDom = document.getElementById("bottomChartContainer");
+        const myChart = echarts.init(chartDom);
+        const option = {
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'shadow'
+            },
+            formatter: function(params) {
+              const ebp = params[0].value;
+              const nonEbp = params[1].value;
+              const total = ebp + nonEbp;
+              const ebpPercentage = ((ebp / total) * 100).toFixed(1);
+              const nonEbpPercentage = ((nonEbp / total) * 100).toFixed(1);
+              return `<b>${params[0].name}</b><br/>` +
+                     `Total: ${total}<br/>` +
+                     `EBP contribution: ${ebp} (${ebpPercentage}%)<br/>` +
+                     `INSDC (Non-EBP): ${nonEbp} (${nonEbpPercentage}%)`;
+            },
+            textStyle: {
+              fontSize: 14
+            },
+            extraCssText: 'box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);'
+          },
+          grid: {
+            left: '10%',    
+            right: '15%',   
+            bottom: '10%',
+            top: '10%',     
+            containLabel: true
+          },
+          xAxis: {
+            type: 'value',
+            min: 0,
+            max: 'dataMax',
+            position: 'bottom',  // Position x-axis at the bottom
+            interval: 1000,  // Set tick interval to 1000
+            axisLine: { show: true },
+            axisLabel: {
+              formatter: function(value) {
+                // Only show values that are multiples of 1000
+                if (value % 1000 === 0) {
+                  return value;
+                }
+                return '';  // Hide non-multiple values
+              },
+              margin: 10,
+              fontSize: 14,
+            },
+            splitLine: {
+              show: false
+            },
+            axisTick: {
+              show: true,
+              alignWithLabel: true
+            }
+          },
+          yAxis: {
+            type: 'category',
+            data: ['Species', 'Genus', 'Family'],
+            axisLine: { show: true },
+            axisTick: { show: false },
+            axisLabel: {
+              fontSize: 14,
+              fontWeight: 'bold',
+              margin: 16
+            }
+          },
+          series: data
+        };
+
+        myChart.setOption(option);
+      }
+
+      function getGraphicOption(type, data) {
+        if(type == 'text') {
+          return {
+              type: 'text',
+              z: 100,
+              left: 0,
+              top: 0,
+              style: {
+                text: `${data.text}`,
+                textAlign: 'center',
+                textVerticalAlign: 'middle',
+                fontSize: 10,
+                fill: data.color
+              }
+          }
+        } else if(type == 'rect') {
+          return {
+            type: "rect",
+            left: 0,
+            top: 0,
+            shape: {
+              width: 16,
+              height: 10,
+              r: 3,
+            },
+            style: {
+              fill: data.color,
+              stroke: null,
+            },
+            silent: true,
+          }
+        }
+      }
+
+      function initLegendChart(legends) {
+        // Empty function as we're not showing statistics for now
+      }
+
+      window.onload = function () {
+        console.log('Window loaded, starting data fetch...');
+        
+        // Define URLs for Total Counts with Assemblies Meeting EBP Metrics
+        const totalUrls = [
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20tax_rank%28phylum%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=contig_n50&excludeMissing%5B1%5D=scaffold_n50&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20tax_rank%28class%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=contig_n50&excludeMissing%5B1%5D=scaffold_n50&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20tax_rank%28order%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=contig_n50&excludeMissing%5B1%5D=scaffold_n50&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20tax_rank%28family%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=contig_n50&excludeMissing%5B1%5D=scaffold_n50&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20tax_rank%28genus%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=contig_n50&excludeMissing%5B1%5D=scaffold_n50&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20tax_rank%28species%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=contig_n50&excludeMissing%5B1%5D=scaffold_n50&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0'
+        ];
+
+        // Define URLs for EBP contributions
+        const ebpUrls = [
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20bioproject%3DPRJNA533106%20AND%20tax_rank%28phylum%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20bioproject%3DPRJNA533106%20AND%20tax_rank%28class%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20bioproject%3DPRJNA533106%20AND%20tax_rank%28order%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20bioproject%3DPRJNA533106%20AND%20tax_rank%28family%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20bioproject%3DPRJNA533106%20AND%20tax_rank%28genus%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0',
+          'https://goat.genomehubs.org/api/v2/search?result=taxon&query=contig_n50%3E%3D1000000%20AND%20scaffold_n50%3E%3D10000000%20AND%20bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&fields=contig_n50%2Cscaffold_n50%2Cbioproject&report=arc&summaryValues=count&offset=0'
+        ];
+
+        const annimationDelay = 2000; //ms
+
+        // Fetch and process data
+        Promise.all([
+          Promise.all(totalUrls.map(url => fetch(url).then(res => res.json()))),
+          Promise.all(ebpUrls.map(url => fetch(url).then(res => res.json())))
+        ])
+        .then(([totalResults, ebpResults]) => {
+          console.log('Total Results:', totalResults);
+          console.log('EBP Results:', ebpResults);
+          
+          const ebpData = [];
+          const nonEbpData = [];
+          const ranks = ['Species', 'Genus', 'Family', 'Order', 'Class', 'Phylum'];
+          
+          ranks.forEach((rank, index) => {
+            // Get total count and EBP count
+            const total = totalResults[5-index].status.hits;
+            const ebp = ebpResults[5-index].status.hits;
+            const nonEbp = total - ebp;  // Calculate non-EBP count
+            
+            console.log(`Rank: ${rank}, Total: ${total}, EBP: ${ebp}, Non-EBP: ${nonEbp}`);
+            
+            ebpData.push(ebp);
+            nonEbpData.push(nonEbp);
+          });
+
+          // Split data for top panel (Phylum, Class, Order) - indices 5, 4, 3
+          const topEbpData = [ebpData[3], ebpData[4], ebpData[5]];  // Order, Class, Phylum
+          const topNonEbpData = [nonEbpData[3], nonEbpData[4], nonEbpData[5]];  // Order, Class, Phylum
+          
+          // Split data for bottom panel (Family, Genus, Species) - indices 2, 1, 0
+          const bottomEbpData = [ebpData[0], ebpData[1], ebpData[2]];  // Species, Genus, Family
+          const bottomNonEbpData = [nonEbpData[0], nonEbpData[1], nonEbpData[2]];  // Species, Genus, Family
+
+          // Per-rank colors matching progress_StackedRainbow.html (EBP dark, INSDC light)
+          // Rank order: [Order, Class, Phylum] for top chart; [Species, Genus, Family] for bottom chart
+          // Full rank color map (index 0=phylum...5=species, after EBPColors/INSDCColors.reverse())
+          const rankColors = {
+            phylum: { ebp: '#ff4500', insdc: '#ff8c42' },
+            class:  { ebp: '#7ad151', insdc: '#b3e093' },
+            order:  { ebp: '#22a884', insdc: '#4ad6a4' },
+            family: { ebp: '#2a788e', insdc: '#55b4c6' },
+            genus:  { ebp: '#404387', insdc: '#6e6d9b' },
+            species:{ ebp: '#440154', insdc: '#6d3f9b' }
+          };
+
+          function createSeriesData(ebpDataArray, nonEbpDataArray, rankNames) {
+            // rankNames: array of rank strings in bar order (bottom to top in horizontal chart)
+            const ebpColors  = rankNames.map(r => rankColors[r.toLowerCase()].ebp);
+            const insdcColors = rankNames.map(r => rankColors[r.toLowerCase()].insdc);
+
+            return [
+              {
+                name: 'EBP Contribution',
+                type: 'bar',
+                stack: 'total',
+                itemStyle: {
+                  color: function(params) { return ebpColors[params.dataIndex]; },
+                  borderColor: 'transparent',
+                  borderWidth: 0
+                },
+                label: { show: false },
+                data: ebpDataArray
+              },
+              {
+                name: 'INSDC (Non-EBP)',
+                type: 'bar',
+                stack: 'total',
+                itemStyle: {
+                  color: function(params) { return insdcColors[params.dataIndex]; },
+                  borderColor: 'transparent',
+                  borderWidth: 0
+                },
+                label: { show: false },
+                data: nonEbpDataArray
+              }
+            ];
+          }
+
+          const topSeries = createSeriesData(topEbpData, topNonEbpData, ['Order', 'Class', 'Phylum']);
+          const bottomSeries = createSeriesData(bottomEbpData, bottomNonEbpData, ['Species', 'Genus', 'Family']);
+
+          console.log('Top series data:', topSeries);
+          console.log('Bottom series data:', bottomSeries);
+          
+          return { 
+            topData: topSeries, 
+            bottomData: bottomSeries, 
+            legends: [] 
+          };
+        })
+        .then(({ topData, bottomData, legends }) => {
+          console.log('Initializing charts with data');
+          // Draw charts
+          initTopChart(topData, annimationDelay);
+          initBottomChart(bottomData, annimationDelay);
+          initLegendChart(legends);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      };
+    </script>
+    <style>
+      .charts-container {
+        width: 80%;
+        margin: 0px auto 45px auto;
+      }
+      
+      #topChartContainer {
+        width: 100%;
+        height: 280px;
+        margin-bottom: 0;
+        margin-top: 20px;
+      }
+      
+      #bottomChartContainer {
+        width: 100%;
+        height: 280px;
+        margin-top: 0;
+      }
+      
+      #legendContainer {
+        display: none;
+      }
+      
+      /* Add container padding to prevent footer overlap */
+      .container {
+        padding-bottom: 30px;
+      }
+
+      /* Notes section */
+      .notes-section {
+        width: 80%;
+        margin: 0 auto 80px auto;
+        padding: 12px 18px;
+        background: #f8f9fa;
+        border-left: 3px solid #aaa;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #555;
+        line-height: 1.6;
+      }
+
+      .notes-section p {
+        margin: 0 0 6px 0;
+      }
+
+      .notes-section p:last-child {
+        margin-bottom: 0;
+      }
+
+      .notes-section a {
+        color: #0563C1;
+        text-decoration: underline;
+      }
+
+      .notes-section a:hover {
+        color: #003d8f;
+      }
+
+      /* Footer styles */
+      #footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background-color: rgba(248, 249, 250, 0.95);
+        color: #333;
+        text-align: center;
+        padding: 5px;
+        z-index: 9999;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="charts-container">
+        <div id="topChartContainer"></div>
+        <div id="bottomChartContainer"></div>
+      </div>
+      <div id="legendContainer"></div>
+      <div class="notes-section">
+      <p><strong>Notes:</strong> This chart shows the number of taxa at each taxonomic rank for which at least one genome assembly in GoaT meets the proxy EBP quality thresholds. The EBP standard criteria shown here reflect GoaT's relaxed interpretation of EBP assembly standards, based on available data. This assessment uses a subset of the metrics recommended in the EBP Scientific Subcommittee's <a href="https://www.earthbiogenome.org/report-on-assembly-standards" target="_blank">Report on Assembly Standards</a>, specifically: assembly level, contig and scaffold N50, and the percentage of sequences assigned to chromosomes. Counts here therefore represent a subset of assemblies that partially fulfil EBP standards, not a fully certified assessment. Totals will consequently differ from assembly counts reported in other sections of this dashboard. See the <a href="https://github.com/genomehubs/goat-data/wiki/5.1-Earth-Biogenome-Project-(EBP)-FAQs#how-are-ebp-standard-criteria-and-dates-calculated" target="_blank">GoaT FAQs</a> for details on how these categories are calculated.</p>
+      <p><strong>EBP contribution</strong> refers to taxa where at least one qualifying assembly is directly linked to the EBP umbrella BioProject (NCBI BioProject PRJNA533106). <strong>Non-EBP contribution</strong> is the remainder &mdash; taxa where the quality threshold is met exclusively by assemblies from non-EBP projects.</p>
+      <p>For taxa where assemblies meeting the quality thresholds were produced by <em>both</em> EBP and non-EBP projects, the taxon is counted once under <strong>EBP contribution</strong>. It therefore does not appear in the Non-EBP count.</p>
+      </div>
+    </div>
+    <div id="footer">
+        <div id="copyright">Data source: <a href="https://goat.genomehubs.org" target="_blank" rel="noopener noreferrer">Genomes on a Tree (GoaT)</a>. Used with permission.</div>
+    </div>
+  </body>
+</html> 

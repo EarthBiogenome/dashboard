@@ -22,28 +22,47 @@
         body {
             margin: 0;
             padding: 0;
-            overflow: hidden;
         }
-        #mapContainer  {
+        #mapContainer {
             width: 100vw;
             height: 100vh;
             overflow: hidden;
             background-color: #1b2a58;
         }
-        
-        /* Add container padding to prevent footer overlap */
-        .container {
-            padding: 0;
-            margin: 0;
-            width: 100%;
-            height: 100%;
+        #barContainer {
+            width: 80vw;
+            height: 160vh;
+            margin: 60px auto 80px auto;
+            overflow: hidden;
         }
-
+        .btns {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            display: flex;
+            border-radius: 25px;
+            overflow: hidden;
+            height: 40px;
+            border: 1px solid #000;
+            z-index: 99999999;
+        }
+        .btns button {
+            display: inline-flex;
+            width: 80px;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            cursor: pointer;
+            background-color: #fff;
+            outline: none;
+        }
+        .btns .selected {
+            background-color: #aaa;
+        }
         #relationshipGraph {
             width: 766px;
             height: 400px;
         }
-
         #total {
             position: absolute;
             left: 50px;
@@ -51,7 +70,6 @@
             color: #000;
             font-size: 26px;
         }
-
         #projectsList {
             height: 500px;
             overflow: auto;
@@ -62,8 +80,27 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="mapContainer"></div>
+    <div class="btns">
+        <button>Map</button>
+        <button>Statistic</button>
+    </div>
+    <div id="mapContainer"></div>
+    <div id="barContainer"></div>
+    <!-- Modal for displaying project list by country -->
+    <div class="modal fade" id="relationshipModal" tabindex="-1" aria-labelledby="relationshipModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="relationshipModalLabel">Project Relationships</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="projectsList"></div>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         const data = projectsData;
@@ -386,7 +423,112 @@
             }
         }
 
-        initMap(worldJson)
+        function initBar() {
+            const countryProjects = {};
+            let count = 0;
+            projectsData.forEach(project => {
+                if (project.isNew || project.isCenter) return;
+                count++;
+                const { address } = project;
+                if (!address) return;
+                const raw = address.split(', ').at(-1) ?? '';
+                // Skip if the last segment contains digits (street number / postcode, not a country)
+                if (/\d/.test(raw)) return;
+                const country = raw.trim().toLowerCase()
+                    .split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                if (!country) return;
+                if (!countryProjects[country]) {
+                    countryProjects[country] = [];
+                }
+                countryProjects[country].push(project);
+            });
+
+            // Sort ascending so largest bar appears at the top
+            const sortedArr = Object.entries(countryProjects).sort((a, b) => a[1].length - b[1].length);
+            const keys = sortedArr.map(item => item[0]);
+            const barData = sortedArr.map(item => item[1].length);
+
+            var myChart = echarts.init(document.getElementById('barContainer'));
+            var option = {
+                title: {
+                    text: `Distribution of ${count} EBP Affiliated Projects by Country`,
+                    left: 'center'
+                },
+                grid: {
+                    top: '8%',
+                    left: '1%',
+                    right: '12%',
+                    bottom: '5%',
+                    containLabel: true
+                },
+                tooltip: {},
+                xAxis: {
+                    type: 'value',
+                    name: 'Number of Projects',
+                    nameLocation: 'middle',
+                    nameGap: 30,
+                    nameTextStyle: { fontSize: 14 },
+                    splitLine: { show: true },
+                    axisLine: { show: true },
+                    minInterval: 1
+                },
+                yAxis: {
+                    type: 'category',
+                    data: keys,
+                    axisLabel: { fontSize: 12 }
+                },
+                series: [{
+                    name: 'Country',
+                    type: 'bar',
+                    data: barData,
+                    itemStyle: { color: '#38aadd' },
+                    barWidth: '60%',
+                    label: {
+                        show: true,
+                        position: 'right',
+                        fontSize: 12
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+
+            myChart.on('click', function (params) {
+                if (params.componentType === 'series') {
+                    const projects = countryProjects[params.name];
+                    document.getElementById('relationshipModalLabel').innerText = `${params.name}  (${projects.length})`;
+                    const projectsContainer = document.getElementById('projectsList');
+                    projectsContainer.innerHTML = projects.map(project => {
+                        const { projectName, website } = project;
+                        return `<li><a href="${website}" title="${website}" target="_blank">${projectName}</a></li>`;
+                    }).join('');
+                    $('#relationshipModal').modal('show');
+                }
+            });
+        }
+
+        initMap(worldJson);
+        initBar();
+
+        document.querySelectorAll('button').forEach(btn => {
+            btn.onclick = e => {
+                const type = e.target.innerHTML;
+                if (type !== 'Map' && type !== 'Statistic') return;
+                document.querySelectorAll('button').forEach(b => { b.className = ''; });
+                e.target.className = 'selected';
+                const map = document.getElementById('mapContainer');
+                const bar = document.getElementById('barContainer');
+                if (type == 'Map') {
+                    map.style.display = 'block';
+                    bar.style.display = 'none';
+                } else {
+                    map.style.display = 'none';
+                    bar.style.display = 'block';
+                }
+            };
+        });
+        document.querySelector('button').click();
+
     </script>
 </body>
 </html>

@@ -49,23 +49,10 @@
         display: none;
       }
 
-      #loadingIndicator {
-        text-align: center;
-        padding: 40px 20px;
-        font-size: 15px;
-        color: #666;
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
-      #loadingIndicator .spinner {
-        display: inline-block;
-        width: 32px;
-        height: 32px;
-        border: 4px solid #ddd;
-        border-top-color: #3498db;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin-bottom: 12px;
-      }
-      @keyframes spin { to { transform: rotate(360deg); } }
 
       .download-buttons {
         display: none;
@@ -113,10 +100,6 @@
   </head>
   <body>
     <div id="error-message"></div>
-    <div id="loadingIndicator">
-      <div class="spinner"></div>
-      <div>Loading data from GoaT, please wait…</div>
-    </div>
     <div class="container">
       <div id="combinedPhylumContainer" class="chart-container"></div>
     </div>
@@ -222,7 +205,7 @@
 
         const option = {
           title: {
-            text: 'Sequenced Eukaryotic Species by Phylum',
+            text: 'Sequenced eukaryotic species by Phylum',
             subtext: `EBP: ${formatNumber(ebpTotal)} species  |  INSDC: ${formatNumber(inscdTotal)} species  |  Total Eukaryota: ${formatNumber(totalTotal)} species`,
             left: 'center',
             top: 5,
@@ -329,11 +312,49 @@
         };
 
         combinedChart.setOption(option);
-        document.getElementById('loadingIndicator').style.display = 'none';
         document.getElementById('downloadButtons').style.display = 'flex';
       }
 
+      function showLoadingIndicator(containerId) {
+        const container = document.getElementById(containerId);
+        if (container) {
+          container.innerHTML = `
+            <div style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100%;
+              font-family: Arial, sans-serif;
+              color: #333;
+              background-color: #f9f9f9;
+              border-radius: 8px;
+            ">
+              <div style="
+                width: 60px;
+                height: 60px;
+                border: 6px solid #e3e3e3;
+                border-top: 6px solid #3498db;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 20px;
+              "></div>
+              <div style="
+                font-size: 16px;
+                font-weight: normal;
+                color: #666;
+              ">Fetching data...</div>
+            </div>
+          `;
+        }
+      }
+
+      function hideLoadingIndicator(containerId) {
+        // ECharts automatically replaces container content on init
+      }
+
       window.onload = function () {
+        showLoadingIndicator('combinedPhylumContainer');
         const ebpSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&fields=bioproject&size=100&offset=0&names=&ranks=phylum";
         const ebpHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=bioproject%3DPRJNA533106%20AND%20tax_tree%28eukaryota%29&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&xOpts=PRJNA533106%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true";
         const inscdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29&taxonomy=ncbi&includeEstimates=true&size=1";
@@ -450,7 +471,6 @@
           })();
         }).catch(error => {
           console.error('Error loading phylum data:', error);
-          document.getElementById('loadingIndicator').style.display = 'none';
           const errorMessage = document.getElementById('error-message');
           errorMessage.textContent = `Error loading data: ${error.message}`;
           errorMessage.style.display = 'block';
