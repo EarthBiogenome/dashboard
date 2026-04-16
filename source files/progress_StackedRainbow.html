@@ -513,7 +513,7 @@
         <div id="chartContainer" class="chartContainer"></div>
         <div id="legendContainer" class="legendContainer"></div>
         <div class="chartNote">
-          <p><strong>Notes:</strong> Each arc represents one taxonomic rank (species through phylum); the light grey background shows the total eukaryotic taxa in NCBI taxonomy, the colored segment shows taxa with any INSDC assembly, and the darker overlap shows taxa with at least one EBP-affiliated assembly (NCBI BioProject PRJNA533106). Coverage counts taxa with at least one submitted assembly regardless of quality, reflecting taxonomic breadth rather than assembly completeness.</p>
+          <p><strong>Notes:</strong> Each arc represents one taxonomic rank (species through phylum); the light grey background shows the total eukaryotic taxa in NCBI taxonomy, the light colored segment shows taxa with any INSDC assembly, and the darker overlap shows taxa with at least one EBP-affiliated assembly. Coverage counts taxa with at least one submitted assembly regardless of quality, reflecting taxonomic breadth rather than assembly completeness.</p>
         </div>
       </div>
 
@@ -526,8 +526,10 @@
         <div id="chartContainer2" class="chartContainer"></div>
         <div id="legendContainer2" class="legendContainer"></div>
         <div class="chartNote">
-          <p><strong>Notes:</strong> This chart shows the number of taxa at each taxonomic rank for which at least one genome assembly in GoaT meets the proxy EBP quality thresholds. The EBP standard criteria shown here reflect GoaT's relaxed interpretation of EBP assembly standards, based on available data. This assessment uses a subset of the metrics recommended in the EBP Scientific Subcommittee's <a href="https://www.earthbiogenome.org/report-on-assembly-standards" target="_blank">Report on Assembly Standards</a>, specifically: contig N50 ≥1 Mb and scaffold N50 ≥10 Mb. The grey background is identical to the chart above (total eukaryotic taxa), making the two charts directly comparable. See the <a href="https://github.com/genomehubs/goat-data/wiki/5.1-Earth-Biogenome-Project-(EBP)-FAQs#how-are-ebp-standard-criteria-and-dates-calculated" target="_blank">GoaT FAQs</a> for details on how these categories are calculated.</p>
-          <p><strong>EBP contribution</strong> refers to taxa where at least one qualifying assembly is directly linked to the EBP umbrella BioProject (NCBI BioProject PRJNA533106). <strong>INSDC (non-EBP)</strong> is the remainder — taxa where the quality threshold is met exclusively by assemblies from non-EBP projects.</p>
+          <p><strong>Notes:</strong> This chart shows the number of taxa at each taxonomic rank for which at least one genome assembly in GoaT meets the proxy EBP quality thresholds. The EBP standard criteria  here reflect GoaT's relaxed interpretation of EBP assembly standards, based on available data. This assessment uses a subset of the metrics recommended in the EBP Scientific Subcommittee's <a href="https://www.earthbiogenome.org/report-on-assembly-standards" target="_blank">Report on Assembly Standards</a>, specifically: assembly level, contig and scaffold N50, and the percentage of sequences assigned to chromosomes. Counts
+          here therefore represent a subset of assemblies that partially fulfil EBP standards, not a fully certified assessment. See the <a
+            href="https://github.com/genomehubs/goat-data/wiki/5.1-Earth-Biogenome-Project-(EBP)-FAQs#how-are-ebp-standard-criteria-and-dates-calculated"
+            target="_blank">GoaT FAQs</a> for details on how these categories are calculated. The grey background is identical to the chart above (total eukaryotic taxa), making the two charts directly comparable.</p>          
         </div>
       </div>
 
