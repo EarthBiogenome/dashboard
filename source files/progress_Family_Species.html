@@ -190,6 +190,50 @@
           font-size: 1.5vw;
         }
       }
+
+      /* Download buttons container */
+      .download-buttons {
+        display: none;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 0px;
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 100;
+      }
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #fff;
+        background-color: #3498db;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        pointer-events: auto;
+      }
+      .download-btn:hover {
+        background-color: #2980b9;
+        transform: translateY(-1px);
+      }
+      .download-btn:active {
+        transform: translateY(0);
+      }
+      .download-btn.csv-btn {
+        background-color: #27ae60;
+      }
+      .download-btn.csv-btn:hover {
+        background-color: #219a52;
+      }
+      .download-btn svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+      }
     </style>
   </head>
   <body>
@@ -264,10 +308,30 @@
         <div id="speciesProgressContainer2" class="chart-container"></div>
         <div id="speciesProgressContainer3" class="chart-container"></div> -->
         <div id="speciesProgressContainer" class="chart-container"></div>
+        <div class="download-buttons" id="downloadButtonsSpecies">
+          <button type="button" class="download-btn" id="downloadChartSpeciesBtn">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Download Chart
+          </button>
+          <button type="button" class="download-btn csv-btn" id="downloadCSVSpeciesBtn">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+            Download Data (CSV)
+          </button>
+        </div>
       </div>
       <div class="column">
         <!-- Assembly Span Progress -->
         <div id="assemblySpanProgressContainer" class="chart-container"></div>
+        <div class="download-buttons" id="downloadButtonsAssemblySpan">
+          <button type="button" class="download-btn" id="downloadChartAssemblySpanBtn">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Download Chart
+          </button>
+          <button type="button" class="download-btn csv-btn" id="downloadCSVAssemblySpanBtn">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+            Download Data (CSV)
+          </button>
+        </div>
       </div>
       <div class="column">
         <!-- Family Progress -->
@@ -275,6 +339,16 @@
         <div id="familyProgressContainer2" class="chart-container"></div>
         <div id="familyProgressContainer3" class="chart-container"></div> -->
         <div id="familyProgressContainer" class="chart-container"></div>
+        <div class="download-buttons" id="downloadButtonsFamily">
+          <button type="button" class="download-btn" id="downloadChartFamilyBtn">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Download Chart
+          </button>
+          <button type="button" class="download-btn csv-btn" id="downloadCSVFamilyBtn">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+            Download Data (CSV)
+          </button>
+        </div>
       </div>
     </div>
 
@@ -453,6 +527,11 @@
           hideLoadingIndicator('speciesProgressContainer');
           hideLoadingIndicator('assemblySpanProgressContainer');
           hideLoadingIndicator('familyProgressContainer');
+
+          // Show download buttons after all charts are ready
+          document.getElementById('downloadButtonsSpecies').style.display = 'flex';
+          document.getElementById('downloadButtonsAssemblySpan').style.display = 'flex';
+          document.getElementById('downloadButtonsFamily').style.display = 'flex';
         }
       }
 
@@ -1180,6 +1259,127 @@
       if (familyChart) familyChart.resize();
       if (speciesChart) speciesChart.resize();
       if (assemblySpanChart) assemblySpanChart.resize();
+    });
+
+    // Download chart as PNG image
+    function downloadChartImage(chartInstance, chartName) {
+      if (!chartInstance) {
+        alert('Chart not available. Please wait for data to load.');
+        return;
+      }
+      const url = chartInstance.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#fff'
+      });
+      const link = document.createElement('a');
+      link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Download data as CSV — years as rows, columns: actual/cumulative/YoY per assembly level
+    function downloadCSVForChart(dataMap, chartName) {
+      const actualData = dataMap['Actual'];
+      const cumulativeData = dataMap['Cumulative'];
+      const yoyData = dataMap['YoY Growth'];
+
+      if (!actualData || !actualData.category || actualData.category.length === 0) {
+        alert('Data not available. Please wait for data to load.');
+        return;
+      }
+
+      const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
+
+      // Helper to get series array by level name
+      const getSeriesData = (data, levelName) => {
+        if (!data || !data.series) return [];
+        const s = data.series.find(s => s.name === levelName);
+        return s ? s.data : [];
+      };
+
+      // Build header
+      let header = 'Year';
+      assemblyLevels.forEach(level => { header += `,Actual_${level.replace(/ /g, '_')}`; });
+      header += ',Actual_Total';
+      assemblyLevels.forEach(level => { header += `,Cumulative_${level.replace(/ /g, '_')}`; });
+      header += ',Cumulative_Total';
+      assemblyLevels.forEach(level => { header += `,YoY_${level.replace(/ /g, '_')}`; });
+      header += ',YoY_Total';
+
+      let csvContent = header + '\n';
+
+      // All three maps share the same category array (calculateCumulativeFromActual preserves it)
+      const years = actualData.category;
+
+      years.forEach((year, i) => {
+        let row = year;
+
+        // Actual
+        let actualTotal = 0;
+        assemblyLevels.forEach(level => {
+          const val = getSeriesData(actualData, level)[i] || 0;
+          actualTotal += val;
+          row += `,${val}`;
+        });
+        row += `,${actualTotal}`;
+
+        // Cumulative
+        let cumTotal = 0;
+        assemblyLevels.forEach(level => {
+          const val = getSeriesData(cumulativeData, level)[i] || 0;
+          cumTotal += val;
+          row += `,${val}`;
+        });
+        row += `,${cumTotal}`;
+
+        // YoY Growth
+        let yoyTotal = 0;
+        assemblyLevels.forEach(level => {
+          const val = getSeriesData(yoyData, level)[i] || 0;
+          yoyTotal += val;
+          row += `,${val}`;
+        });
+        row += `,${yoyTotal}`;
+
+        csvContent += row + '\n';
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.csv`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // Set up download button event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('downloadChartSpeciesBtn').addEventListener('click', function() {
+        downloadChartImage(speciesChart, 'EBP_Species_Progress');
+      });
+      document.getElementById('downloadCSVSpeciesBtn').addEventListener('click', function() {
+        downloadCSVForChart(speciesDataMap, 'EBP_Species_Progress');
+      });
+
+      document.getElementById('downloadChartAssemblySpanBtn').addEventListener('click', function() {
+        downloadChartImage(assemblySpanChart, 'EBP_AssemblySpan_Progress');
+      });
+      document.getElementById('downloadCSVAssemblySpanBtn').addEventListener('click', function() {
+        downloadCSVForChart(assemblySpanDataMap, 'EBP_AssemblySpan_Progress');
+      });
+
+      document.getElementById('downloadChartFamilyBtn').addEventListener('click', function() {
+        downloadChartImage(familyChart, 'EBP_Family_Progress');
+      });
+      document.getElementById('downloadCSVFamilyBtn').addEventListener('click', function() {
+        downloadCSVForChart(familyDataMap, 'EBP_Family_Progress');
+      });
     });
     </script>
   </body>
