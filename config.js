@@ -40,7 +40,7 @@ const pages = [
       },
       {
         name: "Genome Assemblies Meeting EBP-standard Metrics",
-        file: "./source files/progress_EBPmetrics_colored.html",
+        file: "./source files/progress_EBPmetrics.html",
         description: "Contribution of EBP to assemblies meeting EBP-standard metrics at all taxonomic levels",
         icon: "fa-chart-bar"
       },
