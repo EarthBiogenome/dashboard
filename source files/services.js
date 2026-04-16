@@ -867,8 +867,9 @@ async function fetchData(url) {
     const histograms = data.report.report.histogram.histograms;
     const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
     
-    // Extract years from buckets (use UTC to avoid timezone shifting Jan 1 dates to prior year)
-    const category = histograms.buckets.map(d => new Date(d).getUTCFullYear());
+    // GoaT returns N+1 bucket boundary dates for N bins; drop the trailing end-boundary
+    // (it is the upper fence of the last bin, not a data bin itself)
+    const category = histograms.buckets.slice(0, -1).map(d => new Date(d).getUTCFullYear());
     console.log(`${dataType} Report API - Years:`, category);
     console.log(`${dataType} Report API - byCat:`, histograms.byCat);
     
