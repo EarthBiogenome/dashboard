@@ -345,7 +345,7 @@ const projectsData = [
     projectName: "Fish 10,000 Genomes (Fish10K)",
     continent: "Asia",
     type: "Headquarters",
-    address: "Guangdong Province, Shenzhen, Pingshan, 金沙路西200米 邮政编码: 518122, China",
+    address: "Guangdong Province, Shenzhen, Pingshan, 200m west of Jinsha Rd, Postal code: 518122, China",
     website: "http://english.cas.cn/newsroom/research_news/life/201910/t20191008_219736.shtml",
     latitude: 22.7503462738405,
     longitude: 114.396477284745
@@ -408,7 +408,7 @@ const projectsData = [
     projectName: "Lilioid Monocots Core Group Genome Project (LMGP)",
     continent: "Asia",
     type: "Headquarters",
-    address: "Shaanxi, Xi'An, Beilin, 友谊西路127号 邮政编码: 710060, China",
+    address: "Shaanxi, Xi'An, Beilin, 127 Youyi West Rd, Postal code: 710060, China",
     website: null,
     latitude: 34.2416950960594,
     longitude: 108.91149145442
@@ -534,7 +534,7 @@ const projectsData = [
     projectName: "Ungulates Genome Project",
     continent: "Asia",
     type: "Headquarters",
-    address: "Shaanxi, Xi'An, Beilin, 友谊西路127号 邮政编码: 710060, China",
+    address: "Shaanxi, Xi'An, Beilin, 127 Youyi West Rd, Postal code: 710060, China",
     website: null,
     latitude: 34.2415797961091,
     longitude: 108.911469996749

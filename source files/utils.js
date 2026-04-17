@@ -1,50 +1,51 @@
 function calculateCumulativeSums(arr) {
     return arr.reduce((accumulator, currentValue, currentIndex) => {
-      // accumulator 应该是一个数组，保存了到当前位置为止的累积和
-      // 对于第一个元素，累积和数组只有一个元素，就是它本身
+      // accumulator is an array holding the cumulative sums up to the current position.
+      // For the first element, the cumulative-sum array has only one element: itself.
       if (currentIndex === 0) {
         return [currentValue];
       }
 
-      // 对于其他元素，将当前累积和数组的最后一个元素（即前一个位置的累积和）
-      // 加上当前元素的值，然后将新数组推入累积和数组
-      const newAccumulator = [...accumulator]; // 复制累积和数组，避免直接修改它
+      // For other elements, take the last element of the current cumulative-sum array
+      // (the previous position's cumulative sum), add the current value, and push the
+      // new array into the cumulative-sum array.
+      const newAccumulator = [...accumulator]; // Copy to avoid mutating the original.
       newAccumulator.push(
         newAccumulator[newAccumulator.length - 1] + currentValue
       );
       return newAccumulator;
-    }, []); // 初始累积和数组是一个空数组
+    }, []); // Initial cumulative-sum array is empty.
   }
 
   
 function formatNumber(num) {
-    // 定义一个单位映射表
-    const units = ["", "k", "M", "G", "T", "P"]; // 你可以根据需要继续添加单位
+    // Unit mapping table.
+    const units = ["", "k", "M", "G", "T", "P"]; // Append more units as needed.
 
-    // 转换为字符串，便于后续处理
+    // Convert to string for easier processing.
     let numStr = String(num);
 
-    // 去除可能存在的逗号或其他非数字字符
+    // Strip any commas or other non-numeric characters.
     numStr = numStr.replace(/[^0-9\.]/g, "");
 
-    // 将字符串转换为数字
+    // Convert the string to a number.
     num = parseFloat(numStr);
 
-    // 处理小数位
-    num = parseFloat(num.toFixed(2)); // 保留两位小数
+    // Handle decimal places.
+    num = parseFloat(num.toFixed(2)); // Keep two decimal places.
 
-    // 处理单位
+    // Handle units.
     let unitIndex = 0;
     while (num >= 1000) {
         num /= 1000;
         unitIndex++;
         if (unitIndex >= units.length) {
-        // 如果单位列表不足以表示更大的数，则停止处理并返回原始字符串
+        // If the unit list can't represent a larger number, stop and return the original string.
         return numStr;
         }
     }
 
-    // 格式化字符串并添加单位
+    // Format the string and append the unit.
     return `${parseFloat(num.toFixed(2))}${units[unitIndex]}`;
 }
 

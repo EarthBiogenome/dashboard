@@ -32,7 +32,7 @@
 
       #relationshipGraph {
         width: 766px;
-        height: 400px; /* 设置为100%以占满弹窗 */
+        height: 400px; /* Set to 100% to fill the popup */
       }
 
       #total {
@@ -145,7 +145,7 @@
       //     { projectName: 'Project 5', address: 'Address C', website: 'https://example.com/5', latitude: 40.7, longitude: -74.0 },
       //     // More data...
       // ];
-      // 定义不同洲对应的颜色
+      // Define colors for each continent
       const continentColors = {
         Asia: "#33FF57",
         Europe: "#66ccff",
@@ -156,7 +156,7 @@
         Antarctica: "#c4e1ff",
       };
       const countryToContinent = {
-        // 亚洲
+        // Asia
         Afghanistan: "Asia",
         Armenia: "Asia",
         Azerbaijan: "Asia",
@@ -206,7 +206,7 @@
         Vietnam: "Asia",
         Yemen: "Asia",
 
-        // 欧洲
+        // Europe
         Albania: "Europe",
         Andorra: "Europe",
         Austria: "Europe",
@@ -216,7 +216,7 @@
         Bulgaria: "Europe",
         Croatia: "Europe",
         Cyprus: "Europe",
-        "Czech Rep.": "Europe", // 更新为常见缩写
+        "Czech Rep.": "Europe", // updated to common abbreviation
         Denmark: "Europe",
         Estonia: "Europe",
         Finland: "Europe",
@@ -253,7 +253,7 @@
         "United Kingdom": "Europe",
         "Vatican City": "Europe",
 
-        // 非洲
+        // Africa
         Algeria: "Africa",
         Angola: "Africa",
         Benin: "Africa",
@@ -309,7 +309,7 @@
         Zambia: "Africa",
         Zimbabwe: "Africa",
 
-        // 北美洲
+        // North America
         "Antigua and Barbuda": "North America",
         Bahamas: "North America",
         Barbados: "North America",
@@ -332,10 +332,10 @@
         "Saint Lucia": "North America",
         "Saint Vincent and the Grenadines": "North America",
         "United States": "North America",
-        "Puerto Rico": "North America", // 虽然为美国领土但常列为国家
+        "Puerto Rico": "North America", // a US territory but often listed as a country
         Greenland: "North America",
 
-        // 南美洲
+        // South America
         Argentina: "South America",
         Bolivia: "South America",
         Brazil: "South America",
@@ -351,7 +351,7 @@
         "Falkland Is.": "South America",
         "S. Geo. and S. Sandw. Is.": "South America",
 
-        // 大洋洲
+        // Oceania
         Australia: "Oceania",
         Fiji: "Oceania",
         Kiribati: "Oceania",
@@ -387,9 +387,9 @@
       };
       const data = projectsData;
 
-      // 添加项目总数
+      // Add the total number of projects
       // document.querySelector('#total').innerText = `${data.length} affiliated projects`;
-      // 初始化地图
+      // Initialize the map
       function initMap() {
         // Aggregate projects by address
         const addressMap = {};
@@ -414,9 +414,9 @@
             isCenter: item.type === "Headquarter" || !!item.isCenter,
             isNew: !!item.isNew,
             itemStyle: {
-              color: "#333", // 其他点颜色
-              borderColor: !!item.isCenter ? "#ffff00" : "transparent", // 轮廓颜色
-              borderWidth: 4, // 轮廓宽度
+              color: "#333", // color for other points
+              borderColor: !!item.isCenter ? "#ffff00" : "transparent", // border color
+              borderWidth: 4, // border width
               opacity: 0.9,
             },
           };
@@ -438,7 +438,7 @@
         const canadianLinks = [];
 
         filteredData.forEach((point) => {
-          if (point.isCenter && point.type !== 'Headquarter') return; // 中心点不需要链接自己
+          if (point.isCenter && point.type !== 'Headquarter') return; // Center points don't need to link to themselves
 
           // Compute consistent curveness directions
           // const curveness = point.value[0] >= center.value[0] ? 0.4 : -0.4;
@@ -461,7 +461,7 @@
               },
             });
           } else {
-            // 添加飞线连接中心点
+            // Add lines connecting to the center point
             links.push({
               fromName: center.name,
               toName: point.name,
@@ -483,7 +483,7 @@
             formatter: function (params) {
               if (params.seriesType === "scatter") {
                 const item = filteredData[params.dataIndex];
-                let result = `${item.name}<br/>`; // 飞线
+                let result = `${item.name}<br/>`; // connection line
                 if (item.type) {
                     result += `${item.type}`;
                 }
@@ -492,28 +492,28 @@
               return null;
             },
             textStyle: {
-              fontSize: 12, // 设置字体大小
+              fontSize: 12, // set font size
             },
-            // 设置 tooltip 的样式，包括背景色、边框等
-            backgroundColor: "rgba(255, 255, 255, 0.8)", // 可以设置背景颜色
+            // Tooltip style: background color, border, etc.
+            backgroundColor: "rgba(255, 255, 255, 0.8)", // background color
             borderWidth: 1,
             borderColor: "#ccc",
-            padding: [10, 10], // 设置内容的内边距
-            extraCssText: "max-width: 200px; white-space: normal; word-break: break-all", // 设置最大宽度和换行
+            padding: [10, 10], // content padding
+            extraCssText: "max-width: 200px; white-space: normal; word-break: break-all", // max width and wrapping
           },
           // visualMap: {
           //   show: true,
           //   min: 0,
           //   max: 5,
           //   inRange: {
-          //     // 提供一个大洲不同颜色的范围
+          //     // Provide a color range per continent
           //     color: ['#f0f8ff', '#00fa9a', '#ffd700', '#ff8c00', '#ff4500'],
           //   },
           //   outOfRange: {
           //     color: '#dcdcdc'
           //   },
           //   inRange: {
-          //     color: ['#74c476', '#f7b3b3', '#add8e6', '#f1c40f', '#e74c3c'], // 自定义颜色
+          //     color: ['#74c476', '#f7b3b3', '#add8e6', '#f1c40f', '#e74c3c'], // custom colors
           //   }
           // },
           geo: {
@@ -577,9 +577,9 @@
               data: filteredData, //use filtered data
               symbolSize: 8,
               //   itemStyle: {
-              //     color: "#333", // 其他点颜色
-              //     borderColor: "#333", // 轮廓颜色
-              //     borderWidth: 2 // 轮廓宽度
+              //     color: "#333", // color for other points
+              //     borderColor: "#333", // border color
+              //     borderWidth: 2 // border width
               //   },
             },
             // {
@@ -590,7 +590,7 @@
             //       color: "#333",
             //       width: 1,
             //       opacity: 0.5,
-            //       curveness: 0.4, // 线的弯曲度
+            //       curveness: 0.4, // line curvature
             //     },
             //   },
             //   data: links,
@@ -627,9 +627,9 @@
                   data: filteredData, //use filtered data
                   symbolSize: 8,
                   //   itemStyle: {
-                  //     color: "#333", // 其他 点颜色
-                  //     borderColor: "#333", // 轮廓颜色
-                  //     borderWidth: 2 // 轮廓宽度
+                  //     color: "#333", // color for other points
+                  //     borderColor: "#333", // border color
+                  //     borderWidth: 2 // border width
                   //   },
                 },
                 {
@@ -640,7 +640,7 @@
                       color: "#333",
                       width: 1,
                       opacity: 0.5,
-                      curveness: 0.4, // 线的弯曲度
+                      curveness: 0.4, // line curvature
                     },
                   },
                   data: lines,
@@ -648,13 +648,13 @@
               ],
             });
           }
-          // // 当鼠标悬停在中心点上时
+          // // When the mouse hovers over the center point
           // if (
           //   params.seriesType === "scatter" &&
           //   filteredData[params.dataIndex].isCenter
           // ) {
 
-          //   // 移除现有的连接线
+          //   // Remove existing connection lines
           //   myChart.setOption({
           //     series: [
           //       {
@@ -663,9 +663,9 @@
           //         data: filteredData, //use filtered data
           //         symbolSize: 8,
           //         //   itemStyle: {
-          //         //     color: "#333", // 其他点颜色
-          //         //     borderColor: "#333", // 轮廓颜色
-          //         //     borderWidth: 2 // 轮廓宽度
+          //         //     color: "#333", // color for other points
+          //         //     borderColor: "#333", // border color
+          //         //     borderWidth: 2 // border width
           //         //   },
           //       },
           //       {
@@ -676,7 +676,7 @@
           //             color: "#333",
           //             width: 1,
           //             opacity: 0.5,
-          //             curveness: 0.4, // 线的弯曲度
+          //             curveness: 0.4, // line curvature
           //           },
           //         },
           //         data: links,
@@ -685,7 +685,7 @@
           //   });
           // }
           // else {
-          //   // 当鼠标不在中心点上时，隐藏线条
+          //   // When the mouse is not on the center point, hide the lines
           //   myChart.setOption({
           //     series: [
           //       {
@@ -694,21 +694,21 @@
           //         data: filteredData, //use filtered data
           //         symbolSize: 8,
           //         //   itemStyle: {
-          //         //     color: "#333", // 其他点颜色
-          //         //     borderColor: "#333", // 轮廓颜色
-          //         //     borderWidth: 2 // 轮廓宽度
+          //         //     color: "#333", // color for other points
+          //         //     borderColor: "#333", // border color
+          //         //     borderWidth: 2 // border width
           //         //   },
           //       },
           //       {
           //         type: "lines",
-          //         data: [], // 隐藏连线
+          //         data: [], // hide connection lines
           //       },
           //     ],
           //   });
           // }
         });
 
-        // 还原处理，当鼠标移开时也可以处理
+        // Revert behavior when the mouse moves away
         myChart.on("mouseout", function () {
           myChart.setOption({
             series: [
@@ -718,14 +718,14 @@
                 data: filteredData, //use filtered data
                 symbolSize: 8,
                 //   itemStyle: {
-                //     color: "#333", // 其他点颜色
-                //     borderColor: "#333", // 轮廓颜色
-                //     borderWidth: 2 // 轮廓宽度
+                //     color: "#333", // color for other points
+                //     borderColor: "#333", // border color
+                //     borderWidth: 2 // border width
                 //   },
               },
               {
                 type: "lines",
-                data: [], // 重新设置为空
+                data: [], // reset to empty
               },
             ],
           });
@@ -735,13 +735,13 @@
         //     "#38aadd",
         //     "#f63030",
         //     "#f63030",
-        //     "#B0B3B8", // 烟灰色
-        //     "#D4808B", // 金色
-        //     "#708090", // 石板灰
-        //     "#FFD700", // 玫瑰粉
-        //     "#6B8E23", // 亮橄榄绿
-        //     "#191970", // 午夜蓝
-        //     "#FFF8E1"  // 浅象牙色
+        //     "#B0B3B8", // smoke grey
+        //     "#D4808B", // gold
+        //     "#708090", // slate grey
+        //     "#FFD700", // rose pink
+        //     "#6B8E23", // olive green
+        //     "#191970", // midnight blue
+        //     "#FFF8E1"  // light ivory
         // ];
 
         // const promiseArr = aggregatedData.map(item => {
@@ -823,7 +823,7 @@
         //         }
         //     });
 
-        //     // 生成颜色图例
+        //     // Build color legend
         //     // const colorsContainer = document.getElementById('colors');
         //     // colorMap.forEach((color, index) => {
         //     //     const colorDiv = document.createElement('div');
@@ -839,11 +839,11 @@
         //     // });
         // })
 
-        // // 修改图片颜色的函数
+        // // Function to modify image colors
         // function changeImageColor(imageUrl, color) {
         //     return new Promise((resolve) => {
         //         const img = new Image();
-        //         img.crossOrigin = "anonymous"; // 允许跨域
+        //         img.crossOrigin = "anonymous"; // allow cross-origin
         //         img.src = imageUrl;
         //         img.onload = () => {
         //             const canvas = document.createElement('canvas');
@@ -852,36 +852,36 @@
         //             canvas.width = img.width;
         //             canvas.height = img.height;
 
-        //             // 绘制原始图像
+        //             // Draw the original image
         //             context.drawImage(img, 0, 0);
 
-        //             // 获取像素数据
+        //             // Get pixel data
         //             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         //             const data = imageData.data;
 
         //             const myColor = convertColorToRGB(color)
-        //             // 修改颜色
+        //             // Modify colors
         //             for (let i = 0; i < data.length; i += 4) {
         //                 data[i] = myColor.r;      // Red
         //                 data[i + 1] = myColor.g;  // Green
         //                 data[i + 2] = myColor.b;  // Blue
-        //                 // data[i + 3] 是 Alpha 通道，可以保持不变
+        //                 // data[i + 3] is the alpha channel; leave it unchanged
         //             }
 
-        //             // 将修改后的图像数据放回到 Canvas
+        //             // Put the modified image data back on the canvas
         //             context.putImageData(imageData, 0, 0);
 
-        //             // 返回修改后的图像的 Data URL
+        //             // Return the modified image as a Data URL
         //             resolve(canvas.toDataURL());
         //         };
         //     });
         // }
 
         // function convertColorToRGB(color) {
-        //     // 去除前后空白并转换为小写
+        //     // Trim whitespace and convert to lowercase
         //     color = color.trim().toLowerCase();
 
-        //     // 匹配rgb格式
+        //     // Match rgb format
         //     const rgbMatch = color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
         //     if (rgbMatch) {
         //         return {
@@ -891,12 +891,12 @@
         //         };
         //     }
 
-        //     // 匹配Hex格式
+        //     // Match hex format
         //     const hexMatch = color.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
         //     if (hexMatch) {
         //         let hex = hexMatch[1];
         //         if (hex.length === 3) {
-        //             hex = hex.split('').map((h) => h + h).join(''); // 转为6位HEX
+        //             hex = hex.split('').map((h) => h + h).join(''); // expand to 6-digit hex
         //         }
         //         return {
         //             r: parseInt(hex.slice(0, 2), 16),
@@ -905,7 +905,7 @@
         //         };
         //     }
 
-        //     // 匹配HSL格式
+        //     // Match HSL format
         //     const hslMatch = color.match(/^hsl\((\d+),\s*(\d+)%\s*,\s*(\d+)%\)$/);
         //     if (hslMatch) {
         //         let h = parseFloat(hslMatch[1]) / 360;
@@ -970,7 +970,7 @@
         //             edgeSymbol: ['circle', 'arrow'],
         //             edgeSymbolSize: [4, 10],
         //             force: {
-        //                 repulsion: 2000, // 增加斥力间隔
+        //                 repulsion: 2000, // increase repulsion distance
         //             },
         //             label: {
         //                 show: true,
@@ -988,7 +988,7 @@
 
         //     relationshipGraph.on('click', function (params) {
         //         if (params.data.url) {
-        //             window.open(params.data.url, '_blank'); // 在新标签页中打开链接
+        //             window.open(params.data.url, '_blank'); // open the link in a new tab
         //         }
         //     });
         // }
@@ -1016,40 +1016,40 @@
         var option = {
           title: {
             text: `Distribution of ${projectsData.length} EBP Affiliated Projects by Continent`,
-            left: "center", // Title居中
+            left: "center", // title centered
           },
           tooltip: {},
           xAxis: {
             type: "category",
             name: "continent",
-            nameLocation: "middle", // X轴标题居中
+            nameLocation: "middle", // center the X-axis title
             nameTextStyle: {
-              // 设置 X 轴标题字体样式
-              fontSize: 14, // 修改字体大小
+              // X-axis title font style
+              fontSize: 14, // adjust font size
             },
 
-            nameGap: 40, // 与底部的间距
+            nameGap: 40, // gap from the bottom
             data: keys,
           },
           yAxis: {
             type: "value",
             name: "Number  of  Projects",
-            nameLocation: "middle", // Y轴标题居中
-            interval: 5, // 设置Y轴刻度以5为基本单位
+            nameLocation: "middle", // center the Y-axis title
+            interval: 5, // Y-axis tick step is 5
             splitLine: {
-              // 显示Y轴的坐标轴线
+              // show Y-axis lines
               show: true,
             },
             axisLine: {
-              // 显示Y轴的坐标轴线
+              // show Y-axis lines
               show: true,
             },
             nameTextStyle: {
-              // 设置 X 轴标题字体样式
-              fontSize: 14, // 修改字体大小
+              // Y-axis title font style
+              fontSize: 14, // adjust font size
             },
-            nameRotate: 90, // Y轴标题纵向排列
-            nameGap: 40, // 与左侧的间距
+            nameRotate: 90, // rotate the Y-axis title vertically
+            nameGap: 40, // gap from the left
           },
           series: [
             {
@@ -1057,7 +1057,7 @@
               type: "bar",
               data: barData,
               itemStyle: {
-                color: "#FFA500", // 橙色
+                color: "#FFA500", // orange
               },
               barWidth: "50%",
             },
@@ -1066,7 +1066,7 @@
 
         myChart.setOption(option);
 
-        // 点击事件
+        // Click handler
         myChart.on("click", function (params) {
           if (params.componentType === "series") {
             const projects = continentProjects[params.name];
@@ -1107,7 +1107,7 @@
           const map = document.getElementById("mapContainer");
           const bar = document.getElementById("barContainer");
 
-          // 清楚之前的图表
+          // Clear the previous chart
           if (type == "Map") {
             map.style.display = "block";
             bar.style.display = "none";

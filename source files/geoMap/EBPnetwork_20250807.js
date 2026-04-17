@@ -282,7 +282,7 @@ const projectsData = [
     projectName: "Fish 10,000 Genomes (Fish10K)",
     continent: "Asia",
     type: "Headquarters",
-    address: "China, Guangdong Province, Shenzhen, Pingshan, 金沙路西200米 邮政编码: 518122",
+    address: "China, Guangdong Province, Shenzhen, Pingshan, 200m west of Jinsha Rd, Postal code: 518122",
     website: "http://english.cas.cn/newsroom/research_news/life/201910/t20191008_219736.shtml",
     latitude: 22.75,
     longitude: 114.39637

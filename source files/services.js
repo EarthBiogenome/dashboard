@@ -10,17 +10,17 @@
     return assemblyLevelColors[assemblyLevel] || '#cccccc'; // fallback color
   }
 
-// get请求
+// GET request
 async function fetchData(url) {
-    const response = await fetch(url); // 替换为你的 API URL
+    const response = await fetch(url); // Replace with your API URL
     if (!response.ok) {
       throw new Error("Failed to fetch data");
     }
-    const data = await response.json(); // 假设你的 API 返回的是 JSON 格式的数据
+    const data = await response.json(); // Assumes the API returns JSON data
     return data;
   }
 
-    // 获取表盘所需数据
+    // Get data needed for the gauge chart
     function getTreeData(url) {
       return new Promise((resolve) => {
         fetchData(url).then((res) => {
@@ -29,7 +29,7 @@ async function fetchData(url) {
       })
     }
 
-  // 获取表盘所需数据
+  // Get data needed for the gauge chart
   function getUmberllaData(url) {
     return new Promise((resolve) => {
       fetchData(url).then((res) => {
@@ -38,7 +38,7 @@ async function fetchData(url) {
     })
   }
 
-  // 将数据格式化成 echarts 需要的格式
+  // Format data into the shape ECharts needs
   function formatDataUmbrella(data) {
     const arr = data.report.report.arc;
     const colors = ["#440154", "#404387", "#2a788e", "#22a884", "#7ad151", "#ff4500"];
@@ -262,7 +262,7 @@ async function fetchData(url) {
     return { stackedData, legends };
   }
 
-  // 获取柱状图所需数据
+  // Get data needed for the bar chart
   function getStackedBarData(url) {
       return new Promise(resolve => {
           fetchData(url).then((res) => {
@@ -289,7 +289,7 @@ async function fetchData(url) {
     return labels;
   }
 
-  // 将数据格式化成 echarts 需要的格式
+  // Format data into the shape ECharts needs
   function formatStackedBarData(data) {
     const histograms = data.report.report.histogram.histograms;
     console.log('Raw data buckets:', histograms.buckets);
@@ -362,7 +362,7 @@ async function fetchData(url) {
         itemStyle: {
             color: getAssemblyLevelColor(name), // Use consistent color mapping
           },
-          barGap: '1px', // 同一类目下系列之间的间隔
+          barGap: '1px', // Gap between series within the same category
           barCategoryGap: '1px',
       };
       obj.data = filledData;
@@ -398,7 +398,7 @@ async function fetchData(url) {
         itemStyle: {
             color: getAssemblyLevelColor(name), // Use consistent color mapping
           },
-          barGap: '1px', // 同一类目下系列之间的间隔
+          barGap: '1px', // Gap between series within the same category
           barCategoryGap: '1px',
       };
       obj.data = filledData.map((item, index) => {

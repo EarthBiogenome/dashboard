@@ -52,7 +52,7 @@
 
         #relationshipGraph {
             width: 766px;
-            height: 400px;  /* 设置为100%以占满弹窗 */
+            height: 400px;  /* Set to 100% to fill the popup */
         }
 
         #total {
@@ -158,9 +158,9 @@
         // ];
         const data = projectsData
         
-        // 添加项目总数
+        // Add the total number of projects
         // document.querySelector('#total').innerText = `${data.length} affiliated projects`;
-        // 初始化地图
+        // Initialize the map
         function initMap (worldJson) {
             // Aggregate projects by address
             const addressMap = {};
@@ -183,13 +183,13 @@
                 "#dbc649", // color code for project headquarters
                 "#759f98", // color code for areas samples collected
                 "#F28C28",
-                "#B0B3B8", // 烟灰色
-                "#D4808B", // 金色
-                "#708090", // 石板灰
-                "#FFD700", // 玫瑰粉
-                "#6B8E23", // 亮橄榄绿
-                "#191970", // 午夜蓝
-                "#FFF8E1"  // 浅象牙色
+                "#B0B3B8", // smoke grey
+                "#D4808B", // gold
+                "#708090", // slate grey
+                "#FFD700", // rose pink
+                "#6B8E23", // olive green
+                "#191970", // midnight blue
+                "#FFF8E1"  // light ivory
             ];
 
             const promiseArr = aggregatedData.sort((a, b) => {
@@ -216,7 +216,7 @@
             Promise.all(promiseArr).then(arr => {
                 const myChart = echarts.init(document.getElementById('mapContainer'));
 
-                // 国家列表
+                // Country list
                 const countries = new Set()
                 // const projectMap = Object.fromEntries(projectsData.map(project => ([project.projectName, project])))
                 projectsData.forEach(project => {
@@ -260,7 +260,7 @@
                         },
                         regions: Array.from(countries).map(countryName => (
                             {
-                            name: countryName,  // 美国的名称
+                            name: countryName,  // Country name (e.g. "United States")
                             itemStyle: {
                                 areaColor: '#759f98' // color code for country presence
                             }
@@ -307,7 +307,7 @@
                     }
                 });
 
-                // 生成颜色图例
+                // Build color legend
                 // const colorsContainer = document.getElementById('colors');
                 // colorMap.forEach((color, index) => {
                 //     const colorDiv = document.createElement('div');
@@ -323,11 +323,11 @@
                 // });
             })
 
-            // 修改图片颜色的函数
+            // Function to modify image colors
             function changeImageColor(imageUrl, color) {
                 return new Promise((resolve) => {
                     const img = new Image();
-                    img.crossOrigin = "anonymous"; // 允许跨域
+                    img.crossOrigin = "anonymous"; // allow cross-origin
                     img.src = imageUrl;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
@@ -336,36 +336,36 @@
                         canvas.width = img.width;
                         canvas.height = img.height;
 
-                        // 绘制原始图像
+                        // Draw the original image
                         context.drawImage(img, 0, 0);
 
-                        // 获取像素数据
+                        // Get pixel data
                         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
                         const data = imageData.data;
 
                         const myColor = convertColorToRGB(color)
-                        // 修改颜色
+                        // Modify colors
                         for (let i = 0; i < data.length; i += 4) {
                             data[i] = myColor.r;      // Red
                             data[i + 1] = myColor.g;  // Green
                             data[i + 2] = myColor.b;  // Blue
-                            // data[i + 3] 是 Alpha 通道，可以保持不变
+                            // data[i + 3] is the alpha channel; leave it unchanged
                         }
 
-                        // 将修改后的图像数据放回到 Canvas
+                        // Put the modified image data back on the canvas
                         context.putImageData(imageData, 0, 0);
 
-                        // 返回修改后的图像的 Data URL
+                        // Return the modified image as a Data URL
                         resolve(canvas.toDataURL());
                     };
                 });
             }
 
             function convertColorToRGB(color) {
-                // 去除前后空白并转换为小写
+                // Trim whitespace and convert to lowercase
                 color = color.trim().toLowerCase();
 
-                // 匹配rgb格式
+                // Match rgb format
                 const rgbMatch = color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
                 if (rgbMatch) {
                     return {
@@ -375,12 +375,12 @@
                     };
                 }
 
-                // 匹配Hex格式
+                // Match hex format
                 const hexMatch = color.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
                 if (hexMatch) {
                     let hex = hexMatch[1];
                     if (hex.length === 3) {
-                        hex = hex.split('').map((h) => h + h).join(''); // 转为6位HEX
+                        hex = hex.split('').map((h) => h + h).join(''); // expand to 6-digit hex
                     }
                     return {
                         r: parseInt(hex.slice(0, 2), 16),
@@ -389,7 +389,7 @@
                     };
                 }
 
-                // 匹配HSL格式
+                // Match HSL format
                 const hslMatch = color.match(/^hsl\((\d+),\s*(\d+)%\s*,\s*(\d+)%\)$/);
                 if (hslMatch) {
                     let h = parseFloat(hslMatch[1]) / 360;
@@ -454,7 +454,7 @@
                         edgeSymbol: ['circle', 'arrow'],
                         edgeSymbolSize: [4, 10],
                         force: {
-                            repulsion: 2000, // 增加斥力间隔
+                            repulsion: 2000, // increase repulsion distance
                         },
                         label: {
                             show: true,
@@ -472,7 +472,7 @@
                 
                 relationshipGraph.on('click', function (params) {
                     if (params.data.url) {
-                        window.open(params.data.url, '_blank'); // 在新标签页中打开链接
+                        window.open(params.data.url, '_blank'); // open the link in a new tab
                     } 
                 });
             }
@@ -502,7 +502,7 @@
             var option = {
                 title: {
                     text: `Distribution of ${count} EBP Affiliated Projects by Country`,
-                    left: 'center' // Title居中
+                    left: 'center' // title centered
                 },
                 grid: {
                     top: '12%',
@@ -514,32 +514,32 @@
                 xAxis: {
                     type: 'category',
                     name: 'Country',
-                    nameLocation: 'middle', // X轴标题居中
-                    nameTextStyle: { // 设置 X 轴标题字体样式
-                        fontSize: 14 // 修改字体大小
+                    nameLocation: 'middle', // center the X-axis title
+                    nameTextStyle: { // X-axis title font style
+                        fontSize: 14 // adjust font size
                     },
                     axisLabel: {
                         rotate: -45
                     },
-                    nameGap: 60, // 与底部的间距
+                    nameGap: 60, // gap from the bottom
                     data: keys
                 },
                 yAxis: {
                     type: 'value',
                     name: 'Number  of  Projects',
-                    nameLocation: 'middle', // Y轴标题居中
-                    interval: 5, // 设置Y轴刻度以5为基本单位
-                    splitLine: { // 显示Y轴的坐标轴线
+                    nameLocation: 'middle', // center the Y-axis title
+                    interval: 5, // Y-axis tick step is 5
+                    splitLine: { // show Y-axis split lines
                         show: true
                     },
-                    axisLine: { // 显示Y轴的坐标轴线
+                    axisLine: { // show Y-axis line
                         show: true
                     },
-                    nameTextStyle: { // 设置 X 轴标题字体样式
-                        fontSize: 14 // 修改字体大小
+                    nameTextStyle: { // Y-axis title font style
+                        fontSize: 14 // adjust font size
                     },
-                    nameRotate: 90, // Y轴标题纵向排列
-                    nameGap: 40 // 与左侧的间距
+                    nameRotate: 90, // rotate the Y-axis title vertically
+                    nameGap: 40 // gap from the left
                 },
                 series: [{
                     name: 'Country',
@@ -554,7 +554,7 @@
 
             myChart.setOption(option);
 
-            // 点击事件
+            // Click handler
             myChart.on('click', function (params) {
                 if (params.componentType === 'series') {
                     const projects = countryProjects[params.name]
@@ -594,7 +594,7 @@
             const map = document.getElementById('mapContainer')
             const bar = document.getElementById('barContainer')
 
-            // 清楚之前的图表 
+            // Clear the previous chart 
             if(type == 'Map') {
                 map.style.display = 'block'
                 bar.style.display = 'none'

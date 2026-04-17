@@ -243,15 +243,15 @@
                               .text(`${formatNumber(value)}   assembly_span:[${isUnkown(data.fields.assembly_span.min)}-${isUnkown(data.fields.assembly_span.max)}]`);
                       })
                       .on("mousemove", function(event) {
-                        // 获取 tooltip 的宽度和高度
+                        // Get the tooltip width and height
                         const tooltipWidth = tooltip.node().offsetWidth;
                         const tooltipHeight = tooltip.node().offsetHeight;
                         
-                        // 计算 tooltip 的位置
+                        // Compute the tooltip position
                         let left = event.pageX + 10;
                         let top = event.pageY + 10;
 
-                        // 检查边界并调整位置
+                        // Check boundaries and adjust the position
                         if (left + tooltipWidth > window.innerWidth) {
                             left = event.pageX - tooltipWidth - 10;
                         }
@@ -274,13 +274,13 @@
       }
 
       window.onload = () => {
-          // 在页面加载时去除 hash
+          // Strip the hash on page load
             if (window.location.hash) {
                 history.replaceState(null, null, location.pathname + location.search);
             }
         getTreeData(url).then(res => {
           const treeNodes = res.report.report.tree.tree.treeNodes
-          // 选择一个根节点 ID，假设选择 "2759" 作为根节点
+          // Pick a root node ID; assume "2759" as the root
         const rootId = "2759";
         treeData = {name: "root", children: [buildTree(treeNodes, rootId)], fields: []}
         treeMap[root] = treeData
@@ -311,7 +311,7 @@
         const type = document.querySelector('.selected').innerHTML
           
         const svg = d3.selectAll('.phylotree-container')
-         // 如果已有 Phylotree 实例，则清除旧的
+         // If a Phylotree instance already exists, clear the old one
             if (tree) {
               document.querySelector('#tree_container').innerHTML = ''
               document.getElementById('tooltip').style.visibility = 'hidden'
@@ -396,7 +396,7 @@
         } catch (e) {}
       }
 
-      // 将扁平结构转换为层级结构
+      // Convert the flat structure into a hierarchical one
       function buildTree(flatData, rootId) {
             let tree = { name: flatData[rootId].scientific_name, children: [], fields: flatData[rootId].fields };
             treeMap[tree.name] = tree
@@ -416,7 +416,7 @@
             return tree;
         }
 
-        // 转换为 Newick 格式
+        // Convert to Newick format
         function convertToNewick(node) {
             if (!node.children || node.children.length === 0) {
                 return `${node.name}`;
@@ -426,7 +426,7 @@
         }
 
       function formatData(treeData) {
-        // 转换为 Newick 格式
+        // Convert to Newick format
         const newickString = convertToNewick(treeData) + ';';
         return newickString;
       }

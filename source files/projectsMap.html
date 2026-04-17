@@ -160,7 +160,7 @@
             Promise.all(promiseArr).then(arr => {
                 const myChart = echarts.init(document.getElementById('mapContainer'));
 
-                // 国家列表
+                // Country list
                 const countries = new Set()
                 // const projectMap = Object.fromEntries(projectsData.map(project => ([project.projectName, project])))
                 projectsData.forEach(project => {
@@ -205,7 +205,7 @@
                         },
                         regions: Array.from(countries).map(countryName => (
                             {
-                            name: countryName,  // 美国的名称
+                            name: countryName,  // Country name (e.g. "United States")
                             itemStyle: {
                                 areaColor: '#759f98' // color code for country presence
                             }
@@ -252,7 +252,7 @@
                     }
                 });
 
-                // 生成颜色图例
+                // Build color legend
                 // const colorsContainer = document.getElementById('colors');
                 // colorMap.forEach((color, index) => {
                 //     const colorDiv = document.createElement('div');
@@ -268,11 +268,11 @@
                 // });
             })
 
-            // 修改图片颜色的函数
+            // Function to modify image colors
             function changeImageColor(imageUrl, color) {
                 return new Promise((resolve) => {
                     const img = new Image();
-                    img.crossOrigin = "anonymous"; // 允许跨域
+                    img.crossOrigin = "anonymous"; // allow cross-origin
                     img.src = imageUrl;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
@@ -281,36 +281,36 @@
                         canvas.width = img.width;
                         canvas.height = img.height;
 
-                        // 绘制原始图像
+                        // Draw the original image
                         context.drawImage(img, 0, 0);
 
-                        // 获取像素数据
+                        // Get pixel data
                         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
                         const data = imageData.data;
 
                         const myColor = convertColorToRGB(color)
-                        // 修改颜色
+                        // Modify colors
                         for (let i = 0; i < data.length; i += 4) {
                             data[i] = myColor.r;      // Red
                             data[i + 1] = myColor.g;  // Green
                             data[i + 2] = myColor.b;  // Blue
-                            // data[i + 3] 是 Alpha 通道，可以保持不变
+                            // data[i + 3] is the alpha channel; leave it unchanged
                         }
 
-                        // 将修改后的图像数据放回到 Canvas
+                        // Put the modified image data back on the canvas
                         context.putImageData(imageData, 0, 0);
 
-                        // 返回修改后的图像的 Data URL
+                        // Return the modified image as a Data URL
                         resolve(canvas.toDataURL());
                     };
                 });
             }
 
             function convertColorToRGB(color) {
-                // 去除前后空白并转换为小写
+                // Trim whitespace and convert to lowercase
                 color = color.trim().toLowerCase();
 
-                // 匹配rgb格式
+                // Match rgb format
                 const rgbMatch = color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
                 if (rgbMatch) {
                     return {
@@ -320,12 +320,12 @@
                     };
                 }
 
-                // 匹配Hex格式
+                // Match hex format
                 const hexMatch = color.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
                 if (hexMatch) {
                     let hex = hexMatch[1];
                     if (hex.length === 3) {
-                        hex = hex.split('').map((h) => h + h).join(''); // 转为6位HEX
+                        hex = hex.split('').map((h) => h + h).join(''); // expand to 6-digit hex
                     }
                     return {
                         r: parseInt(hex.slice(0, 2), 16),
@@ -334,7 +334,7 @@
                     };
                 }
 
-                // 匹配HSL格式
+                // Match HSL format
                 const hslMatch = color.match(/^hsl\((\d+),\s*(\d+)%\s*,\s*(\d+)%\)$/);
                 if (hslMatch) {
                     let h = parseFloat(hslMatch[1]) / 360;
@@ -399,7 +399,7 @@
                         edgeSymbol: ['circle', 'arrow'],
                         edgeSymbolSize: [4, 10],
                         force: {
-                            repulsion: 2000, // 增加斥力间隔
+                            repulsion: 2000, // increase repulsion distance
                         },
                         label: {
                             show: true,
@@ -417,7 +417,7 @@
                 
                 relationshipGraph.on('click', function (params) {
                     if (params.data.url) {
-                        window.open(params.data.url, '_blank'); // 在新标签页中打开链接
+                        window.open(params.data.url, '_blank'); // open the link in a new tab
                     } 
                 });
             }
