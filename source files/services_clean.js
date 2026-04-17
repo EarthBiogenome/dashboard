@@ -1,4 +1,4 @@
-﻿  // Will add consistent color mapping function at the top
+  // Will add consistent color mapping function at the top
   // Define consistent color mapping based on assembly level names
   function getAssemblyLevelColor(assemblyLevel) {
     const assemblyLevelColors = {
@@ -10,17 +10,17 @@
     return assemblyLevelColors[assemblyLevel] || '#cccccc'; // fallback color
   }
 
-// getΦ»╖µ▒é
+// GET request
 async function fetchData(url) {
-    const response = await fetch(url); // µ¢┐µìóΣ╕║Σ╜áτÜä API URL
+    const response = await fetch(url); // Replace with your API URL
     if (!response.ok) {
       throw new Error("Failed to fetch data");
     }
-    const data = await response.json(); // σüçΦ«╛Σ╜áτÜä API Φ┐öσ¢₧τÜäµÿ» JSON µá╝σ╝ÅτÜäµò░µì«
+    const data = await response.json(); // Assumes the API returns JSON data
     return data;
   }
 
-    // ΦÄ╖σÅûΦí¿τ¢ÿµëÇΘ£Çµò░µì«
+    // Get data needed for the gauge chart
     function getTreeData(url) {
       return new Promise((resolve) => {
         fetchData(url).then((res) => {
@@ -29,7 +29,7 @@ async function fetchData(url) {
       })
     }
 
-  // ΦÄ╖σÅûΦí¿τ¢ÿµëÇΘ£Çµò░µì«
+  // Get data needed for the gauge chart
   function getUmberllaData(url) {
     return new Promise((resolve) => {
       fetchData(url).then((res) => {
@@ -38,7 +38,7 @@ async function fetchData(url) {
     })
   }
 
-  // σ░åµò░µì«µá╝σ╝ÅσîûµêÉ echarts Θ£ÇΦªüτÜäµá╝σ╝Å
+  // Format data into the shape ECharts needs
   function formatDataUmbrella(data) {
     const arr = data.report.report.arc;
     const colors = ["#440154", "#404387", "#2a788e", "#22a884", "#7ad151", "#ff4500"];
@@ -113,10 +113,12 @@ async function fetchData(url) {
           show: false
         }
       }]
-      arr[index].value = d.data[0].value
-      arr[index].description = `${sourceName}-${d.name}: ${d.data[0].description}`
-      arr[index].label.show = true
-      arr[index].label.rotate = 0
+      // Invert index to place phylum inner (index 0) and species outer (index 5)
+      const invertedIndex = 5 - index;
+      arr[invertedIndex].value = d.data[0].value
+      arr[invertedIndex].description = `${sourceName}-${d.name}: ${d.data[0].description}`
+      arr[invertedIndex].label.show = true
+      arr[invertedIndex].label.rotate = 0
       d.data = arr
       // d.stack = index
       d.stack  = 'a'
@@ -140,11 +142,13 @@ async function fetchData(url) {
         //   }
         // })
         INSDC.forEach((item, index) => {
-          let ratio = item.data[index].value / EBP[index].data[index].value
-          if(EBP[index].data[index].value < 5) {
-            EBP[index].data[index].value = EBP[index].data[index].value + 1
+          // Use inverted index to match the inverted data positioning
+          const invertedIndex = 5 - index;
+          let ratio = item.data[invertedIndex].value / EBP[index].data[invertedIndex].value
+          if(EBP[index].data[invertedIndex].value < 5) {
+            EBP[index].data[invertedIndex].value = EBP[index].data[invertedIndex].value + 1
             ratio = Math.min(ratio, 3)
-            item.data[index].value = EBP[index].data[index].value * ratio
+            item.data[invertedIndex].value = EBP[index].data[invertedIndex].value * ratio
           }
           // item.data[index].value = item.data[index].value - EBP[index].data[index].value
           // item.animationDelay = function() {
@@ -180,7 +184,86 @@ async function fetchData(url) {
     
   }
 
-  // ΦÄ╖σÅûµƒ▒τè╢σ¢╛µëÇΘ£Çµò░µì«
+  // Format EBP quality metrics data into stacked arc chart format.
+  // totalByRank: object keyed by rank name with total eukaryotic taxa count (denominator, same as StackedRainbow grey background).
+  // ebpHits / insdcHits: objects keyed by rank name with quality-filtered counts.
+  function formatQualityMetricsArcData(totalByRank, insdcHits, ebpHits) {
+    // Same color arrays as formatStackedUmbrellaData — reversed before passing to handleStackedFormat
+    const EBPColors   = ["#440154", "#404387", "#2a788e", "#22a884", "#7ad151", "#ff4500"];
+    const INSDCColors = ["#6d3f9b", "#6e6d9b", "#55b4c6", "#4ad6a4", "#b3e093", "#ff8c42"];
+    // ranks in same order as formatDataUmbrella output (phylum first, species last), then .reverse()
+    const ranks = ["phylum", "class", "order", "family", "genus", "species"];
+
+    const EBPUmbrellaData = ranks.map((rank) => {
+      const total  = totalByRank[rank];
+      const ebp    = ebpHits[rank];
+      const arcPct = total > 0 ? Math.floor((ebp / total) * 1000 + 0.5) / 10 : 0;
+      return {
+        name: rank,
+        type: 'bar',
+        data: [{ value: arcPct, description: `${Number(ebp).toLocaleString('en-US')}/${Number(total).toLocaleString('en-US')}` }],
+        total: total,
+        num: ebp,
+        coordinateSystem: 'polar',
+        showBackground: true,
+        backgroundStyle: { color: '#cccccc' },
+        label: { show: true, position: 'middle', formatter: `${arcPct}%`, textStyle: { color: '#fff', fontSize: 14, fontWeight: 'bold' } }
+      };
+    }).reverse();
+
+    const INSDCUmbrellaData = ranks.map((rank) => {
+      const total  = totalByRank[rank];
+      const insdc  = insdcHits[rank];
+      const arcPct = total > 0 ? Math.floor((insdc / total) * 1000 + 0.5) / 10 : 0;
+      return {
+        name: rank,
+        type: 'bar',
+        data: [{ value: arcPct, description: `${Number(insdc).toLocaleString('en-US')}/${Number(total).toLocaleString('en-US')}` }],
+        total: total,
+        num: insdc,
+        coordinateSystem: 'polar',
+        showBackground: true,
+        backgroundStyle: { color: '#cccccc' },
+        label: { show: true, position: 'middle', formatter: `${arcPct}%`, textStyle: { color: '#fff', fontSize: 14, fontWeight: 'bold' } }
+      };
+    }).reverse();
+
+    // Mirror formatStackedUmbrellaData exactly: reverse color arrays before passing to handleStackedFormat
+    const EBP   = handleStackedFormat(EBPUmbrellaData,   EBPColors.reverse(),   'EBP-quality');
+    const INSDC = handleStackedFormat(INSDCUmbrellaData, INSDCColors.reverse(), 'INSDC-quality');
+
+    // Subtract EBP arc from INSDC arc so they stack correctly (same logic as formatStackedUmbrellaData)
+    INSDC.forEach((item, index) => {
+      const invertedIndex = 5 - index;
+      let ratio = item.data[invertedIndex].value / EBP[index].data[invertedIndex].value;
+      if (EBP[index].data[invertedIndex].value < 5) {
+        EBP[index].data[invertedIndex].value = EBP[index].data[invertedIndex].value + 1;
+        ratio = Math.min(ratio, 3);
+        item.data[invertedIndex].value = EBP[index].data[invertedIndex].value * ratio;
+      }
+    });
+
+    // After .reverse() above, EBPColors/INSDCColors are now in reversed order — same as formatStackedUmbrellaData
+    const legends = [];
+    const len = EBPUmbrellaData.length;
+    for (let i = 0; i < len; i++) {
+      legends.push({
+        name: EBPUmbrellaData[i].name,
+        color: EBPColors[i],
+        data: [
+          { name: 'EBP-quality',   num: EBPUmbrellaData[i].num,   color: EBPColors[i]   },
+          { name: 'INSDC-quality', num: INSDCUmbrellaData[i].num, color: INSDCColors[i] }
+        ],
+        contrast: INSDCUmbrellaData[i].num > 0 ? EBPUmbrellaData[i].num / INSDCUmbrellaData[i].num : 0,
+        total: formatNumber(EBPUmbrellaData[i].total)
+      });
+    }
+
+    const stackedData = EBP.map((_, index) => [EBP[index], INSDC[index]]).flat();
+    return { stackedData, legends };
+  }
+
+  // Get data needed for the bar chart
   function getStackedBarData(url) {
       return new Promise(resolve => {
           fetchData(url).then((res) => {
@@ -207,7 +290,7 @@ async function fetchData(url) {
     return labels;
   }
 
-  // σ░åµò░µì«µá╝σ╝ÅσîûµêÉ echarts Θ£ÇΦªüτÜäµá╝σ╝Å
+  // Format data into the shape ECharts needs
   function formatStackedBarData(data) {
     const histograms = data.report.report.histogram.histograms;
     console.log('Raw data buckets:', histograms.buckets);
@@ -280,7 +363,7 @@ async function fetchData(url) {
         itemStyle: {
             color: getAssemblyLevelColor(name), // Use consistent color mapping
           },
-          barGap: '1px', // σÉîΣ╕Çτ▒╗τ¢«Σ╕ïτ│╗σêùΣ╣ïΘù┤τÜäΘù┤ΘÜö
+          barGap: '1px', // Gap between series within the same category
           barCategoryGap: '1px',
       };
       obj.data = filledData;
@@ -316,7 +399,7 @@ async function fetchData(url) {
         itemStyle: {
             color: getAssemblyLevelColor(name), // Use consistent color mapping
           },
-          barGap: '1px', // σÉîΣ╕Çτ▒╗τ¢«Σ╕ïτ│╗σêùΣ╣ïΘù┤τÜäΘù┤ΘÜö
+          barGap: '1px', // Gap between series within the same category
           barCategoryGap: '1px',
       };
       obj.data = filledData.map((item, index) => {
@@ -785,8 +868,9 @@ async function fetchData(url) {
     const histograms = data.report.report.histogram.histograms;
     const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
     
-    // Extract years from buckets
-    const category = histograms.buckets.map(d => new Date(d).getFullYear());
+    // GoaT returns N+1 bucket boundary dates for N bins; drop the trailing end-boundary
+    // (it is the upper fence of the last bin, not a data bin itself)
+    const category = histograms.buckets.slice(0, -1).map(d => new Date(d).getUTCFullYear());
     console.log(`${dataType} Report API - Years:`, category);
     console.log(`${dataType} Report API - byCat:`, histograms.byCat);
     

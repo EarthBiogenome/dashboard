@@ -8,7 +8,7 @@
     <title>Progress_StackedRainbow</title>
     <script src="./echarts.min.js"></script>
     <script src="./utils.js"></script>
-    <script src="./services.js"></script>
+    <script src="./services_clean.js"></script>
     <script>
       // Initialize a polar arc chart into a given container element id
       function initEchart(containerId, data, annimationDelay) {
@@ -40,7 +40,7 @@
             textStyle: {
                 color: 'rgba(0, 0, 0, 0.85)',
                 fontFamily: 'sans-serif',
-                fontSize: 10,
+                fontSize: 14,
                 fontWeight: 'normal',
             }
           },
@@ -85,7 +85,7 @@
                 text: `${data.text}`,
                 textAlign: 'center',
                 textVerticalAlign: 'middle',
-                fontSize: 10,
+                fontSize: 14,
                 fill: data.color
               }
           }
@@ -121,29 +121,25 @@
         const contrasts = [];
 
         const labelOffsets = {
-          'species': -55,
-          'genus': -60,
-          'family': -65,
-          'order': -65,
-          'class': -70,
-          'phylum': -80
+          'species': -8,
+          'genus': -8,
+          'family': -10,
+          'order': -15,
+          'class': -20,
+          'phylum': -30
         };
-        const totalOffsets = {
-          'species': -45,
-          'genus': -50,
-          'family': -60,
-          'order': -65,
-          'class': -75,
-          'phylum': -80
-        };
+        // Totals are drawn on the right side in the reversed order of names (so at slot 0
+        // the displayed total is phylum's, at slot 5 it is species's). Index this array
+        // by slot position to control each total independently. Left-to-right on the
+        // right side: phylum, class, order, family, genus, species.
+        const totalOffsetsByIndex = [10, 3, -8, -18, -25, -27];
 
         displayLegends.forEach(item => {
           names.push({
             type: 'total',
             text: item.name,
             color: item.color,
-            labelOffset: labelOffsets[item.name] || 0,
-            totalOffset: totalOffsets[item.name] || 0
+            labelOffset: labelOffsets[item.name] || 0
           });
           EBP.push({ type: 'rect', text: item.data[0].num, color: item.data[0].color });
           INSDC.push({ type: 'rect', text: item.data[1].num, color: item.data[1].color });
@@ -164,7 +160,7 @@
             type: 'group',
             top: (index) * 20 + 10,
             left: offsetX - document.getElementById(refChartId).clientHeight + 10,
-            bounding: 'all',
+            bounding: 'raw',
             children: []
           };
           const width = Math.floor(document.getElementById(refChartId).clientHeight / displayLegends.length);
@@ -185,7 +181,7 @@
               text.left = index * width + (item.labelOffset || 0);
               groupOption.children.push(text);
               const total = getGraphicOption('text', totals[index]);
-              total.left = index * width + document.getElementById(refChartId).clientHeight + width / 2 + (item.totalOffset || 0);
+              total.left = index * width + document.getElementById(refChartId).clientHeight + width / 2 + (totalOffsetsByIndex[index] || 0);
               groupOption.children.push(total);
             }
           });
@@ -242,8 +238,27 @@
           initEchart('chartContainer', stackedData, annimationDelay);
           initLegendChart('legendContainer', legends, annimationDelay, 'chartContainer');
           document.getElementById('taxaPanel').innerHTML = buildTaxaPanelHtml(legends);
+          notifyParentOfContentHeight();
         });
       };
+
+      // When embedded in an iframe on another site, the parent page often gives the
+      // iframe a fixed height that is larger than the actual chart, which shows up as
+      // empty space below the chart. Broadcast our real content height via postMessage
+      // so a cooperating parent can resize the iframe. Also respond to window resizes.
+      function notifyParentOfContentHeight() {
+        if (window.parent === window) return;
+        const send = () => {
+          const container = document.querySelector('.container');
+          const height = container ? container.getBoundingClientRect().bottom : document.body.scrollHeight;
+          window.parent.postMessage(
+            { type: 'stackedRainbow:resize', height: Math.ceil(height) },
+            '*'
+          );
+        };
+        send();
+        window.addEventListener('resize', send);
+      }
     </script>
     <style>
       body {
@@ -334,7 +349,7 @@
         color: #888;
         min-width: 36px;
         text-align: right;
-        font-weight: normal;
+        font-weight: bold;
       }
       .taxa-value {
         font-weight: bold;

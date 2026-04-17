@@ -44,7 +44,7 @@
             textStyle: { // Set tooltip text style
                 color: 'rgba(0, 0, 0, 0.85)', // Text color
                 fontFamily: 'sans-serif', // Font family
-                fontSize: 10, // Font size
+                fontSize: 14, // Font size
                 fontWeight: 'normal', // Font weight
                 // You can also set other text styles such as lineHeight, backgroundColor, borderColor, etc.
             }
@@ -90,7 +90,7 @@
                 text: `${data.text}`,
                 textAlign: 'center',
                 textVerticalAlign: 'middle',
-                fontSize: 12,
+                fontSize: 14,
                 fill: data.color
               }
           }
@@ -126,13 +126,19 @@
         
         // Define individual offsets for each taxonomic rank
         const nameOffsets = {
-          'phylum': 0,
-          'class': 0, 
-          'order': -5,
-          'family': -10,
-          'genus': -15,
-          'species': -22
+          'phylum': -8,
+          'class': -5,
+          'order': -12,
+          'family': -17,
+          'genus': -23,
+          'species': -30
         };
+        // Totals on the right side: totals[totals.length-1-index] means index 0 (leftmost
+        // slot) pairs with species (outermost/widest grey arc, rightmost total), and
+        // index 5 (rightmost slot) pairs with phylum (innermost/narrowest grey arc,
+        // leftmost total). So as index increases, the paired arc gets narrower/closer
+        // to center, and the total should shift progressively LEFT to sit under it.
+        const totalOffsetsByIndex = [-20, -10, -12, -12, -12, -12];
         
         reverseLegends.forEach(item => {
           names.push({
@@ -181,7 +187,7 @@
             type: 'group',
             top: (index) * 20 + 10,
             left: offsetX - document.getElementById('chartContainer').clientHeight + 10,
-            bounding: 'all',
+            bounding: 'raw',
             children: []
           }
           const width = Math.floor(document.getElementById('chartContainer').clientHeight / reverseLegends.length)
@@ -202,7 +208,7 @@
               text.left = index * width + (item.offset || 0)  // Apply custom offset here
               groupOption.children.push(text)
               const total = getGraphicOption('text', totals[totals.length - 1 - index])
-              total.left = index * width + document.getElementById('chartContainer').clientHeight + width / 2
+              total.left = index * width + document.getElementById('chartContainer').clientHeight + width / 2 + (totalOffsetsByIndex[index] || 0)
               groupOption.children.push(total)
             }
           })
