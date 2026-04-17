@@ -249,6 +249,7 @@
       body {
         margin: 0;
         width: 100vw;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
@@ -275,9 +276,12 @@
       #chartContainer {
         width: 90vw;
         max-width: 1400px;
-        height: min(48vh, 500px);
-        min-height: 300px;
-        margin-top: 20px;
+        /* Height is the smaller of half the width (so the semi-circle arc fills the
+           container without empty space below) and the remaining viewport height
+           (so the full chart fits without scrolling). */
+        height: min(45vw, calc(100vh - 140px));
+        min-height: 260px;
+        margin-top: 10px;
       }
       #legendContainer {
         width: 90vw;
@@ -298,7 +302,8 @@
       }
       #taxaPanel {
         position: absolute;
-        top: 16px;
+        /* Positioned below the chart title to prevent overlap with the centered title text. */
+        top: 70px;
         left: 16px;
         background: #fff;
         border-radius: 8px;

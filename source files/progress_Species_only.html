@@ -13,22 +13,25 @@
       body {
         margin: 0;
         padding: 0;
-        font-family: Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        overflow: hidden;
       }
       .page-title {
         text-align: center;
-        font-weight: bold;
-        margin: 5vh 0 2vh 0;
+        font-size: 1.6vw;
+        font-weight: 700;
         color: #333;
-        letter-spacing: 1px;
-        font-size: 2.0vw;
+        margin: 15px auto 12px auto;
+        line-height: 1.4;
       }
       #chartContainer {
         width: 80%;
         aspect-ratio: 16/9;
         min-height: 300px;
-        max-height: 70vh;
-        margin: 0 auto 2vh auto;
+        /* Cap height so the chart plus title and fixed footer fit in one viewport,
+           leaving a consistent ~30px of space below the chart (matching StackedRainbow_clean.html). */
+        max-height: calc(100vh - 90px);
+        margin: 0 auto 10px auto;
       }
       #footer {
         position: fixed;
@@ -48,13 +51,13 @@
         .page-title { font-size: 4vw; }
       }
       @media (min-width: 2000px) {
-        #chartContainer { max-width: 1200px; max-height: 60vh; }
+        #chartContainer { max-width: 1200px; max-height: calc(100vh - 90px); }
         .page-title { font-size: 1.5vw; }
       }
     </style>
   </head>
   <body>
-    <h1 class="page-title">Annual EBP Species Progress</h1>
+    <h1 class="page-title">Annual EBP progress</h1>
     <div id="chartContainer"></div>
 
     <div id="footer">
