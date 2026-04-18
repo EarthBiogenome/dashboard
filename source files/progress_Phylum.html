@@ -163,10 +163,10 @@
       }
 
       // Position-based color palette — bar 1 gets color[0], bar 2 gets color[1], etc.
-      // Colors span the full hue wheel to stay visually distinct even after the 55% white
-      // blend used for the INSDC light shade.
+      // Dark saturated bases (hue-spread); INSDC segments use the same hue after 55% white blend.
       const colorPalette = [
-        '#4B1979', '#3B3B98', '#218cbe', '#38ada9', '#b8e994', '#f6e58d', '#ffbe76', '#e17055', '#6ab04c', '#1a5276', '#8e44ad'
+        '#4c1d95', '#3730a3', '#1e3a8a', '#0c4a6e', '#0f766e', '#14532d', '#3f6212',
+        '#713f12', '#9a3412', '#991b1b', '#701a75'
       ];
       function getPhylumDarkColor(idx) {
         return colorPalette[idx % colorPalette.length];
