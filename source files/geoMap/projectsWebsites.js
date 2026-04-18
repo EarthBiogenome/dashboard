@@ -9,6 +9,15 @@ const projectsData = [
     isCenter: true,
   },
   {
+    projectName: "HUNTomics",
+    continent: "Europe",
+    address:
+      "13 Rue du Général Leclerc, 92130 Issy-les-Moulineaux, France",
+    website: "https://www.chasseurdefrance.com/",
+    latitude: 48.82639,
+    longitude: 2.27871,
+  },
+  {
     projectName: "Global Invertebrates Genome Alliance (GIGA)",
     continent: "North America",
     address: "8000 North Ocean Drive Dania Beach, FL 33004, United States",
@@ -77,6 +86,15 @@ const projectsData = [
   },
   {
     projectName: "Darwin Tree of Life (DToL)",
+    continent: "Europe",
+    address:
+      "Wellcome Trust Genome Campus, Hinxton, Saffron Walden CB10 1RQ, United Kingdom",
+    website: "https://www.darwintreeoflife.org/",
+    latitude: 52.0795000649971,
+    longitude: 0.184695043288939,
+  },
+  {
+    projectName: "Ancient Environmental Genomics Initiative for Sustainability (AEGIS)",
     continent: "Europe",
     address:
       "Wellcome Trust Genome Campus, Hinxton, Saffron Walden CB10 1RQ, United Kingdom",
