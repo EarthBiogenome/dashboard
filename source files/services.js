@@ -67,7 +67,7 @@ async function fetchData(url) {
                   formatter: `${Math.floor(item.arc * 1000 + 0.5) / 10}%`,
                   textStyle: {
                       color: '#fff',
-                      fontSize: 10
+                      fontSize: 12
                   }
               }
           }
@@ -206,7 +206,7 @@ async function fetchData(url) {
         coordinateSystem: 'polar',
         showBackground: true,
         backgroundStyle: { color: '#cccccc' },
-        label: { show: true, position: 'middle', formatter: `${arcPct}%`, textStyle: { color: '#fff', fontSize: 10 } }
+        label: { show: true, position: 'middle', formatter: `${arcPct}%`, textStyle: { color: '#fff', fontSize: 12 } }
       };
     }).reverse();
 
@@ -223,7 +223,7 @@ async function fetchData(url) {
         coordinateSystem: 'polar',
         showBackground: true,
         backgroundStyle: { color: '#cccccc' },
-        label: { show: true, position: 'middle', formatter: `${arcPct}%`, textStyle: { color: '#fff', fontSize: 10 } }
+        label: { show: true, position: 'middle', formatter: `${arcPct}%`, textStyle: { color: '#fff', fontSize: 12 } }
       };
     }).reverse();
 

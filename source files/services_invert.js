@@ -1,4 +1,4 @@
-﻿  // Will add consistent color mapping function at the top
+  // Will add consistent color mapping function at the top
   // Define consistent color mapping based on assembly level names
   function getAssemblyLevelColor(assemblyLevel) {
     const assemblyLevelColors = {
@@ -10,17 +10,17 @@
     return assemblyLevelColors[assemblyLevel] || '#cccccc'; // fallback color
   }
 
-// getΦ»╖µ▒é
+// GET request
 async function fetchData(url) {
-    const response = await fetch(url); // µ¢┐µìóΣ╕║Σ╜áτÜä API URL
+    const response = await fetch(url); // Replace with your API URL
     if (!response.ok) {
       throw new Error("Failed to fetch data");
     }
-    const data = await response.json(); // σüçΦ«╛Σ╜áτÜä API Φ┐öσ¢₧τÜäµÿ» JSON µá╝σ╝ÅτÜäµò░µì«
+    const data = await response.json(); // Assumes the API returns JSON data
     return data;
   }
 
-    // ΦÄ╖σÅûΦí¿τ¢ÿµëÇΘ£Çµò░µì«
+    // Get data needed for the gauge chart
     function getTreeData(url) {
       return new Promise((resolve) => {
         fetchData(url).then((res) => {
@@ -29,7 +29,7 @@ async function fetchData(url) {
       })
     }
 
-  // ΦÄ╖σÅûΦí¿τ¢ÿµëÇΘ£Çµò░µì«
+  // Get data needed for the gauge chart
   function getUmberllaData(url) {
     return new Promise((resolve) => {
       fetchData(url).then((res) => {
@@ -38,7 +38,7 @@ async function fetchData(url) {
     })
   }
 
-  // σ░åµò░µì«µá╝σ╝ÅσîûµêÉ echarts Θ£ÇΦªüτÜäµá╝σ╝Å
+  // Format data into the shape ECharts needs
   function formatDataUmbrella(data) {
     const arr = data.report.report.arc;
     const colors = ["#440154", "#404387", "#2a788e", "#22a884", "#7ad151", "#ff4500"];
@@ -67,8 +67,7 @@ async function fetchData(url) {
                   formatter: `${Math.floor(item.arc * 1000 + 0.5) / 10}%`,
                   textStyle: {
                       color: '#fff',
-                      fontSize: 14,
-                      fontWeight: 'bold'
+                      fontSize: 12
                   }
               }
           }
@@ -180,7 +179,7 @@ async function fetchData(url) {
     
   }
 
-  // ΦÄ╖σÅûµƒ▒τè╢σ¢╛µëÇΘ£Çµò░µì«
+  // Get data needed for the bar chart
   function getStackedBarData(url) {
       return new Promise(resolve => {
           fetchData(url).then((res) => {
@@ -207,7 +206,7 @@ async function fetchData(url) {
     return labels;
   }
 
-  // σ░åµò░µì«µá╝σ╝ÅσîûµêÉ echarts Θ£ÇΦªüτÜäµá╝σ╝Å
+  // Format data into the shape ECharts needs
   function formatStackedBarData(data) {
     const histograms = data.report.report.histogram.histograms;
     console.log('Raw data buckets:', histograms.buckets);
@@ -280,7 +279,7 @@ async function fetchData(url) {
         itemStyle: {
             color: getAssemblyLevelColor(name), // Use consistent color mapping
           },
-          barGap: '1px', // σÉîΣ╕Çτ▒╗τ¢«Σ╕ïτ│╗σêùΣ╣ïΘù┤τÜäΘù┤ΘÜö
+          barGap: '1px', // Gap between series within the same category
           barCategoryGap: '1px',
       };
       obj.data = filledData;
@@ -316,7 +315,7 @@ async function fetchData(url) {
         itemStyle: {
             color: getAssemblyLevelColor(name), // Use consistent color mapping
           },
-          barGap: '1px', // σÉîΣ╕Çτ▒╗τ¢«Σ╕ïτ│╗σêùΣ╣ïΘù┤τÜäΘù┤ΘÜö
+          barGap: '1px', // Gap between series within the same category
           barCategoryGap: '1px',
       };
       obj.data = filledData.map((item, index) => {
@@ -785,8 +784,9 @@ async function fetchData(url) {
     const histograms = data.report.report.histogram.histograms;
     const assemblyLevels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
     
-    // Extract years from buckets
-    const category = histograms.buckets.map(d => new Date(d).getFullYear());
+    // GoaT returns N+1 bucket boundary dates for N bins; drop the trailing end-boundary
+    // (it is the upper fence of the last bin, not a data bin itself)
+    const category = histograms.buckets.slice(0, -1).map(d => new Date(d).getUTCFullYear());
     console.log(`${dataType} Report API - Years:`, category);
     console.log(`${dataType} Report API - byCat:`, histograms.byCat);
     
