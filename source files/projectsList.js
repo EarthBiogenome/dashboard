@@ -30,7 +30,7 @@ const projectsList = {
     "endemixit": "PRJNA712951",
     "edgp": "",
     "ein": "",
-    "erga": "PRJEB43510",
+    //"erga": "PRJEB43510",
     "fish10k": "",
     "g10k": "",
     "gbb": "PRJNA1180976",

@@ -21,10 +21,11 @@
             margin: 20px auto;
         }
         #chartContainer1 {
-            margin-bottom: -60px;  /* Reduced spacing between charts */
+            margin-bottom: -60px;  /* Pull hint/buttons up under the slider */
         }
         #chartContainer2 {
-            margin-top: 0px;  /* Reduced spacing between charts */
+            margin-top: 0px;
+            margin-bottom: -60px;  /* Match EBP: remove empty strip below ERGA slider */
         }
         /* Add container padding to prevent footer overlap */
         .container {
@@ -174,11 +175,10 @@
         /* Clickable bar hint */
         .click-hint {
             text-align: center;
-            font-size: 13px;
-            color: #666;
-            margin-top: -80px;
-            margin-bottom: 5px;
-            font-style: italic;
+            font-size: 15px;
+            color: #444;
+            margin-top: 12px;
+            margin-bottom: 20px;
             pointer-events: none;
         }
         /* Download buttons container */
@@ -236,7 +236,7 @@
        <div class="progress-text">Fetching data...</div>
      </div>
    </div>
-   <div class="click-hint" id="clickHint1" style="display: none;">Click on a project bar to see annual breakdown</div>
+   <div class="click-hint" id="clickHint1" style="display: none;">Tip: click any project bar to view its annual assembly breakdown, or scroll the slider to view more projects.</div>
    <div class="download-buttons" id="downloadButtons1">
      <button type="button" class="download-btn" id="downloadChart1Btn">
        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -254,7 +254,7 @@
        <div class="progress-text">Fetching data...</div>
      </div>
    </div>
-   <div class="click-hint" id="clickHint2" style="display: none;">Click on a project bar to see annual breakdown</div>
+   <div class="click-hint" id="clickHint2" style="display: none;">Tip: click any project bar to view its annual assembly breakdown, or scroll the slider to view more projects.</div>
    <div class="download-buttons" id="downloadButtons2">
      <button type="button" class="download-btn" id="downloadChart2Btn">
        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -840,13 +840,29 @@
         data.series.forEach((series, index) => {
           series.data = sortedData[index];
         });
-        
-        // Update stored chart data for CSV export (after sorting)
+
+        // Snapshot the FULL sorted dataset (including zero-value projects) for CSV export
+        // before we filter zeros out of the rendered chart.
         if (containerId === 'chartContainer1') {
           chart1Data = { categories: sortedCategories.slice(), series: JSON.parse(JSON.stringify(data.series)) };
         } else if (containerId === 'chartContainer2') {
           chart2Data = { categories: sortedCategories.slice(), series: JSON.parse(JSON.stringify(data.series)) };
         }
+
+        // Filter out projects whose total across all assembly levels is zero — chart only.
+        // The CSV snapshot above still includes every project.
+        const keepIndex = [];
+        for (let i = 0; i < data.categories.length; i++) {
+          let rowTotal = 0;
+          for (let j = 0; j < data.series.length; j++) {
+            rowTotal += data.series[j].data[i] || 0;
+          }
+          if (rowTotal > 0) keepIndex.push(i);
+        }
+        data.categories = keepIndex.map(i => sortedCategories[i]);
+        data.series.forEach((series, j) => {
+          series.data = keepIndex.map(i => sortedData[j][i]);
+        });
 
         // Calculate total count and project count for species chart
         let totalCount = 0;
@@ -916,7 +932,7 @@
             left: '7%',  // Decreased left margin
             right: '2%',
             top: containerId === 'chartContainer1' || containerId === 'chartContainer2' ? '18%' : '8%',  // More space for title in species chart
-            bottom: '20%',  // Increased bottom margin for rotated labels
+            bottom: containerId === 'chartContainer1' || containerId === 'chartContainer2' ? '25%' : '20%',  // Extra room for dataZoom slider
             containLabel: true
           },
           yAxis: {
@@ -963,7 +979,7 @@
           },
           xAxis: {
             type: "category",
-            data: arr.map(item => (item[0])), // Create an array of years from 2006 to 2024
+            data: data.categories, // Filtered (non-zero) project names, sorted by total
             axisLine: {
               show: true,
               lineStyle: {
@@ -975,11 +991,9 @@
             axisLabel: {
               show: true,
               color: "#000",
-              fontSize: 12,
+              fontSize: (containerId === 'chartContainer1' || containerId === 'chartContainer2') ? 14 : 12,
               rotate: 45,
-        
-            //   fontFamily: 'Times News Roman' 
-            // fontWeight: 700
+              interval: 0, // Force every project label to render (no auto-skipping)
             },
             name: (containerId === 'chartContainer1' || containerId === 'chartContainer2') ? '' : (xAxisLabel || "EBP affiliates"), // Hide x-axis name for both charts since it's in the title
             nameLocation: 'middle', // Place the label in the middle 
@@ -1038,6 +1052,35 @@
             },
           },
           series: data.series,
+          // Slider below the x-axis lets the user scan long project lists without
+          // overlapping labels. Auto-sized: show ~25 bars at a time; if fewer, show all.
+          dataZoom: (containerId === 'chartContainer1' || containerId === 'chartContainer2') ? [
+            {
+              type: 'slider',
+              xAxisIndex: 0,
+              // Both charts keep the slider visible at all times. When every project
+              // already fits inside the default window, the two handles span the full
+              // track (full-filled), signaling there is nothing more to scroll.
+              show: true,
+              startValue: 0,
+              endValue: containerId === 'chartContainer2'
+                ? Math.max(0, data.categories.length - 1)
+                : Math.min(14, Math.max(0, data.categories.length - 1)),
+              height: 20,
+              bottom: 66,
+              brushSelect: false,
+              labelFormatter: ''
+            },
+            {
+              type: 'inside',
+              xAxisIndex: 0,
+              startValue: 0,
+              endValue: Math.min(24, Math.max(0, data.categories.length - 1)),
+              zoomOnMouseWheel: 'shift',
+              moveOnMouseWheel: true,
+              moveOnMouseMove: false
+            }
+          ] : undefined,
         };
         myChart.setOption(option);
         

@@ -255,7 +255,7 @@
       <div class="select-group">
         <label class="select-label">Start Year</label>
         <div class="custom-select">
-          <div class="select-box">2010</div>
+          <div class="select-box">2018</div>
           <div class="options-container">
             <div class="option">2009</div>
             <div class="option">2010</div>
@@ -366,8 +366,9 @@
       const speciesDataMap = {}
       const assemblySpanDataMap = {}
       let activeType = 'Cumulative'
-      let startYear = 2010
+      let startYear = 2018
       let endYear = 2026
+      const DATA_START_YEAR = 2009 // Earliest year offered by the Start Year dropdown
       let familyChart = null
       let speciesChart = null
       let assemblySpanChart = null
@@ -430,8 +431,7 @@
       
       // Helper function to get effective start year based on user selection and data availability
       function getEffectiveStartYear(dataType) {
-        const dataStartYear = 2010; // Data from services.js is already filtered to 2010-2026
-        return Math.max(startYear, dataStartYear);
+        return Math.max(startYear, DATA_START_YEAR);
       }
 
       // Helper function to validate year range
@@ -445,6 +445,30 @@
           // Update the UI to reflect the swap
           updateYearDropdowns();
         }
+      }
+
+      // Prepend zero-value bins so `category` begins at DATA_START_YEAR even when the
+      // Report API omits leading years. Mutates and returns `data`.
+      function padLeadingYears(data, targetStartYear = DATA_START_YEAR) {
+        if (!data || !Array.isArray(data.category) || data.category.length === 0) return data;
+
+        const currentStartYear = data.category[0];
+        const missingYears = currentStartYear - targetStartYear;
+        if (missingYears <= 0) return data;
+
+        const leadingYears = Array.from({ length: missingYears }, (_, i) => targetStartYear + i);
+        data.category = [...leadingYears, ...data.category];
+
+        if (Array.isArray(data.series)) {
+          data.series.forEach(s => {
+            if (Array.isArray(s.data)) {
+              const zeros = Array.from({ length: missingYears }, () => 0);
+              s.data = [...zeros, ...s.data];
+            }
+          });
+        }
+
+        return data;
       }
 
       // Helper function to convert actual data to cumulative data
@@ -479,7 +503,7 @@
 
       // Helper function to recalculate cumulative data for filtered year range
       function recalculateCumulativeForYearRange(actualData, startYear, endYear) {
-        const dataStartYear = (actualData.category && actualData.category.length > 0) ? actualData.category[0] : 2010;
+        const dataStartYear = (actualData.category && actualData.category.length > 0) ? actualData.category[0] : DATA_START_YEAR;
         const startIndex = startYear - dataStartYear;
         const endIndex = endYear - dataStartYear;
         
@@ -583,7 +607,7 @@
           'chromosome': '#404387',
           'complete genome': '#7ad151'
         };
-        const years = Array.from({length: 2026 - 2010 + 1}, (_, i) => 2010 + i);
+        const years = Array.from({length: 2026 - DATA_START_YEAR + 1}, (_, i) => DATA_START_YEAR + i);
 
         // Accumulate span values per level per year
         const spanByLevelByYear = {};
@@ -606,7 +630,7 @@
           if (!spanByLevelByYear.hasOwnProperty(level)) return;
 
           const year = new Date(assemblyDate.value).getUTCFullYear();
-          if (year < 2010 || year > 2026) return;
+          if (year < DATA_START_YEAR || year > 2026) return;
 
           spanByLevelByYear[level][year] += assemblySpan.value;
         });
@@ -669,10 +693,15 @@
         console.log('Loading family data from Report API...');
         const familyDataPromise = window.getFamilyReportData(familyReportUrl).then(({defaultData, percentData}) => {
           console.log('Family report data loaded, calculating cumulative...');
-          
+
+          // Pad leading years so the x-axis starts at DATA_START_YEAR even when the
+          // Report API omits 2009 (and/or 2010). Pad before deriving cumulative data.
+          padLeadingYears(defaultData);
+          padLeadingYears(percentData);
+
           // Calculate cumulative from actual data
           const cumulativeData = calculateCumulativeFromActual(defaultData);
-          
+
           // Store all three data types
           familyDataMap['Actual'] = defaultData;
           familyDataMap['YoY Growth'] = percentData;
@@ -963,36 +992,12 @@
         if (endYearBox) endYearBox.textContent = endYear;
       }
 
-      // Function to find the first year with non-zero counts for a specific data type
+      // Honor the user's selected Start Year. The axis begins at the user's choice
+      // (clamped to DATA_START_YEAR) even if leading bins are zero, so picks like
+      // 2009/2010 are respected rather than snapped to the first non-zero year.
       function findOptimalStartYearForData(data, dataType) {
-        const dataStartYear = (data && data.category && data.category.length > 0) ? data.category[0] : 2010;
-
-        // Get the effective start year based on user selection
         const effectiveStartYear = getEffectiveStartYear(dataType);
-
-        if (!data || !data.series || data.series.length === 0) {
-          console.log(`No data available for ${dataType}, using effective start year: ${effectiveStartYear}`);
-          return effectiveStartYear;
-        }
-
-        // Find the first year where this data type has non-zero counts, starting from effective start year
-        for (let year = effectiveStartYear; year <= endYear; year++) {
-          const yearIndex = year - dataStartYear;
-          if (yearIndex < 0) continue;
-          
-          // Check if this year index exists in the data and has non-zero values
-          for (let series of data.series) {
-            if (series.data && 
-                yearIndex < series.data.length && 
-                series.data[yearIndex] && 
-                series.data[yearIndex] > 0) {
-              console.log(`${dataType} optimal start year found: ${year} (first non-zero data)`);
-              return year;
-            }
-          }
-        }
-        
-        console.log(`${dataType} using effective start year: ${effectiveStartYear} (no non-zero data found)`);
+        console.log(`${dataType} using start year: ${effectiveStartYear}`);
         return effectiveStartYear;
       }
 
@@ -1014,7 +1019,7 @@
       }
 
       // Function to trim series data to match the user's selected year range
-      function trimSeriesToStartYear(series, startYear, containerId, dataStartYear = 2010) {
+      function trimSeriesToStartYear(series, startYear, containerId, dataStartYear = DATA_START_YEAR) {
         const startIndex = Math.max(0, startYear - dataStartYear);
         const endIndex = endYear - dataStartYear + 1; // +1 because slice end is exclusive
 
