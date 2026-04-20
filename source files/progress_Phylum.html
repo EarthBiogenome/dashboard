@@ -484,7 +484,7 @@
 
       function downloadChartImage() {
         if (!combinedChart) { alert('Chart not available. Please wait for data to load.'); return; }
-        const url = combinedChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#fff' });
+        const url = combinedChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: 'transparent' });
         const link = document.createElement('a');
         link.download = `EBP_Phylum_Coverage_${new Date().toISOString().split('T')[0]}.png`;
         link.href = url;

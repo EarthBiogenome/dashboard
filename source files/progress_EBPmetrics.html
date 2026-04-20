@@ -11,6 +11,11 @@
     <script src="./utils.js"></script>
     <script src="./services.js"></script>
     <script>
+      // Module-level state for downloads
+      let topChartInstance = null;
+      let bottomChartInstance = null;
+      let rawChartData = null; // { ranks, ebpData, nonEbpData }
+
       // Initialize top chart (Phylum, Class, Order)
       function initTopChart(data, annimationDelay) {
         console.log('Initializing top chart with data:', data);
@@ -116,6 +121,7 @@
         };
 
         myChart.setOption(option);
+        return myChart;
       }
 
       // Initialize bottom chart (Family, Genus, Species)
@@ -193,6 +199,7 @@
         };
 
         myChart.setOption(option);
+        return myChart;
       }
 
       function getGraphicOption(type, data) {
@@ -384,18 +391,24 @@
           console.log('Top series data:', topSeries);
           console.log('Bottom series data:', bottomSeries);
           
-          return { 
-            topData: topSeries, 
-            bottomData: bottomSeries, 
-            legends: [] 
+          // Store raw data for CSV export
+          rawChartData = { ranks, ebpData, nonEbpData };
+
+          return {
+            topData: topSeries,
+            bottomData: bottomSeries,
+            legends: []
           };
         })
         .then(({ topData, bottomData, legends }) => {
           console.log('Initializing charts with data');
           // Draw charts
-          initTopChart(topData, annimationDelay);
-          initBottomChart(bottomData, annimationDelay);
+          topChartInstance = initTopChart(topData, annimationDelay);
+          bottomChartInstance = initBottomChart(bottomData, annimationDelay);
           initLegendChart(legends);
+
+          // Show download buttons
+          document.getElementById('downloadButtonsCombined').style.display = 'flex';
         })
         .catch(error => {
           console.error('Error:', error);
@@ -460,6 +473,33 @@
         color: #003d8f;
       }
 
+      /* Download buttons */
+      .download-buttons {
+        display: none;
+        justify-content: center;
+        gap: 15px;
+        margin: 10px 0 -20px 0;
+      }
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #fff;
+        background-color: #3498db;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+      .download-btn:hover { background-color: #2980b9; transform: translateY(-1px); }
+      .download-btn:active { transform: translateY(0); }
+      .download-btn.csv-btn { background-color: #27ae60; }
+      .download-btn.csv-btn:hover { background-color: #219a52; }
+      .download-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
       /* Footer styles */
       #footer {
         position: fixed;
@@ -480,6 +520,16 @@
       <div class="charts-container">
         <div id="topChartContainer"></div>
         <div id="bottomChartContainer"></div>
+        <div class="download-buttons" id="downloadButtonsCombined">
+          <button type="button" class="download-btn" id="downloadChartCombinedBtn">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Download Chart
+          </button>
+          <button type="button" class="download-btn csv-btn" id="downloadCSVCombinedBtn">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+            Download Data (CSV)
+          </button>
+        </div>
       </div>
       <div id="legendContainer"></div>
       <div class="notes-section">
@@ -502,5 +552,74 @@
     <div id="footer">
         <div id="copyright">Data source: <a href="https://goat.genomehubs.org" target="_blank" rel="noopener noreferrer">Genomes on a Tree (GoaT)</a>. Used with permission.</div>
     </div>
+
+    <script>
+      // Download both charts stacked into one PNG
+      function downloadCombinedChart() {
+        if (!topChartInstance || !bottomChartInstance) {
+          alert('Charts not available. Please wait for data to load.');
+          return;
+        }
+        const topURL = topChartInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: 'transparent' });
+        const bottomURL = bottomChartInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: 'transparent' });
+
+        const topImg = new Image();
+        topImg.onload = function() {
+          const bottomImg = new Image();
+          bottomImg.onload = function() {
+            const combined = document.createElement('canvas');
+            combined.width = Math.max(topImg.width, bottomImg.width);
+            combined.height = topImg.height + bottomImg.height;
+            const ctx = combined.getContext('2d');
+            ctx.drawImage(topImg, 0, 0);
+            ctx.drawImage(bottomImg, 0, topImg.height);
+            const url = combined.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `EBP_Metrics_${new Date().toISOString().split('T')[0]}.png`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+          bottomImg.src = bottomURL;
+        };
+        topImg.src = topURL;
+      }
+
+      // Download all 6 ranks in one CSV: Phylum → Species
+      function downloadCombinedCSV() {
+        if (!rawChartData) {
+          alert('Data not available. Please wait for data to load.');
+          return;
+        }
+        const { ranks, ebpData, nonEbpData } = rawChartData;
+        const header = 'Rank,EBP_Count,NonEBP_Count,Total,EBP_pct';
+        let csvContent = header + '\n';
+
+        // Order: Phylum(5), Class(4), Order(3), Family(2), Genus(1), Species(0)
+        [5, 4, 3, 2, 1, 0].forEach(i => {
+          const ebp = ebpData[i];
+          const nonEbp = nonEbpData[i];
+          const total = ebp + nonEbp;
+          const pct = total > 0 ? (ebp / total * 100).toFixed(2) : '0.00';
+          csvContent += `${ranks[i]},${ebp},${nonEbp},${total},${pct}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `EBP_Metrics_${new Date().toISOString().split('T')[0]}.csv`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('downloadChartCombinedBtn').addEventListener('click', downloadCombinedChart);
+        document.getElementById('downloadCSVCombinedBtn').addEventListener('click', downloadCombinedCSV);
+      });
+    </script>
   </body>
-</html> 
+</html>

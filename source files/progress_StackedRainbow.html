@@ -72,6 +72,7 @@
           option.series = data;
           myChart.setOption(option);
         }, annimationDelay * 2);
+        return myChart;
       }
 
       function getGraphicOption(type, data) {
@@ -224,6 +225,13 @@
         document.getElementById('taxaPanel2').innerHTML = buildTaxaPanelHtml(qualityLegends);
       }
 
+      // Module-level state for downloads
+      let chartInstance1 = null;
+      let chartInstance2 = null;
+      let legendsData1 = null;
+      let legendsData2 = null;
+      let totalByRankData = null;
+
       window.onload = function () {
         const url1 = 'https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=%2A%2AEBP%20Umbrella%2A%2A%20-%20EBP%20taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=8EWp2aVcZB';
         const url2 = 'https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=assembly_span&excludeMissing%5B0%5D=assembly_span&caption=%2A%2AAll%20INSDC%20taxa%2A%2A%20-%20Taxa%20with%20assemblies%20out%20of%20all%20Eukaryotic%20taxa%20in%20INSDC&taxonomy=ncbi&result=taxon&queryId=R8LGXM94GW';
@@ -272,13 +280,22 @@
           });
 
           // Draw both charts
-          initEchart('chartContainer', stackedData, annimationDelay);
+          chartInstance1 = initEchart('chartContainer', stackedData, annimationDelay);
           initLegendChart('legendContainer', legends, annimationDelay, 'chartContainer');
-          initEchart('chartContainer2', qualityStackedData, annimationDelay);
+          chartInstance2 = initEchart('chartContainer2', qualityStackedData, annimationDelay);
           initLegendChart('legendContainer2', qualityLegends, annimationDelay, 'chartContainer2');
 
           // Separate taxa panels, one per chart
           renderTaxaPanels(legends, qualityLegends);
+
+          // Store data for CSV export
+          legendsData1 = legends;
+          legendsData2 = qualityLegends;
+          totalByRankData = totalByRank;
+
+          // Show download buttons
+          document.getElementById('downloadButtons1').style.display = 'flex';
+          document.getElementById('downloadButtons2').style.display = 'flex';
         });
       };
     </script>
@@ -484,6 +501,36 @@
       }
       .nav-dot:hover .nav-label { opacity: 1; }
 
+      /* Download buttons */
+      .download-buttons {
+        display: none;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0 0 0;
+      }
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #fff;
+        background-color: #3498db;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+      .download-btn:hover {
+        background-color: #2980b9;
+        transform: translateY(-1px);
+      }
+      .download-btn:active { transform: translateY(0); }
+      .download-btn.csv-btn { background-color: #27ae60; }
+      .download-btn.csv-btn:hover { background-color: #219a52; }
+      .download-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
       /* Footer styles */
       #footer {
         position: fixed;
@@ -508,6 +555,16 @@
         <div class="chart-title">Eukaryotic assemblies in INSDC databases and the fraction contributed by EBP </div>
         <div id="chartContainer" class="chartContainer"></div>
         <div id="legendContainer" class="legendContainer"></div>
+        <div class="download-buttons" id="downloadButtons1">
+          <button type="button" class="download-btn" id="downloadChart1Btn">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Download Chart
+          </button>
+          <button type="button" class="download-btn csv-btn" id="downloadCSV1Btn">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+            Download Data (CSV)
+          </button>
+        </div>
         <div class="chartNote">
           <p><strong>Notes:</strong> Each arc represents one taxonomic rank (species through phylum); the light grey background shows the total eukaryotic taxa in NCBI taxonomy, the light colored segment shows taxa with any INSDC assembly, and the darker overlap shows taxa with at least one EBP-affiliated assembly. Coverage counts taxa with at least one submitted assembly regardless of quality, reflecting taxonomic breadth rather than assembly completeness.</p>
         </div>
@@ -521,6 +578,16 @@
         <div class="chart-title">Eukaryotic assemblies meeting EBP-standard metrics</div>
         <div id="chartContainer2" class="chartContainer"></div>
         <div id="legendContainer2" class="legendContainer"></div>
+        <div class="download-buttons" id="downloadButtons2">
+          <button type="button" class="download-btn" id="downloadChart2Btn">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Download Chart
+          </button>
+          <button type="button" class="download-btn csv-btn" id="downloadCSV2Btn">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+            Download Data (CSV)
+          </button>
+        </div>
         <div class="chartNote">
           <p><strong>Notes:</strong> This chart shows the number of taxa at each taxonomic rank for which at least one genome assembly in GoaT meets the proxy EBP quality thresholds. The EBP standard criteria  here reflect GoaT's relaxed interpretation of EBP assembly standards, based on available data. This assessment uses a subset of the metrics recommended in the EBP Scientific Subcommittee's <a href="https://www.earthbiogenome.org/report-on-assembly-standards" target="_blank">Report on Assembly Standards</a>, specifically: assembly level, contig and scaffold N50, and the percentage of sequences assigned to chromosomes. Counts
           here therefore represent a subset of assemblies that partially fulfil EBP standards, not a fully certified assessment. See the <a
@@ -587,5 +654,73 @@
     <div id="footer">
         <div id="copyright">Data source: <a href="https://goat.genomehubs.org" target="_blank" rel="noopener noreferrer">Genomes on a Tree (GoaT)</a>. Used with permission.</div>
     </div>
+
+    <script>
+      // Download chart as PNG image
+      function downloadChartImage(chartInstance, chartName) {
+        if (!chartInstance) {
+          alert('Chart not available. Please wait for data to load.');
+          return;
+        }
+        const url = chartInstance.getDataURL({
+          type: 'png',
+          pixelRatio: 2,
+          backgroundColor: 'transparent'
+        });
+        const link = document.createElement('a');
+        link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // Download data as CSV — rows = taxonomic ranks, columns = total taxa, INSDC count/coverage, EBP count/coverage
+      function downloadCSVForChart(legendsData, totalByRank, chartName) {
+        if (!legendsData) {
+          alert('Data not available. Please wait for data to load.');
+          return;
+        }
+        const displayOrder = ['species', 'genus', 'family', 'order', 'class', 'phylum'];
+        const header = 'Rank,Total_Eukaryotic_Taxa,INSDC_Count,INSDC_Coverage_pct,EBP_Count,EBP_pct_of_INSDC';
+        let csvContent = header + '\n';
+
+        displayOrder.forEach(rank => {
+          const l = legendsData.find(item => item.name === rank);
+          if (!l) return;
+          const total = (totalByRank && totalByRank[rank]) ? totalByRank[rank] : '';
+          const insdc = l.data[1].num;
+          const ebp = l.data[0].num;
+          const insdcPct = total ? (insdc / total * 100).toFixed(2) : '';
+          const ebpPct = (l.contrast * 100).toFixed(2);
+          csvContent += `${rank},${total},${insdc},${insdcPct},${ebp},${ebpPct}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('downloadChart1Btn').addEventListener('click', function() {
+          downloadChartImage(chartInstance1, 'EBP_Any_Assembly_Coverage');
+        });
+        document.getElementById('downloadCSV1Btn').addEventListener('click', function() {
+          downloadCSVForChart(legendsData1, totalByRankData, 'EBP_Any_Assembly_Coverage');
+        });
+        document.getElementById('downloadChart2Btn').addEventListener('click', function() {
+          downloadChartImage(chartInstance2, 'EBP_Quality_Assembly_Coverage');
+        });
+        document.getElementById('downloadCSV2Btn').addEventListener('click', function() {
+          downloadCSVForChart(legendsData2, totalByRankData, 'EBP_Quality_Assembly_Coverage');
+        });
+      });
+    </script>
   </body>
 </html>

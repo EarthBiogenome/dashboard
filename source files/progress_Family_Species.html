@@ -1279,7 +1279,7 @@
       const url = chartInstance.getDataURL({
         type: 'png',
         pixelRatio: 2,
-        backgroundColor: '#fff'
+        backgroundColor: 'transparent'
       });
       const link = document.createElement('a');
       link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.png`;
