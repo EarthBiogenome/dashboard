@@ -1,66 +1,69 @@
+// 04/21/2026: Updated 65 EBP projects with GoaT-consistent project names and bioproject IDs
+
 const projectsList = {
-    "10kp": "",
-    "1000gch": "PRJNA1245457",
-    "bat1k": "PRJNA489245",
-    "i5k": "PRJNA163993",
-    "aegis": "PRJEB80366",
-    "africabp": "PRJNA811786",
-    "ag100pest": "PRJNA555319",
-    "agc": "",
-    "asg": "PRJEB43743",
-    "atlasea": "PRJEB64126",
-    "ausarg": "PRJNA1075730",
-    "beenome100": "PRJNA923301",
-    "b10k": "PRJNA545868",
-    "bridge-col": "",
-    "bgp": "",
-    "BioINSPIR": "",
-    "ccgp": "PRJNA720569",
-    "canbp": "PRJNA813333",
-    "canseq150": "PRJNA706690",
-    "cfgp": "",
-    "cbp": "PRJEB49670",
-    "cgp": "PRJNA1020146",
-    "crabgp": "",
-    "dtol": "PRJEB40665",
-    "dog": "",
-    "disco": "",
-    "dresdenhq": "",
-    "ebpn": "PRJEB65317",
-    "endemixit": "PRJNA712951",
-    "edgp": "",
-    "ein": "",
+    "10kp": "", // 10,000 Plants (10KP)
+    "1000gch": "PRJNA1245457", // 1000 Chilean Genomes (1000GCH)
+    "bat1k": "PRJNA489245", // 1,000 Bat Genomes (Bat1K)
+    "i5k": "PRJNA163993", // 5,000 Insect Genomes (i5K)
+    "aegis": "PRJEB80366", // Ancient Environmental Genomics Initiative for Sustainability (AEGIS)
+    "africabp": "PRJNA811786", // African BioGenome Project (AfricaBP)
+    "ag100pest": "PRJNA555319", // 100 Pest Genomes (AG100PEST)
+    "agc": "", // Amphibian Genomics Consortium (AGC)
+    "asg": "PRJEB43743", // Aquatic Symbiosis Genomics Project (ASG)
+    "atlasea": "PRJEB64126", // an Atlas of Eukaryotic Marine Genomes (AtlasSea)
+    "ausarg": "PRJNA1075730", // Australian Amphibian and Reptile Genome Initiative (AUSARG)
+    "beenome100": "PRJNA923301", // Beenome100 project (BEENOME100)
+    "b10k": "PRJNA545868", // 10,000 bird genomes (B10k)
+    "bridge-col": "", // Bridge Colombia Project (Bridge-Col)
+    "bgp": "", // Butterfly Genome Project (BGP)
+    "BioINSPIR": "", // BioINSPIR Project (BioINSPIR)
+    "ccgp": "PRJNA720569", // California Conservation Genomics Project (CCGP)
+    "canbp": "PRJNA813333", // Canadian BioGenome Project (CANBP)
+    "canseq150": "PRJNA706690", // Canada 150 Sequencing Initiative (CanSeq150)
+    "cfgp": "", // Cartilaginous Fish Genome Project (CFGP)
+    "cbp": "PRJEB49670", // Catalan Initiative for the Earth BioGenome Project (CBP)
+    "cgp": "PRJNA1020146", // Cetacean Genomes Project (CGP)
+    "crabgp": "", // Crab Genome Project (CrabGP)
+    "dtol": "PRJEB40665", // Darwin Tree of Life (DTOL)
+    "dog": "", // Deep-Ocean Genomes Project (DOG)
+    "disco": "", // Diversity Initiative for the Southern California Ocean (DISCO)
+    "dresdenhq": "", // Dresden HQ Genomes Project (DresdenHQ)
+    "ebpn": "PRJEB65317", // Earth Biogenome Project Norway (EBPN)
+    "endemixit": "PRJNA712951", // Italian Endemics (ENDEMIXIT)
+    "edgp": "", // Epizoic Diatom Genomes Project (EDGP)
+    "ein": "", // Euglena International Network (EIN)
     //"erga": "PRJEB43510",
-    "fish10k": "",
-    "g10k": "",
-    "gbb": "PRJNA1180976",
-    "gaga": "",
-    "ggbn": "",
-    "giga": "PRJNA649812",
-    "ebphk": "",
-    "HUNTomics": "PRJEB86906",
-    "ilebp": "PRJNA844590",
-    "kazusa": "PRJDB20515",
-    "lmgp": "PRJNA948806",
-    "loewe-tbg": "PRJNA706923",
-    "og": "PRJNA1046164",
-    "ogg": "",
-    "phyloalps": "PRJEB52290",
-    "paftol": "",
-    "plantgarden": "",
-    "pgp": "",
-    "prgp": "",
-    "psyche": "PRJEB71705",
-    "P10K": "",
-    "r2k": "PRJNA1399476",
-    "metainvert": "PRJNA758215",
-    "squalomix": "PRJNA707598",
-    "tbp": "",
-    "tsi": "PRJNA1075750",
-    "upg": "",
-    "cal-ebp": "PRJNA707235",
-    "vgp": "PRJNA489243",
-    "wa": "PRJEB96280",
-    "ygg": "PRJNA955268",
-    "zoonomia": "PRJNA312960"
+    "erga-bge": "PRJEB61747", // ERGA Biodiversity Genomics Europe project (ERGA-BGE)
+    "fish10k": "", // Fish 10,000 Genomes (Fish10K)
+    "g10k": "", // Genome 10K (G10K)
+    "gbb": "PRJNA1180976", // Genomics of the Brazilian Biodiversity (GBB)
+    "gaga": "", // Global Amphibian Genome Atlas (GAGA)
+    "ggbn": "", // Global Genome Biodiversity Network (GGBN)
+    "giga": "PRJNA649812", // Global Invertebrate Genome Alliance (GIGA)
+    "ebphk": "", // Hong Kong EBP (EBPHK)
+    "huntomics": "PRJEB86906", // HUNTomics Project (HUNTomics)
+    "ilebp": "PRJNA844590", // Illinois EBP Pilot (ILEBP)
+    "kazusa": "PRJDB20515", // Kazusa Genome Project (Kazusa)
+    "lmgp": "PRJNA948806", // Lilioid Monocots Core Group Genome Project (LMGP)
+    "loewe-tbg": "PRJNA706923", // LOEWE Centre for Translational Biodiversity Genomics (LOEWE-TBG)
+    "metainvert": "PRJNA758215", // Soil Invertebrate Genome Initiative (MetaInvert)
+    "og": "PRJNA1046164", // Ocean Genomes (OG)
+    "ogg": "", // Ocean Green Genomes (OGG)
+    "phyloalps": "PRJEB52290", // PhyloAlps Project (PhyloAlps)
+    "paftol": "", // Plant and Fungi Trees of Life (PAFTOL)
+    "plantgarden": "", // Plant GARDEN (PlantGarden)
+    "pgp": "", // Polar Genomes Project (PGP)
+    "prgp": "", // Primate Genome Project (PRGP)
+    "psyche": "PRJEB71705", // Project Psyche (PSYCHE)
+    "p10k": "", // 10,000 Plant Genomes (P10K)
+    "r2k": "PRJNA1399476", // Rodent 2k (R2K)
+    "squalomix": "PRJNA707598", // Genome Sequencing and Assembly of Chondrichthyans (SQUALOMIX)
+    "tbp": "", // Taiwan BioGenome Project (TBP)
+    "tsi": "PRJNA1075750", // Threatened Species Initiative (TSI)
+    "upg": "", // Ungulates Genome Project (UGP)
+    "cal-ebp": "PRJNA707235", // University of California Consortium for the EBP (Cal-EBP)
+    "vgp": "PRJNA489243", // Vertebrate Genome Project (VGP)
+    "wa": "PRJEB96280", // Wise Ancestors (WA)
+    "ygg": "PRJNA955268", // Yggdrasil (YGG)
+    "zoonomia": "PRJNA312960" // 200 Mammals Project (Zoonomia)
 }
