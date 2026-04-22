@@ -2697,8 +2697,8 @@ const projectsData = [
     latitude: 59.334591,
     longitude: 18.06324,
     isNew: true,
-  }
-  ,{
+  },
+  {
     projectName: "kazusa",
     continent: "Asia",
     address: "〒292-0818 千葉県木更津市かずさ鎌足 2-6-7, Japan",
@@ -2722,5 +2722,4 @@ const projectsData = [
     latitude: 43.657094,
     longitude: -79.388836,
   }
-
 ];
