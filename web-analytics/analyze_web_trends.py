@@ -7,14 +7,12 @@ Similar to GitHub repository traffic analysis
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
+import matplotlib.dates as mdates
 from datetime import datetime
 from pathlib import Path
 
 # Set up the plotting style to match traffic analysis
 plt.style.use('seaborn-v0_8')
-sns.set_palette("husl")
 
 def load_weekly_analytics_data():
     """Load weekly analytics data for trend analysis"""
@@ -24,7 +22,7 @@ def load_weekly_analytics_data():
     if not csv_file.exists():
         print("❌ No weekly analytics data found")
         print("💡 Run collect_web_analytics.py first to collect data")
-        return None
+        return None, None
         
     # Load weekly summary data
     weekly_df = pd.read_csv(csv_file)
@@ -35,27 +33,31 @@ def load_weekly_analytics_data():
     weekly_df['cumulative_sessions'] = weekly_df['sessions'].cumsum()
     weekly_df['cumulative_screen_page_views'] = weekly_df['screen_page_views'].cumsum()
     weekly_df['cumulative_custom_events'] = weekly_df['total_custom_events'].cumsum()
-    
-    # Calculate cumulative users (sum of weekly totals)
-    # Note: This may slightly overcount unique users over longer periods since
-    # a user who visits multiple weeks will be counted multiple times.
-    # However, this provides a consistent automated metric that shows growth trends.
-    weekly_df['cumulative_users'] = weekly_df['total_users'].cumsum()
+
+    # Cumulative new users: summing new_users each week approximates total unique visitors over time
+    weekly_df['cumulative_users'] = weekly_df['new_users'].cumsum()
     
     # Create readable date labels (end date of the week being collected)
     # collection_date is the Monday of the week being collected
     # Show the Sunday (end date) of that week as the label
     weekly_df['week_label'] = (weekly_df['collection_date'] + pd.Timedelta(days=6)).dt.strftime('%m/%d')
     
-    print(f"✅ Loaded {len(weekly_df)} weeks of analytics data")
+    # Aggregate weekly data into monthly totals for activity plots
+    weekly_df['year_month'] = weekly_df['collection_date'].dt.to_period('M')
+    monthly_df = (
+        weekly_df.groupby('year_month')
+                 .agg(new_users=('new_users', 'sum'),
+                      screen_page_views=('screen_page_views', 'sum'))
+                 .reset_index()
+    )
+    monthly_df['collection_date'] = monthly_df['year_month'].dt.to_timestamp()
+    monthly_df['cumulative_users'] = monthly_df['new_users'].cumsum()
+    monthly_df['cumulative_screen_page_views'] = monthly_df['screen_page_views'].cumsum()
+
+    print(f"✅ Loaded {len(weekly_df)} weeks / {len(monthly_df)} months of analytics data")
     print(f"📅 Date range: {weekly_df['collection_date'].min().strftime('%Y-%m-%d')} to {weekly_df['collection_date'].max().strftime('%Y-%m-%d')}")
-    
-    # Note: Sessions can be greater than page views when:
-    # - Sessions start but no page view event fires (tracking failures, bot traffic, etc.)
-    # - Single-page bounces where the page view metric isn't captured
-    # This is normal GA4 behavior, not a data quality issue.
-    
-    return weekly_df
+
+    return weekly_df, monthly_df
 
 def create_weekly_trends_analysis(weekly_df):
     """Create weekly trends analysis visualization (similar to GitHub traffic)"""
@@ -63,10 +65,6 @@ def create_weekly_trends_analysis(weekly_df):
     if weekly_df is None or len(weekly_df) == 0:
         print("❌ No data available for trends analysis")
         return
-    
-    # Set up the plotting style
-    plt.style.use('seaborn-v0_8')
-    sns.set_palette("husl")
     
     # Create figure with subplots (2x2 layout similar to GitHub traffic analysis)
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
@@ -153,7 +151,7 @@ def create_weekly_trends_analysis(weekly_df):
 
     plt.close()
 
-def create_engagement_trends(weekly_df):
+def create_engagement_trends(monthly_df):
     """Create engagement and interaction trends analysis
     
     Two vertically stacked charts:
@@ -164,68 +162,67 @@ def create_engagement_trends(weekly_df):
     we haven't collected that period locally yet (not data loss).
     """
     
+    def setup_ax(ax):
+        ax.set_xlabel('')
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b\n%Y'))
+
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
     fig.suptitle('EBP Dashboard Web Analytics Trends', fontsize=16, fontweight='bold', y=0.995)
-    
-    # 1. TOP CHART: Cumulative Counts (line chart with filled areas)
-    ax1.plot(weekly_df['week_label'], weekly_df['cumulative_sessions'], 
-             marker='o', linewidth=2.5, markersize=6, label='Total Sessions', color='#2E86AB')
-    ax1.fill_between(weekly_df['week_label'], weekly_df['cumulative_sessions'], 
-                     alpha=0.2, color='#2E86AB')
-    
-    ax1.plot(weekly_df['week_label'], weekly_df['cumulative_users'], 
-             marker='s', linewidth=2.5, markersize=6, label='Total Users (Unique)', color='#A23B72')
-    ax1.fill_between(weekly_df['week_label'], weekly_df['cumulative_users'], 
-                     alpha=0.2, color='#A23B72')
-    
-    ax1.plot(weekly_df['week_label'], weekly_df['cumulative_screen_page_views'], 
-             marker='^', linewidth=2.5, markersize=6, label='Total Page Views', color='#F18F01')
-    ax1.fill_between(weekly_df['week_label'], weekly_df['cumulative_screen_page_views'], 
-                     alpha=0.2, color='#F18F01')
-    
-    # Add final totals as annotations
-    final_sessions = weekly_df['cumulative_sessions'].iloc[-1]
-    final_users = weekly_df['cumulative_users'].iloc[-1]
-    final_views = weekly_df['cumulative_screen_page_views'].iloc[-1]
-    
-    ax1.text(len(weekly_df)-1, final_sessions, f'{int(final_sessions):,}', 
-             ha='left', va='bottom', fontsize=9, fontweight='bold', color='#2E86AB')
-    ax1.text(len(weekly_df)-1, final_users, f'{int(final_users):,}', 
-             ha='left', va='bottom', fontsize=9, fontweight='bold', color='#A23B72')
-    ax1.text(len(weekly_df)-1, final_views, f'{int(final_views):,}', 
-             ha='left', va='bottom', fontsize=9, fontweight='bold', color='#F18F01')
-    
-    ax1.set_title('Cumulative Totals (All-Time Growth)', fontweight='bold', fontsize=13, pad=10)
+
+    C_USERS_CUM = 'darkred'
+    C_USERS_CUM_FILL = 'lightcoral'
+    C_VIEWS_CUM = 'darkblue'
+    C_VIEWS_CUM_FILL = 'lightblue'
+    C_USERS_WK = 'lightcoral'
+    C_VIEWS_WK = 'skyblue'
+
+    # 1. TOP CHART: Cumulative Counts (page views first = top of legend)
+    m_dates = monthly_df['collection_date'].values
+    ax1.plot_date(m_dates, monthly_df['cumulative_screen_page_views'],
+                  fmt='-s', linewidth=3, markersize=6, label='Total Page Views', color=C_VIEWS_CUM)
+    ax1.fill_between(m_dates, monthly_df['cumulative_screen_page_views'], alpha=0.3, color=C_VIEWS_CUM_FILL)
+
+    ax1.plot_date(m_dates, monthly_df['cumulative_users'],
+                  fmt='-o', linewidth=3, markersize=6, label='Total First-Time Users', color=C_USERS_CUM)
+    ax1.fill_between(m_dates, monthly_df['cumulative_users'], alpha=0.3, color=C_USERS_CUM_FILL)
+
+    final_users = monthly_df['cumulative_users'].iloc[-1]
+    final_views = monthly_df['cumulative_screen_page_views'].iloc[-1]
+
+    ax1.text(m_dates[-1], final_views, f'{int(final_views):,}',
+             ha='left', va='bottom', fontsize=9, fontweight='bold', color=C_VIEWS_CUM)
+    ax1.text(m_dates[-1], final_users, f'{int(final_users):,}',
+             ha='left', va='bottom', fontsize=9, fontweight='bold', color=C_USERS_CUM)
+
+    ax1.set_title('')
     ax1.set_ylabel('Cumulative Count', fontsize=11, fontweight='bold')
-    ax1.legend(loc='upper left', fontsize=10)
+    ax1.legend(loc='upper left', fontsize=18)
     ax1.set_facecolor('#f8f9fa')
     ax1.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-    plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right')
-    
-    # 2. BOTTOM CHART: Weekly Actual Counts (bar chart)
-    x_pos = np.arange(len(weekly_df))
-    width = 0.25
-    
-    bars1 = ax2.bar(x_pos - width, weekly_df['sessions'], width, 
-                    label='Weekly Sessions', color='#2E86AB', alpha=0.8, edgecolor='#1a4d6d')
-    bars2 = ax2.bar(x_pos, weekly_df['total_users'], width,
-                    label='Weekly Users (Unique)', color='#A23B72', alpha=0.8, edgecolor='#6b2449')
-    bars3 = ax2.bar(x_pos + width, weekly_df['screen_page_views'], width,
-                    label='Weekly Page Views', color='#F18F01', alpha=0.8, edgecolor='#a86201')
-    
-    ax2.set_title('Weekly Activity (Period Counts)', fontweight='bold', fontsize=13, pad=10)
-    ax2.set_xlabel('Week (Month/Day)', fontsize=11, fontweight='bold')
-    ax2.set_ylabel('Weekly Count', fontsize=11, fontweight='bold')
-    ax2.set_xticks(x_pos)
-    ax2.set_xticklabels(weekly_df['week_label'], rotation=45, ha='right')
-    ax2.legend(loc='upper left', fontsize=10)
+    setup_ax(ax1)
+
+    # 2. BOTTOM CHART: Monthly Counts (page views first = top of legend)
+    m_dates = monthly_df['collection_date'].values
+    ax2.plot_date(m_dates, monthly_df['screen_page_views'],
+                  fmt='-s', linewidth=3, markersize=6, label='Monthly Page Views', color=C_VIEWS_WK)
+    ax2.fill_between(m_dates, monthly_df['screen_page_views'], alpha=0.3, color=C_VIEWS_WK)
+
+    ax2.plot_date(m_dates, monthly_df['new_users'],
+                  fmt='-o', linewidth=3, markersize=6, label='Monthly First-Time Users', color=C_USERS_WK)
+    ax2.fill_between(m_dates, monthly_df['new_users'], alpha=0.3, color=C_USERS_WK)
+
+    ax2.set_title('')
+    ax2.set_ylabel('Monthly Count', fontsize=11, fontweight='bold')
+    ax2.legend(loc='upper left', fontsize=18)
     ax2.set_facecolor('#f8f9fa')
-    ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7, axis='y')
+    ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
+    setup_ax(ax2)
     
     plt.tight_layout()
     
     # Save engagement trends
-    engagement_file = "weekly_engagement_trends.png"
+    engagement_file = "web_engagement_trends.png"
     plt.savefig(engagement_file, dpi=300, bbox_inches='tight')
     print(f"📈 Web analytics trends saved as: {engagement_file}")
     
@@ -310,7 +307,7 @@ def print_weekly_summary_statistics(weekly_df):
     print(f"\n🌍 GROWTH METRICS:")
     print(f"   • Weekly Growth Rate (Sessions): {((weekly_df['sessions'].iloc[-1] / weekly_df['sessions'].iloc[0]) - 1) * 100:.1f}%" if len(weekly_df) > 1 else "N/A")
     print(f"   • User Retention Rate: {(weekly_df['total_users'].sum() - weekly_df['new_users'].sum()) / weekly_df['total_users'].sum() * 100:.1f}%" if weekly_df['total_users'].sum() > 0 else "N/A")
-    print(f"   • Recent Activity: {weekly_df['sessions'].tail(3).sum()} sessions in last 3 weeks")
+    print(f"   • Recent Activity: {weekly_df['screen_page_views'].tail(3).sum()} page views in last 3 weeks")
     
     print("="*80)
 
@@ -321,19 +318,19 @@ def main():
     print("="*80)
     
     # Load weekly data
-    weekly_df = load_weekly_analytics_data()
+    weekly_df, monthly_df = load_weekly_analytics_data()
     
     if weekly_df is None:
         return
     
     # Print data overview
     print("\n📋 WEEKLY DATA OVERVIEW:")
-    print(weekly_df[['week', 'collection_date', 'sessions', 'total_users', 
+    print(weekly_df[['week', 'collection_date', 'sessions', 'total_users',
                      'screen_page_views', 'cumulative_sessions', 'cumulative_users']].to_string(index=False))
     
     # Create visualizations (only engagement trends)
     print("\n📈 Creating engagement trends...")
-    create_engagement_trends(weekly_df)
+    create_engagement_trends(monthly_df)
     
     # Print summary statistics
     print_weekly_summary_statistics(weekly_df)

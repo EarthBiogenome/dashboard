@@ -6,8 +6,8 @@ Analyzes both visitor (views) and clone metrics with weekly and cumulative trend
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from datetime import datetime
-import numpy as np
 from pathlib import Path
 
 def load_and_prepare_data():
@@ -17,7 +17,7 @@ def load_and_prepare_data():
     
     if not csv_file.exists():
         print(f"❌ Could not find {csv_file}")
-        return None
+        return None, None
     
     # Load data
     df = pd.read_csv(csv_file)
@@ -39,23 +39,39 @@ def load_and_prepare_data():
     # Show the Sunday (end date) of that week as the label
     df['week_label'] = (df['collection_date'] + pd.Timedelta(days=6)).dt.strftime('%m/%d')
     df['month_year'] = df['collection_date'].dt.strftime('%b %Y')
-    
-    print(f"✅ Loaded {len(df)} weeks of traffic data")
+
+    # Aggregate weekly data into monthly totals for activity plots
+    df['year_month'] = df['collection_date'].dt.to_period('M')
+    monthly_df = (
+        df.groupby('year_month')
+          .agg(views_count=('views_count', 'sum'),
+               views_uniques=('views_uniques', 'sum'),
+               clones_count=('clones_count', 'sum'),
+               clones_uniques=('clones_uniques', 'sum'))
+          .reset_index()
+    )
+    monthly_df['collection_date'] = monthly_df['year_month'].dt.to_timestamp()
+    monthly_df['cumulative_views_count'] = monthly_df['views_count'].cumsum()
+    monthly_df['cumulative_views_uniques'] = monthly_df['views_uniques'].cumsum()
+    monthly_df['cumulative_clones_count'] = monthly_df['clones_count'].cumsum()
+    monthly_df['cumulative_clones_uniques'] = monthly_df['clones_uniques'].cumsum()
+
+    print(f"✅ Loaded {len(df)} weeks / {len(monthly_df)} months of traffic data")
     print(f"📅 Date range: {df['collection_date'].min().strftime('%Y-%m-%d')} to {df['collection_date'].max().strftime('%Y-%m-%d')}")
-    
+
     # Check if we have views data
     has_views_data = df['views_count'].sum() > 0
     if has_views_data:
         print(f"👁️  Views data available: {df['views_count'].sum():,} total views")
     else:
         print(f"⚠️  No views data yet (may be zero or not collected)")
-    
-    return df
+
+    return df, monthly_df
 
 
-def create_trend_analysis(df):
+def create_trend_analysis(df, monthly_df):
     """Create comprehensive traffic trend analysis visualization for both views and clones"""
-    
+
     has_views_data = df['views_count'].sum() > 0
     
     # Create figure with 4 subplots if views data exists, otherwise 2 for clones only
@@ -79,175 +95,129 @@ def create_trend_analysis(df):
                 'weeks_missing': int(days_diff / 7)
             })
     
-    # Define x_pos once for all charts to ensure perfect alignment
-    x_pos = np.arange(len(df))
-    width = 0.35  # For bar charts
-    
+    def apply_monthly_xaxis(ax):
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b\n%Y'))
+        ax.set_xlabel('')
+
+    def setup_ax(ax):
+        ax.set_xlabel('')
+        ax.xaxis.set_major_locator(mdates.MonthLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b\n%Y'))
+
     if has_views_data:
+        m_dates = monthly_df['collection_date'].values
+
         # CHART 1: Cumulative Views Trend
-        ax1.plot(x_pos, df['cumulative_views_count'], 
-                 marker='o', linewidth=3, label='Total Views', color='darkgreen')
-        ax1.fill_between(x_pos, df['cumulative_views_count'], alpha=0.3, color='lightgreen')
-        ax1.plot(x_pos, df['cumulative_views_uniques'], 
-                 marker='s', linewidth=3, label='Total Unique Visitors', color='darkorange')
-        ax1.fill_between(x_pos, df['cumulative_views_uniques'], alpha=0.3, color='moccasin')
-        
-        # Add final totals as annotations
-        final_views_count = df['cumulative_views_count'].iloc[-1]
-        final_views_uniques = df['cumulative_views_uniques'].iloc[-1]
-        ax1.text(x_pos[-1], final_views_count, f'{int(final_views_count):,}', 
+        ax1.plot_date(m_dates, monthly_df['cumulative_views_count'],
+                 fmt='-o', linewidth=3, label='Total Views', color='darkgreen')
+        ax1.fill_between(m_dates, monthly_df['cumulative_views_count'], alpha=0.3, color='lightgreen')
+        ax1.plot_date(m_dates, monthly_df['cumulative_views_uniques'],
+                 fmt='-s', linewidth=3, label='Total Unique Visitors', color='darkorange')
+        ax1.fill_between(m_dates, monthly_df['cumulative_views_uniques'], alpha=0.3, color='moccasin')
+
+        final_views_count = monthly_df['cumulative_views_count'].iloc[-1]
+        final_views_uniques = monthly_df['cumulative_views_uniques'].iloc[-1]
+        ax1.text(m_dates[-1], final_views_count, f'{int(final_views_count):,}',
                  ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkgreen')
-        ax1.text(x_pos[-1], final_views_uniques, f'{int(final_views_uniques):,}', 
+        ax1.text(m_dates[-1], final_views_uniques, f'{int(final_views_uniques):,}',
                  ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkorange')
-        
-        for gap in gaps:
-            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-            ax1.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
-        
-        ax1.set_xlabel('Week (Month/Day)')
+
         ax1.set_ylabel('Cumulative Views')
-        ax1.set_xticks(x_pos)
-        ax1.set_xticklabels(df['week_label'], rotation=45)
-        ax1.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
-        ax1.legend()
+        setup_ax(ax1)
+        ax1.legend(loc='upper left', fontsize=12)
         ax1.set_title('Visitor Trends - Cumulative', fontsize=12, fontweight='bold')
         ax1.set_facecolor('#f8f9fa')
         ax1.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-        
-        # CHART 2: Weekly Views Activity
-        bars1 = ax2.bar(x_pos - width/2, df['views_count'], width, 
-                        label='Weekly Views', color='limegreen', alpha=0.8)
-        bars2 = ax2.bar(x_pos + width/2, df['views_uniques'], width,
-                        label='Weekly Unique Visitors', color='orange', alpha=0.8)
-        
-        for gap in gaps:
-            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-            ax2.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
-            ax2.text(gap_center, ax2.get_ylim()[1] * 0.9, 
-                    f"Gap: {gap['weeks_missing']} weeks\nmissing", 
-                    ha='center', va='top', fontsize=8, style='italic',
-                    bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
-        
-        ax2.set_xlabel('Week (Month/Day)')
-        ax2.set_ylabel('Weekly Views')
-        ax2.set_xticks(x_pos)
-        ax2.set_xticklabels(df['week_label'], rotation=45)
-        ax2.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
-        ax2.legend()
-        ax2.set_title('Visitor Trends - Weekly Activity', fontsize=12, fontweight='bold')
+
+        # CHART 2: Monthly Views Activity
+        m_dates = monthly_df['collection_date'].values
+        ax2.plot_date(m_dates, monthly_df['views_count'], fmt='-o', linewidth=3, label='Monthly Views', color='limegreen')
+        ax2.fill_between(m_dates, monthly_df['views_count'], alpha=0.3, color='limegreen')
+        ax2.plot_date(m_dates, monthly_df['views_uniques'], fmt='-s', linewidth=3, label='Monthly Unique Visitors', color='orange')
+        ax2.fill_between(m_dates, monthly_df['views_uniques'], alpha=0.3, color='moccasin')
+
+        ax2.set_ylabel('Monthly Views')
+        setup_ax(ax2)
+        ax2.legend(loc='upper left', fontsize=12)
+        ax2.set_title('Visitor Trends - Monthly Activity', fontsize=12, fontweight='bold')
         ax2.set_facecolor('#f8f9fa')
         ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-        
+
         # CHART 3: Cumulative Clones Trend
-        ax3.plot(x_pos, df['cumulative_clones_count'], 
-                 marker='o', linewidth=3, label='Total Clones', color='darkblue')
-        ax3.fill_between(x_pos, df['cumulative_clones_count'], alpha=0.3, color='lightblue')
-        ax3.plot(x_pos, df['cumulative_clones_uniques'], 
-                 marker='s', linewidth=3, label='Total Unique Cloners', color='darkred')
-        ax3.fill_between(x_pos, df['cumulative_clones_uniques'], alpha=0.3, color='lightcoral')
-        
-        # Add final totals as annotations
-        final_clones_count = df['cumulative_clones_count'].iloc[-1]
-        final_clones_uniques = df['cumulative_clones_uniques'].iloc[-1]
-        ax3.text(x_pos[-1], final_clones_count, f'{int(final_clones_count):,}', 
+        ax3.plot_date(m_dates, monthly_df['cumulative_clones_count'],
+                 fmt='-o', linewidth=3, label='Total Clones', color='darkblue')
+        ax3.fill_between(m_dates, monthly_df['cumulative_clones_count'], alpha=0.3, color='lightblue')
+        ax3.plot_date(m_dates, monthly_df['cumulative_clones_uniques'],
+                 fmt='-s', linewidth=3, label='Total Unique Cloners', color='darkred')
+        ax3.fill_between(m_dates, monthly_df['cumulative_clones_uniques'], alpha=0.3, color='lightcoral')
+
+        final_clones_count = monthly_df['cumulative_clones_count'].iloc[-1]
+        final_clones_uniques = monthly_df['cumulative_clones_uniques'].iloc[-1]
+        ax3.text(m_dates[-1], final_clones_count, f'{int(final_clones_count):,}',
                  ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkblue')
-        ax3.text(x_pos[-1], final_clones_uniques, f'{int(final_clones_uniques):,}', 
+        ax3.text(m_dates[-1], final_clones_uniques, f'{int(final_clones_uniques):,}',
                  ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkred')
-        
-        for gap in gaps:
-            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-            ax3.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
-        
-        ax3.set_xlabel('Week (Month/Day)')
+
         ax3.set_ylabel('Cumulative Clones')
-        ax3.set_xticks(x_pos)
-        ax3.set_xticklabels(df['week_label'], rotation=45)
-        ax3.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
-        ax3.legend()
+        setup_ax(ax3)
+        ax3.legend(loc='upper left', fontsize=12)
         ax3.set_title('Clone Trends - Cumulative', fontsize=12, fontweight='bold')
         ax3.set_facecolor('#f8f9fa')
         ax3.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-        
-        # CHART 4: Weekly Clones Activity
-        bars3 = ax4.bar(x_pos - width/2, df['clones_count'], width, 
-                        label='Weekly Clones', color='skyblue', alpha=0.8)
-        bars4 = ax4.bar(x_pos + width/2, df['clones_uniques'], width,
-                        label='Weekly Unique Cloners', color='lightcoral', alpha=0.8)
-        
-        for gap in gaps:
-            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-            ax4.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
-            ax4.text(gap_center, ax4.get_ylim()[1] * 0.9, 
-                    f"Gap: {gap['weeks_missing']} weeks\nmissing", 
-                    ha='center', va='top', fontsize=8, style='italic',
-                    bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
-        
-        ax4.set_xlabel('Week (Month/Day)')
-        ax4.set_ylabel('Weekly Clones')
-        ax4.set_xticks(x_pos)
-        ax4.set_xticklabels(df['week_label'], rotation=45)
-        ax4.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
-        ax4.legend()
-        ax4.set_title('Clone Trends - Weekly Activity', fontsize=12, fontweight='bold')
+
+        # CHART 4: Monthly Clones Activity
+        ax4.plot_date(m_dates, monthly_df['clones_count'], fmt='-o', linewidth=3, label='Monthly Clones', color='skyblue')
+        ax4.fill_between(m_dates, monthly_df['clones_count'], alpha=0.3, color='skyblue')
+        ax4.plot_date(m_dates, monthly_df['clones_uniques'], fmt='-s', linewidth=3, label='Monthly Unique Cloners', color='lightcoral')
+        ax4.fill_between(m_dates, monthly_df['clones_uniques'], alpha=0.3, color='lightcoral')
+
+        ax4.set_ylabel('Monthly Clones')
+        setup_ax(ax4)
+        ax4.legend(loc='upper left', fontsize=12)
+        ax4.set_title('Clone Trends - Monthly Activity', fontsize=12, fontweight='bold')
         ax4.set_facecolor('#f8f9fa')
         ax4.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-        
+
         chart_title = "Repository Traffic Analysis - Views & Clones"
     else:
         # CHART 1: Cumulative Clones Trend (when no views data)
-        ax1.plot(x_pos, df['cumulative_clones_count'], 
-                 marker='o', linewidth=3, label='Total Clones', color='darkblue')
-        ax1.fill_between(x_pos, df['cumulative_clones_count'], alpha=0.3, color='lightblue')
-        ax1.plot(x_pos, df['cumulative_clones_uniques'], 
-                 marker='s', linewidth=3, label='Total Unique Cloners', color='darkred')
-        ax1.fill_between(x_pos, df['cumulative_clones_uniques'], alpha=0.3, color='lightcoral')
-        
-        # Add final totals as annotations
-        final_clones_count = df['cumulative_clones_count'].iloc[-1]
-        final_clones_uniques = df['cumulative_clones_uniques'].iloc[-1]
-        ax1.text(x_pos[-1], final_clones_count, f'{int(final_clones_count):,}', 
+        m_dates = monthly_df['collection_date'].values
+        ax1.plot_date(m_dates, monthly_df['cumulative_clones_count'],
+                 fmt='-o', linewidth=3, label='Total Clones', color='darkblue')
+        ax1.fill_between(m_dates, monthly_df['cumulative_clones_count'], alpha=0.3, color='lightblue')
+        ax1.plot_date(m_dates, monthly_df['cumulative_clones_uniques'],
+                 fmt='-s', linewidth=3, label='Total Unique Cloners', color='darkred')
+        ax1.fill_between(m_dates, monthly_df['cumulative_clones_uniques'], alpha=0.3, color='lightcoral')
+
+        final_clones_count = monthly_df['cumulative_clones_count'].iloc[-1]
+        final_clones_uniques = monthly_df['cumulative_clones_uniques'].iloc[-1]
+        ax1.text(m_dates[-1], final_clones_count, f'{int(final_clones_count):,}',
                  ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkblue')
-        ax1.text(x_pos[-1], final_clones_uniques, f'{int(final_clones_uniques):,}', 
+        ax1.text(m_dates[-1], final_clones_uniques, f'{int(final_clones_uniques):,}',
                  ha='left', va='bottom', fontsize=9, fontweight='bold', color='darkred')
-        
-        for gap in gaps:
-            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-            ax1.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
-        
-        ax1.set_xlabel('Week (Month/Day)')
+
         ax1.set_ylabel('Cumulative Count')
-        ax1.set_xticks(x_pos)
-        ax1.set_xticklabels(df['week_label'], rotation=45)
-        ax1.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
-        ax1.legend()
+        setup_ax(ax1)
+        ax1.legend(loc='upper left', fontsize=12)
         ax1.set_title('Clone Trends - Cumulative', fontsize=12, fontweight='bold')
         ax1.set_facecolor('#f8f9fa')
         ax1.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-        
-        # CHART 2: Weekly Clones Activity
-        bars1 = ax2.bar(x_pos - width/2, df['clones_count'], width, 
-                        label='Weekly Clones', color='skyblue', alpha=0.8)
-        bars2 = ax2.bar(x_pos + width/2, df['clones_uniques'], width,
-                        label='Weekly Unique Cloners', color='lightcoral', alpha=0.8)
-        
-        for gap in gaps:
-            gap_center = (gap['start_idx'] + gap['end_idx']) / 2
-            ax2.axvline(x=gap_center, color='red', linestyle='--', alpha=0.5, linewidth=2)
-            ax2.text(gap_center, ax2.get_ylim()[1] * 0.9, 
-                    f"Gap: {gap['weeks_missing']} weeks\nmissing", 
-                    ha='center', va='top', fontsize=8, style='italic',
-                    bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
-        
-        ax2.set_xlabel('Week (Month/Day)')
-        ax2.set_ylabel('Activity Count')
-        ax2.set_xticks(x_pos)
-        ax2.set_xticklabels(df['week_label'], rotation=45)
-        ax2.set_xlim(x_pos[0] - 0.5, x_pos[-1] + 0.5)
-        ax2.legend()
-        ax2.set_title('Clone Trends - Weekly Activity', fontsize=12, fontweight='bold')
+
+        # CHART 2: Monthly Clones Activity
+        m_dates = monthly_df['collection_date'].values
+        ax2.plot_date(m_dates, monthly_df['clones_count'], fmt='-o', linewidth=3, label='Monthly Clones', color='skyblue')
+        ax2.fill_between(m_dates, monthly_df['clones_count'], alpha=0.3, color='skyblue')
+        ax2.plot_date(m_dates, monthly_df['clones_uniques'], fmt='-s', linewidth=3, label='Monthly Unique Cloners', color='lightcoral')
+        ax2.fill_between(m_dates, monthly_df['clones_uniques'], alpha=0.3, color='lightcoral')
+
+        ax2.set_ylabel('Monthly Clones')
+        setup_ax(ax2)
+        ax2.legend(loc='upper left', fontsize=12)
+        ax2.set_title('Clone Trends - Monthly Activity', fontsize=12, fontweight='bold')
         ax2.set_facecolor('#f8f9fa')
         ax2.grid(True, color='#e0e0e0', linestyle='-', linewidth=0.5, alpha=0.7)
-        
+
         chart_title = "Repository Traffic Analysis - Clones Only"
     
     plt.suptitle(chart_title, fontsize=14, fontweight='bold', y=0.995)
@@ -329,7 +299,7 @@ def main():
     print("="*60)
     
     # Load data
-    df = load_and_prepare_data()
+    df, monthly_df = load_and_prepare_data()
     
     if df is None:
         return
@@ -345,7 +315,7 @@ def main():
     
     # Create visualizations
     print("\n📈 Creating trend analysis...")
-    create_trend_analysis(df)
+    create_trend_analysis(df, monthly_df)
     
     # Print summary statistics
     print_summary_statistics(df)
