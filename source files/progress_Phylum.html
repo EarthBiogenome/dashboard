@@ -428,13 +428,16 @@
             .forEach(p => csvPhyla.push(p));
           Object.keys(totalMap).filter(p => p !== 'Other' && !csvPhyla.includes(p))
             .forEach(p => csvPhyla.push(p));
-          csvPhyla.sort((a, b) => (inscdMapFull[b] || 0) - (inscdMapFull[a] || 0));
+          csvPhyla.sort((a, b) => (ebpMapFull[b] || 0) - (ebpMapFull[a] || 0));
+          // Append Unclassified row — species with no phylum-level assignment in NCBI taxonomy.
+          // Values read directly from the histogram 'Other' bucket (totalCount - sum of named phyla).
+          csvPhyla.push('Unclassified');
 
           exportData = {
             categories: csvPhyla,
-            ebpData: csvPhyla.map(p => ebpMapFull[p] || 0),
-            inscdData: csvPhyla.map(p => inscdMapFull[p] || 0),
-            totalData: csvPhyla.map(p => 0)  // filled in after async batch
+            ebpData: [...csvPhyla.slice(0, -1).map(p => ebpMapFull[p] || 0), ebpMapFull['Other'] || 0],
+            inscdData: [...csvPhyla.slice(0, -1).map(p => inscdMapFull[p] || 0), inscdMapFull['Other'] || 0],
+            totalData: csvPhyla.map(p => 0)  // filled in after async batch; Unclassified total computed there
           };
           initCombinedChart(allPhyla, ebpData, inscdData, totalData, ebpTotal, inscdTotal, totalTotal);
 
@@ -442,22 +445,28 @@
           // as ebpTotal/inscdTotal), batched 5 at a time to avoid rate-limiting GoaT.
           (async () => {
             const batchSize = 5;
-            const csvTotalCounts = new Array(csvPhyla.length).fill(0);
-            for (let i = 0; i < csvPhyla.length; i += batchSize) {
-              const batch = csvPhyla.slice(i, i + batchSize);
+            // csvPhyla ends with 'Unclassified' — query only the 69 named phyla
+            const namedCsvPhyla = csvPhyla.slice(0, -1);
+            const namedTotalCounts = new Array(namedCsvPhyla.length).fill(0);
+            for (let i = 0; i < namedCsvPhyla.length; i += batchSize) {
+              const batch = namedCsvPhyla.slice(i, i + batchSize);
               const results = await Promise.all(batch.map(phylum =>
                 fetchData('https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%28' + encodeURIComponent(phylum) + '%29&taxonomy=ncbi&includeEstimates=true&size=1')
                   .then(d => d?.status?.hits || 0)
                   .catch(() => 0)
               ));
-              results.forEach((count, j) => { csvTotalCounts[i + j] = count; });
+              results.forEach((count, j) => { namedTotalCounts[i + j] = count; });
             }
+            // Unclassified total = totalTotal minus all named phyla totals
+            const namedSum = namedTotalCounts.reduce((s, v) => s + v, 0);
+            const unclassifiedTotal = Math.max(0, totalTotal - namedSum);
+            const csvTotalCounts = [...namedTotalCounts, unclassifiedTotal];
             // Update CSV export data
             exportData.totalData = csvTotalCounts;
             // Also update totalData in place so the chart tooltip reflects the full counts.
             // The tooltip formatter closes over the same array reference, so mutations are visible immediately.
             const fullTotalMap = {};
-            csvPhyla.forEach((p, i) => { fullTotalMap[p] = csvTotalCounts[i]; });
+            namedCsvPhyla.forEach((p, i) => { fullTotalMap[p] = namedTotalCounts[i]; });
             let namedTotal = 0;
             allPhyla.forEach((p, i) => {
               if (p !== 'Other' && fullTotalMap[p] !== undefined) {
