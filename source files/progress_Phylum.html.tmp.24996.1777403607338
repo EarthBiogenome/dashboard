@@ -81,76 +81,6 @@
       .download-btn.csv-btn:hover { background-color: #219a52; }
       .download-btn svg { width: 16px; height: 16px; fill: currentColor; }
 
-      /* Scroll-down pill */
-      #scrollHint {
-        position: fixed;
-        bottom: 36px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(50, 50, 50, 0.78);
-        color: #fff;
-        font-size: 13px;
-        padding: 7px 18px 7px 14px;
-        border-radius: 20px;
-        cursor: pointer;
-        z-index: 9998;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: opacity 0.4s;
-        user-select: none;
-      }
-      #scrollHint.hidden { opacity: 0; pointer-events: none; }
-      #scrollHint .arrow {
-        display: inline-block;
-        animation: bounce 1.2s infinite;
-      }
-      @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50%       { transform: translateY(4px); }
-      }
-
-      /* Section nav dots */
-      #sectionNav {
-        position: fixed;
-        top: 50%;
-        right: 18px;
-        transform: translateY(-50%);
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        z-index: 9998;
-      }
-      .nav-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #ccc;
-        cursor: pointer;
-        position: relative;
-        transition: background 0.3s, transform 0.3s;
-      }
-      .nav-dot.active {
-        background: #444;
-        transform: scale(1.35);
-      }
-      .nav-dot .nav-label {
-        position: absolute;
-        right: 18px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(50,50,50,0.82);
-        color: #fff;
-        font-size: 11px;
-        white-space: nowrap;
-        padding: 3px 8px;
-        border-radius: 4px;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s;
-      }
-      .nav-dot:hover .nav-label { opacity: 1; }
-
       .chartNote {
         width: 95%;
         max-width: 1200px;
@@ -170,65 +100,38 @@
   </head>
   <body>
     <div id="error-message"></div>
-
-    <div id="chart1Block">
-      <div class="container">
-        <div id="combinedPhylumContainer" class="chart-container"></div>
-      </div>
-      <div class="download-buttons" id="downloadButtons">
-        <button type="button" class="download-btn" id="downloadChartBtn">
-          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-          Download Chart
-        </button>
-        <button type="button" class="download-btn csv-btn" id="downloadCSVBtn">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
-          Download Data (CSV)
-        </button>
-      </div>
-      <div class="chartNote">
-        <p><strong>Notes:</strong> Each bar shows the number of sequenced eukaryotic species in that phylum, stacked by source. Each phylum has its own color: the <strong>dark shade</strong> represents species sequenced under EBP, and the <strong>light shade</strong> of the same color represents additional species with any genome assembly deposited in INSDC but not under EBP. Hover over a bar for species counts. The chart displays the top 10 phyla from the EBP dataset; remaining phyla are aggregated into "Other". Use <strong>Download Chart</strong> to save the chart as a PNG image, or <strong>Download Data (CSV)</strong> to export the full phylum breakdown — the CSV includes all eukaryotic phyla with EBP, INSDC, and total species counts.</p>
-      </div>
+    <div class="container">
+      <div id="combinedPhylumContainer" class="chart-container"></div>
+    </div>
+    <div class="download-buttons" id="downloadButtons">
+      <button type="button" class="download-btn" id="downloadChartBtn">
+        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        Download Chart
+      </button>
+      <button type="button" class="download-btn csv-btn" id="downloadCSVBtn">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+        Download Data (CSV)
+      </button>
+    </div>
+    <div class="chartNote">
+      <p><strong>Notes:</strong> Each bar shows the number of sequenced eukaryotic species in that phylum, stacked by source. Each phylum has its own color: the <strong>dark shade</strong> represents species sequenced under EBP, and the <strong>light shade</strong> of the same color represents additional species with any genome assembly deposited in INSDC but not under EBP. Hover over a bar for species counts. The chart displays the top 10 phyla from the EBP dataset; remaining phyla are aggregated into "Other". Use <strong>Download Chart</strong> to save the chart as a PNG image, or <strong>Download Data (CSV)</strong> to export the full phylum breakdown — the CSV includes all eukaryotic phyla with EBP, INSDC, and total species counts.</p>
     </div>
 
-    <div id="chart2Block">
-      <div class="container">
-        <div id="ebpStandardPhylumContainer" class="chart-container"></div>
-      </div>
-      <div class="download-buttons" id="downloadButtons2">
-        <button type="button" class="download-btn" id="downloadChartBtn2">
-          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-          Download Chart
-        </button>
-        <button type="button" class="download-btn csv-btn" id="downloadCSVBtn2">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
-          Download Data (CSV)
-        </button>
-      </div>
-      <div class="chartNote">
-        <p><strong>Notes:</strong> Each bar shows the number of eukaryotic species in that phylum whose genome assembly meets the proxy EBP quality thresholds. The EBP standard criteria shown here reflect GoaT's relaxed interpretation
-        of EBP assembly standards, based on available data. This assessment uses a subset of the metrics recommended in the EBP
-        Scientific Subcommittee's <a href="https://www.earthbiogenome.org/report-on-assembly-standards" target="_blank">Report
-          on Assembly Standards</a>, specifically: contig and scaffold N50, and the percentage of sequences
-        assigned to chromosomes. Counts here therefore represent a subset of assemblies that partially fulfil EBP standards, not
-        a fully certified assessment. See the <a
-          href="https://github.com/genomehubs/goat-data/wiki/5.1-Earth-Biogenome-Project-(EBP)-FAQs#how-are-ebp-standard-criteria-and-dates-calculated"
-          target="_blank">GoaT FAQs</a> for details on how these categories are calculated.The <strong>dark shade</strong> represents EBP-affiliated species (PRJNA533106) that meet the standard; the <strong>light shade</strong> of the same color represents additional species in INSDC that meet the standard but are not under EBP.  Total species per phylum (regardless of assembly quality) is shown in the tooltip only. The top-10 phyla from the EBP dataset are displayed; remaining phyla are aggregated into "Other".</p>
-      </div>
+    <div class="container">
+      <div id="ebpStandardPhylumContainer" class="chart-container"></div>
     </div>
-
-    <!-- Scroll hint pill -->
-    <div id="scrollHint" onclick="document.getElementById('chart2Block').scrollIntoView({behavior:'smooth'})">
-      <span class="arrow">↓</span> EBP Quality Metrics
+    <div class="download-buttons" id="downloadButtons2">
+      <button type="button" class="download-btn" id="downloadChartBtn2">
+        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        Download Chart
+      </button>
+      <button type="button" class="download-btn csv-btn" id="downloadCSVBtn2">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+        Download Data (CSV)
+      </button>
     </div>
-
-    <!-- Section nav dots -->
-    <div id="sectionNav">
-      <div class="nav-dot active" data-target="chart1Block">
-        <span class="nav-label">Any assembly</span>
-      </div>
-      <div class="nav-dot" data-target="chart2Block">
-        <span class="nav-label">Quality assembly</span>
-      </div>
+    <div class="chartNote">
+      <p><strong>Notes:</strong> Each bar shows the number of eukaryotic species in that phylum whose genome assembly meets the EBP quality standard (<code>ebp_standard_criteria</code>). The <strong>dark shade</strong> represents EBP-affiliated species (PRJNA533106) that meet the standard; the <strong>light shade</strong> of the same color represents additional species in INSDC that meet the standard but are not under EBP. The EBP standard uses genome-size-dependent quality tiers (6.C, 6.7, 5.C, 5.6) based on contig and scaffold N50 thresholds. Total species per phylum (regardless of assembly quality) is shown in the tooltip only. The same top-10 phyla from the EBP dataset are displayed; remaining phyla are aggregated into "Other".</p>
     </div>
 
     <div id="footer">
@@ -613,7 +516,7 @@
         const ebpStdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20bioproject%3DPRJNA533106%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&size=1";
         const ebpStdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=bioproject%3DPRJNA533106%20AND%20tax_tree%28eukaryota%29%20AND%20ebp_standard_criteria&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&xOpts=PRJNA533106%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true";
         const inscdStdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%282759%5BEukaryota%5D%29%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=ebp_standard_criteria&size=1";
-        const inscdStdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=ebp_standard_criteria%20AND%20tax_tree%282759%5BEukaryota%5D%29&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeAncestral%5B0%5D=ebp_standard_criteria&excludeMissing%5B0%5D=ebp_standard_criteria&xOpts=%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true";
+        const inscdStdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree%282759%5BEukaryota%5D%29%20AND%20ebp_standard_criteria&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeMissing%5B0%5D=ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true";
 
         showLoadingIndicator('ebpStandardPhylumContainer');
         Promise.allSettled([
@@ -803,41 +706,9 @@
         URL.revokeObjectURL(url);
       }
 
-      function downloadChartImage2() {
-        if (!ebpStandardChart) { alert('Chart not available. Please wait for data to load.'); return; }
-        const url = ebpStandardChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: 'transparent' });
-        const link = document.createElement('a');
-        link.download = `EBP_Standard_Phylum_Coverage_${new Date().toISOString().split('T')[0]}.png`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      function downloadCSV2() {
-        if (!exportData2) { alert('Data not available. Please wait for data to load.'); return; }
-        const { categories, ebpData, inscdData, totalData } = exportData2;
-        let csv = 'Phylum,EBP Std Species,INSDC Std Species,Total Eukaryota Species\n';
-        categories.forEach((phylum, i) => {
-          const name = phylum.includes(',') ? `"${phylum}"` : phylum;
-          csv += `${name},${ebpData[i] || 0},${inscdData[i] || 0},${totalData[i] || 0}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `EBP_Standard_Phylum_Coverage_${new Date().toISOString().split('T')[0]}.csv`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }
-
       document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('downloadChartBtn').addEventListener('click', downloadChartImage);
         document.getElementById('downloadCSVBtn').addEventListener('click', downloadCSV);
-        document.getElementById('downloadChartBtn2').addEventListener('click', downloadChartImage2);
-        document.getElementById('downloadCSVBtn2').addEventListener('click', downloadCSV2);
       });
 
       // Add copyright notice with fallback
@@ -849,40 +720,6 @@
       } catch (e) {
         console.warn('Copyright configuration not loaded:', e);
       }
-    </script>
-    <script>
-      (function () {
-        const hint   = document.getElementById('scrollHint');
-        const dots   = document.querySelectorAll('.nav-dot');
-        const blocks = [
-          document.getElementById('chart1Block'),
-          document.getElementById('chart2Block')
-        ];
-
-        function onScroll() {
-          const chart2Top = blocks[1].getBoundingClientRect().top;
-          if (chart2Top < window.innerHeight * 0.85) {
-            hint.classList.add('hidden');
-          } else {
-            hint.classList.remove('hidden');
-          }
-          let activeIndex = 0;
-          blocks.forEach((block, i) => {
-            const rect = block.getBoundingClientRect();
-            if (rect.top <= window.innerHeight / 2) activeIndex = i;
-          });
-          dots.forEach((dot, i) => dot.classList.toggle('active', i === activeIndex));
-        }
-
-        window.addEventListener('scroll', onScroll, { passive: true });
-
-        dots.forEach(dot => {
-          dot.addEventListener('click', () => {
-            document.getElementById(dot.dataset.target)
-              .scrollIntoView({ behavior: 'smooth' });
-          });
-        });
-      })();
     </script>
   </body>
 </html>
