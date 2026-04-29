@@ -613,7 +613,7 @@
         const ebpStdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20bioproject%3DPRJNA533106%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&size=1";
         const ebpStdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=bioproject%3DPRJNA533106%20AND%20tax_tree%28eukaryota%29%20AND%20ebp_standard_criteria&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&xOpts=PRJNA533106%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true";
         const inscdStdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%282759%5BEukaryota%5D%29%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=ebp_standard_criteria&size=1";
-        const inscdStdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=ebp_standard_criteria%20AND%20tax_tree%282759%5BEukaryota%5D%29&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeAncestral%5B0%5D=ebp_standard_criteria&excludeMissing%5B0%5D=ebp_standard_criteria&xOpts=%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true";
+        const inscdStdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29%20AND%20ebp_standard_criteria&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeMissing%5B0%5D=ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true";
 
         showLoadingIndicator('ebpStandardPhylumContainer');
         Promise.allSettled([
