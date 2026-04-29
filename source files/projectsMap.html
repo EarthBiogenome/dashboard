@@ -59,6 +59,22 @@
         .btns .selected {
             background-color: #aaa;
         }
+        #downloadBtn {
+            position: absolute;
+            right: 16px;
+            bottom: 20px;
+            height: 40px;
+            padding: 0 16px;
+            border: 1px solid #000;
+            border-radius: 25px;
+            background-color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            z-index: 99999999;
+        }
+        #downloadBtn:hover {
+            background-color: #eee;
+        }
         #relationshipGraph {
             width: 766px;
             height: 400px;
@@ -77,6 +93,36 @@
         #projectsList li {
             margin: 10px;
         }
+        #mapLegend {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(27, 42, 88, 0.75);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #e8e8e8;
+            z-index: 99999999;
+            pointer-events: none;
+        }
+        .legend-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .legend-swatch {
+            display: inline-block;
+            width: 16px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -84,7 +130,13 @@
         <button>Map</button>
         <button>Statistic</button>
     </div>
+    <button id="downloadBtn" title="Download map as PNG">&#8595; Download Map </button>
     <div id="mapContainer"></div>
+    <div id="mapLegend">
+        <div><span class="legend-dot" style="background:#dbc649;"></span> Project central operation</div>
+        <div><span class="legend-dot" style="background:#759f98;"></span> Affiliate / sample collection site</div>
+        <div><span class="legend-swatch" style="background:#759f98;"></span> Country with EBP presence</div>
+    </div>
     <div id="barContainer"></div>
     <!-- Modal for displaying project list by country -->
     <div class="modal fade" id="relationshipModal" tabindex="-1" aria-labelledby="relationshipModalLabel" aria-hidden="true">
@@ -104,6 +156,7 @@
     </div>
     <script>
         const data = projectsData;
+        let mapChartInstance = null;
         
         function initMap (worldJson) {
             // Aggregate projects by address
@@ -159,6 +212,7 @@
 
             Promise.all(promiseArr).then(arr => {
                 const myChart = echarts.init(document.getElementById('mapContainer'));
+                mapChartInstance = myChart;
 
                 // Country list
                 const countries = new Set()
@@ -183,6 +237,7 @@
                 const option = {
                     tooltip: {
                         trigger: 'item',
+                        confine: true,
                         formatter: function (params) {
                             const item = aggregatedData[params.dataIndex]
                             return `Name: ${item.name}<br/>Address: ${item.address}<br/>Website: ${item.website || '-'}`; // Show count
@@ -518,16 +573,43 @@
                 e.target.className = 'selected';
                 const map = document.getElementById('mapContainer');
                 const bar = document.getElementById('barContainer');
+                const legend = document.getElementById('mapLegend');
+                const downloadBtn = document.getElementById('downloadBtn');
                 if (type == 'Map') {
                     map.style.display = 'block';
                     bar.style.display = 'none';
+                    legend.style.display = 'block';
+                    downloadBtn.style.display = 'block';
                 } else {
                     map.style.display = 'none';
                     bar.style.display = 'block';
+                    legend.style.display = 'none';
+                    downloadBtn.style.display = 'none';
                 }
             };
         });
         document.querySelector('button').click();
+
+        document.getElementById('downloadBtn').onclick = function () {
+            if (!mapChartInstance) return;
+            const chartDataURL = mapChartInstance.getDataURL({ type: 'png', pixelRatio: 2 });
+            // Composite: draw navy background then chart on top
+            const img = new Image();
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#1b2a58';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                const a = document.createElement('a');
+                a.download = 'EBP_global_distribution.png';
+                a.href = canvas.toDataURL('image/png');
+                a.click();
+            };
+            img.src = chartDataURL;
+        };
 
     </script>
 </body>

@@ -182,7 +182,6 @@ const projectsData = [
   {
     projectName: "africabp",
     continent: "Africa",
-    type: 'Headquarter',
     address:
       "Jomo Kenyatta University of Agriculture and Technology, Juja Kwale, Rd, Juja, Kenya",
     website: "http://africanbiogenome.org/",
@@ -192,38 +191,38 @@ const projectsData = [
   {
     projectName: "africabp",
     continent: "Africa",
-    type: 'Affiliate',
     address:
       "Agricultural Research Council, Pretoria, South Africa",    
     latitude: -25.7485438,
     longitude: 28.236981,
+    isNew: true,
   },
   {
     projectName: "africabp",
     continent: "Africa",
-    type: 'Affiliate',
     address:
       "Agricultural Research Council, Pretoria, South Africa",
     latitude: 9.081999,
     longitude: 8.675277,
+    isNew: true,
   },
   {
     projectName: "africabp",
     continent: "Africa",
-    type: 'Affiliate',
     address:
       "Agricultural Research Council, Pretoria, South Africa",
     latitude: -33.9162159,
     longitude: 18.6044098,
+    isNew: true,
   },
   {
     projectName: "africabp",
     continent: "Africa",
-    type: 'Affiliate',
     address:
       "Agricultural Research Council, Pretoria, South Africa",
     latitude: 31.791702,
     longitude: -7.09262,
+    isNew: true,
   },
   {
     projectName: "ag100pest",
@@ -1456,7 +1455,6 @@ const projectsData = [
   {
     projectName: "canbp",
     continent: "North America",
-    type: 'Headquarter',
     address: "University of British Columbia, Vancouver, BC V6T 1Z4, Canada",
     website: "https://earthbiogenome.ca/",
     latitude: 49.260125680538,
@@ -1465,26 +1463,26 @@ const projectsData = [
   {
     projectName: "canbp",
     continent: "North America",
-    type: "Affiliate",
     website: "https://earthbiogenome.ca/",
     latitude: 43.662536,
     longitude: -79.37189,
+    isNew: true,
     },
     {
     projectName: "canbp",
     continent: "North America",
-    type: "Affiliate",
     website: "https://earthbiogenome.ca/",
     latitude: 45.499981,
     longitude: -73.556587,
+    isNew: true,
     },
     {
     projectName: "canbp",
     continent: "North America",
-    type: "Affiliate",
     website: "https://earthbiogenome.ca/",
     latitude: 53.51485,
     longitude: -113.516594,
+    isNew: true,
     },
   {
     projectName: "canseq150",
