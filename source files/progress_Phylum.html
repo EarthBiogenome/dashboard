@@ -721,21 +721,24 @@
           };
           initEbpStandardChart(allPhyla, ebpStdData, inscdStdData, totalData, ebpStdTotal, inscdStdTotal, totalTotal);
 
-          // Fetch total eukaryota species per phylum using individual search queries (same mechanism
-          // as ebpTotal/inscdTotal), batched 5 at a time to avoid rate-limiting GoaT.
+          // Fetch total species per phylum for phyla absent from totalMap (zero-assembly phyla).
+          // Phyla already in totalMap reuse that count directly, avoiding duplicate API calls.
           (async () => {
             const batchSize = 5;
-            // csvPhyla ends with 'Unclassified' — query only the 69 named phyla
+            // csvPhyla ends with 'Unclassified' — query only the named phyla
             const namedCsvPhyla = csvPhyla.slice(0, -1);
-            const namedTotalCounts = new Array(namedCsvPhyla.length).fill(0);
-            for (let i = 0; i < namedCsvPhyla.length; i += batchSize) {
-              const batch = namedCsvPhyla.slice(i, i + batchSize);
+            const namedTotalCounts = namedCsvPhyla.map(p => totalMap[p] || 0);
+            const missingPhyla = namedCsvPhyla.filter(p => !totalMap[p]);
+            for (let i = 0; i < missingPhyla.length; i += batchSize) {
+              const batch = missingPhyla.slice(i, i + batchSize);
               const results = await Promise.all(batch.map(phylum =>
                 fetchData('https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%28' + encodeURIComponent(phylum) + '%29&taxonomy=ncbi&includeEstimates=true&size=1')
                   .then(d => d?.status?.hits || 0)
                   .catch(() => 0)
               ));
-              results.forEach((count, j) => { namedTotalCounts[i + j] = count; });
+              batch.forEach((phylum, j) => {
+                namedTotalCounts[namedCsvPhyla.indexOf(phylum)] = results[j];
+              });
             }
             // Unclassified total = totalTotal minus all named phyla totals
             const namedSum = namedTotalCounts.reduce((s, v) => s + v, 0);
