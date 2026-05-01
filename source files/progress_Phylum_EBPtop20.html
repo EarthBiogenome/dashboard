@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="copyright" content="Data source: Genomes on a Tree (GoaT). Used with permission." />
+    <meta name="author" content="Fang Chen" />
+    <title>EBP Progress by Phylum</title>
+    <script src="../config.js"></script>
+    <script src="./echarts.min.js"></script>
+    <script src="./utils.js"></script>
+    <script src="./services.js"></script>
+    <style>
+      .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px 20px;
+        max-width: 1200px;
+        width: 95%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .chart-container {
+        width: 90%;
+        height: 600px;
+        margin: 0px auto 0px auto;
+        position: relative;
+      }
+
+      /* Footer styles */
+      #footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background-color: rgba(248, 249, 250, 0.95);
+        color: #333;
+        text-align: center;
+        padding: 5px;
+        z-index: 9999;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        font-size: 14px;
+      }
+
+      #error-message {
+        color: red;
+        text-align: center;
+        margin: 20px;
+        display: none;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .download-buttons {
+        display: none;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 0px;
+        margin-bottom: 16px;
+      }
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #fff;
+        background-color: #3498db;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+      .download-btn:hover { background-color: #2980b9; transform: translateY(-1px); }
+      .download-btn:active { transform: translateY(0); }
+      .download-btn.csv-btn { background-color: #27ae60; }
+      .download-btn.csv-btn:hover { background-color: #219a52; }
+      .download-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+      /* Scroll-down pill */
+      #scrollHint {
+        position: fixed;
+        bottom: 36px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(50, 50, 50, 0.78);
+        color: #fff;
+        font-size: 13px;
+        padding: 7px 18px 7px 14px;
+        border-radius: 20px;
+        cursor: pointer;
+        z-index: 9998;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: opacity 0.4s;
+        user-select: none;
+      }
+      #scrollHint.hidden { opacity: 0; pointer-events: none; }
+      #scrollHint .arrow {
+        display: inline-block;
+        animation: bounce 1.2s infinite;
+      }
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(4px); }
+      }
+
+      /* Section nav dots */
+      #sectionNav {
+        position: fixed;
+        top: 50%;
+        right: 18px;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 9998;
+      }
+      .nav-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ccc;
+        cursor: pointer;
+        position: relative;
+        transition: background 0.3s, transform 0.3s;
+      }
+      .nav-dot.active {
+        background: #444;
+        transform: scale(1.35);
+      }
+      .nav-dot .nav-label {
+        position: absolute;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(50,50,50,0.82);
+        color: #fff;
+        font-size: 11px;
+        white-space: nowrap;
+        padding: 3px 8px;
+        border-radius: 4px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      .nav-dot:hover .nav-label { opacity: 1; }
+
+      .chartNote {
+        width: 95%;
+        max-width: 1200px;
+        margin: 0 auto 60px auto;
+        padding: 10px 16px;
+        background: #f8f9fa;
+        border-left: 3px solid #aaa;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #555;
+        line-height: 1.6;
+      }
+      .chartNote p {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="error-message"></div>
+
+    <div id="chart1Block">
+      <div class="container">
+        <div id="combinedPhylumContainer" class="chart-container"></div>
+      </div>
+      <div class="download-buttons" id="downloadButtons">
+        <button type="button" class="download-btn" id="downloadChartBtn">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Download Chart
+        </button>
+        <button type="button" class="download-btn csv-btn" id="downloadCSVBtn">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+          Download Data (CSV)
+        </button>
+      </div>
+      <div class="chartNote">
+        <p><strong>Notes:</strong> Each bar shows the number of sequenced eukaryotic species in that phylum, stacked by source. Each phylum has its own color: the <strong>dark shade</strong> represents species sequenced under EBP, and the <strong>light shade</strong> of the same color represents additional species with any genome assembly deposited in INSDC but not under EBP. Hover over a bar for species counts. The chart displays the top 20 phyla from the EBP dataset; remaining phyla are aggregated into "Other". Use <strong>Download Chart</strong> to save the chart as a PNG image, or <strong>Download Data (CSV)</strong> to export the full phylum breakdown — the CSV includes all eukaryotic phyla with EBP, INSDC, and total species counts.</p>
+      </div>
+    </div>
+
+    <div id="chart2Block">
+      <div class="container">
+        <div id="ebpStandardPhylumContainer" class="chart-container"></div>
+      </div>
+      <div class="download-buttons" id="downloadButtons2">
+        <button type="button" class="download-btn" id="downloadChartBtn2">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Download Chart
+        </button>
+        <button type="button" class="download-btn csv-btn" id="downloadCSVBtn2">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+          Download Data (CSV)
+        </button>
+      </div>
+      <div class="chartNote">
+        <p><strong>Notes:</strong> Each bar shows the number of eukaryotic species in that phylum whose genome assembly meets the proxy EBP quality thresholds. The EBP standard criteria shown here reflect GoaT's relaxed interpretation
+        of EBP assembly standards, based on available data. This assessment uses a subset of the metrics recommended in the EBP
+        Scientific Subcommittee's <a href="https://www.earthbiogenome.org/report-on-assembly-standards" target="_blank">Report
+          on Assembly Standards</a>, specifically: contig and scaffold N50, and the percentage of sequences
+        assigned to chromosomes. Counts here therefore represent a subset of assemblies that partially fulfil EBP standards, not
+        a fully certified assessment. See the <a
+          href="https://github.com/genomehubs/goat-data/wiki/5.1-Earth-Biogenome-Project-(EBP)-FAQs#how-are-ebp-standard-criteria-and-dates-calculated"
+          target="_blank">GoaT FAQs</a> for details on how these categories are calculated.The <strong>dark shade</strong> represents EBP-affiliated species (PRJNA533106) that meet the standard; the <strong>light shade</strong> of the same color represents additional species in INSDC that meet the standard but are not under EBP.  Total species per phylum (regardless of assembly quality) is shown in the tooltip only. The top-20 phyla from the EBP dataset are displayed; remaining phyla are aggregated into "Other".</p>
+      </div>
+    </div>
+
+    <!-- Scroll hint pill -->
+    <div id="scrollHint" onclick="document.getElementById('chart2Block').scrollIntoView({behavior:'smooth'})">
+      <span class="arrow">↓</span> EBP Quality Metrics
+    </div>
+
+    <!-- Section nav dots -->
+    <div id="sectionNav">
+      <div class="nav-dot active" data-target="chart1Block">
+        <span class="nav-label">Any assembly</span>
+      </div>
+      <div class="nav-dot" data-target="chart2Block">
+        <span class="nav-label">Quality assembly</span>
+      </div>
+    </div>
+
+    <div id="footer">
+        <div id="copyright">Data source: <a href="https://goat.genomehubs.org" target="_blank" rel="noopener noreferrer">Genomes on a Tree (GoaT)</a>. Used with permission.</div>
+    </div>
+
+    <script>
+      let combinedChart = null;
+      let ebpStandardChart = null;
+
+      function formatNumber(num) {
+        if (num === undefined || num === null) return '0';
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+      /**
+       * Process histogram cats into top 20 phyla + Other, returned as a {label: count} map.
+       */
+      function processPhylumCats(cats, totalCount, topN) {
+        const TOP_N = topN || 20;
+        const items = (cats || []).map((item) => {
+          const label = (item.label && (item.label.toLowerCase() === 'other' || item.label === '+')) ? 'Other' : (item.label || '');
+          const count = typeof item.doc_count === 'string' ? parseInt(item.doc_count, 10) : (Number(item.doc_count) || 0);
+          return { label, count };
+        }).filter((item) => item.label !== '');
+        items.sort((a, b) => b.count - a.count);
+        const top10 = items.slice(0, TOP_N);
+        const sumTop10 = top10.reduce((sum, item) => sum + item.count, 0);
+        const otherValue = Math.max(0, (totalCount || 0) - sumTop10);
+        let categories = top10.map((item) => item.label);
+        let values = top10.map((item) => item.count);
+        const otherIndex = categories.indexOf('Other');
+        if (otherIndex !== -1) {
+          values[otherIndex] = otherValue;
+          if (otherValue === 0) {
+            categories = categories.filter((_, i) => i !== otherIndex);
+            values = values.filter((_, i) => i !== otherIndex);
+          }
+        } else if (otherValue > 0) {
+          categories.push('Other');
+          values.push(otherValue);
+        }
+        // Return as a map for easy union lookup
+        const map = {};
+        categories.forEach((cat, i) => { map[cat] = values[i]; });
+        return map;
+      }
+
+      // Position-based color palette — bar 1 gets color[0], bar 2 gets color[1], etc.
+      // Dark saturated bases (hue-spread); INSDC segments use the same hue after 55% white blend.
+      const colorPalette = [
+        '#4c1d95', '#3730a3', '#1e3a8a', '#0c4a6e', '#0f766e', '#14532d', '#3f6212',
+        '#713f12', '#9a3412', '#991b1b', '#701a75'
+      ];
+      function getPhylumDarkColor(idx) {
+        return colorPalette[idx % colorPalette.length];
+      }
+      function getPhylumLightColor(idx) {
+        // Lighten the base color by blending toward white at 55%
+        const hex = colorPalette[idx % colorPalette.length].replace('#', '');
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        const lr = Math.round(r + (255 - r) * 0.55);
+        const lg = Math.round(g + (255 - g) * 0.55);
+        const lb = Math.round(b + (255 - b) * 0.55);
+        return `rgb(${lr},${lg},${lb})`;
+      }
+
+      function initCombinedChart(categories, ebpData, insdcData, totalData, ebpTotal, insdcTotal, totalTotal) {
+        const chartDom = document.getElementById('combinedPhylumContainer');
+        if (!chartDom) return;
+        combinedChart = echarts.init(chartDom);
+
+        // INSDC-only count = INSDC - EBP (stacked on top of EBP)
+        const insdcOnlyData = categories.map((_, i) =>
+          Math.max(0, (insdcData[i] || 0) - (ebpData[i] || 0))
+        );
+
+        // Per-bar colored data — dark for EBP, light for INSDC-only, same hue per phylum
+        const ebpSeriesData = categories.map((_, i) => ({
+          value: ebpData[i] || 0,
+          itemStyle: { color: getPhylumDarkColor(i) }
+        }));
+        const insdcSeriesData = categories.map((_, i) => ({
+          value: insdcOnlyData[i],
+          itemStyle: { color: getPhylumLightColor(i) }
+        }));
+
+        const option = {
+          title: {
+            text: 'Sequenced eukaryotic species by Phylum',
+            subtext: `EBP: ${formatNumber(ebpTotal)} species  |  INSDC: ${formatNumber(insdcTotal)} species  |  Total Eukaryota: ${formatNumber(totalTotal)} species`,
+            left: 'center',
+            top: 5,
+            textStyle: {
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#333'
+            },
+            subtextStyle: {
+              fontSize: 13,
+              color: '#666'
+            }
+          },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            position: function (point, params, dom, rect, size) {
+              var x = point[0] + 20;
+              if (x + size.contentSize[0] > size.viewSize[0]) {
+                x = point[0] - size.contentSize[0] - 20;
+              }
+              var y = point[1] - size.contentSize[1] / 2;
+              if (y < 0) y = 0;
+              if (y + size.contentSize[1] > size.viewSize[1]) y = size.viewSize[1] - size.contentSize[1];
+              return [x, y];
+            },
+            formatter: function (params) {
+              const i = params[0].dataIndex;
+              const phylum = params[0].name;
+              const ebp = ebpData[i] || 0;
+              const insdc = insdcData[i] || 0;
+              const total = totalData[i] || 0;
+              const dark = getPhylumDarkColor(i);
+              const light = getPhylumLightColor(i);
+              return `<strong>${phylum}</strong><br/>
+                <span style="display:inline-block;width:10px;height:10px;background:${dark};border-radius:2px;margin-right:4px;"></span>EBP: ${formatNumber(ebp)} species<br/>
+                <span style="display:inline-block;width:10px;height:10px;background:${light};border-radius:2px;margin-right:4px;"></span>INSDC: ${formatNumber(insdc)} species<br/>
+                <span style="display:inline-block;width:10px;height:10px;background:#ddd;border-radius:2px;margin-right:4px;"></span>Total: ${formatNumber(total)} species`;
+            },
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            borderColor: '#ccc',
+            borderWidth: 1,
+            textStyle: { color: '#333' }
+          },
+          grid: {
+            left: '2%',
+            right: '6%',
+            bottom: '2%',
+            top: '20%',
+            containLabel: true
+          },
+          xAxis: {
+            type: 'value',
+            name: '',
+            position: 'top',
+            min: 0,
+            axisLabel: {
+              fontSize: 12,
+              color: '#333',
+              formatter: function(val) { return formatNumber(val); }
+            },
+            axisLine: { show: true, lineStyle: { color: '#333', width: 1 } },
+            splitLine: { show: true, lineStyle: { color: '#eee' } },
+            axisTick: { show: true, lineStyle: { color: '#333' }, length: 4 }
+          },
+          yAxis: {
+            type: 'category',
+            data: categories,
+            inverse: true,
+            axisLabel: {
+              interval: 0,
+              color: '#333',
+              fontSize: 12
+            },
+            axisLine: { lineStyle: { color: '#ccc' } }
+          },
+          graphic: [
+            {
+              type: 'text',
+              left: 'center',
+              top: '14%',
+              style: {
+                text: 'Count of Species',
+                font: 'bold 16px sans-serif',
+                fill: '#333'
+              }
+            },
+          ],
+          series: [
+            {
+              name: 'EBP sequenced',
+              type: 'bar',
+              stack: 'coverage',
+              data: ebpSeriesData,
+              barCategoryGap: '40%'
+            },
+            {
+              name: 'INSDC available',
+              type: 'bar',
+              stack: 'coverage',
+              data: insdcSeriesData
+            }
+          ]
+        };
+
+        combinedChart.setOption(option);
+        document.getElementById('downloadButtons').style.display = 'flex';
+      }
+
+      function initEbpStandardChart(categories, ebpStdData, insdcStdData, totalData, ebpStdTotal, insdcStdTotal, totalTotal) {
+        const chartDom = document.getElementById('ebpStandardPhylumContainer');
+        if (!chartDom) return;
+        ebpStandardChart = echarts.init(chartDom);
+
+        const insdcStdOnlyData = categories.map((_, i) =>
+          Math.max(0, (insdcStdData[i] || 0) - (ebpStdData[i] || 0))
+        );
+
+        const ebpStdSeriesData = categories.map((_, i) => ({
+          value: ebpStdData[i] || 0,
+          itemStyle: { color: getPhylumDarkColor(i) }
+        }));
+        const insdcStdSeriesData = categories.map((_, i) => ({
+          value: insdcStdOnlyData[i],
+          itemStyle: { color: getPhylumLightColor(i) }
+        }));
+
+        const option = {
+          title: {
+            text: 'EBP-standard eukaryotic species by Phylum',
+            subtext: `EBP std: ${formatNumber(ebpStdTotal)} species  |  INSDC std: ${formatNumber(insdcStdTotal)} species  |  Total Eukaryota: ${formatNumber(totalTotal)} species`,
+            left: 'center',
+            top: 5,
+            textStyle: {
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#333'
+            },
+            subtextStyle: {
+              fontSize: 13,
+              color: '#666'
+            }
+          },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            position: function (point, params, dom, rect, size) {
+              var x = point[0] + 20;
+              if (x + size.contentSize[0] > size.viewSize[0]) {
+                x = point[0] - size.contentSize[0] - 20;
+              }
+              var y = point[1] - size.contentSize[1] / 2;
+              if (y < 0) y = 0;
+              if (y + size.contentSize[1] > size.viewSize[1]) y = size.viewSize[1] - size.contentSize[1];
+              return [x, y];
+            },
+            formatter: function (params) {
+              const i = params[0].dataIndex;
+              const phylum = params[0].name;
+              const ebpStd = ebpStdData[i] || 0;
+              const insdcStd = insdcStdData[i] || 0;
+              const total = totalData[i] || 0;
+              const dark = getPhylumDarkColor(i);
+              const light = getPhylumLightColor(i);
+              return `<strong>${phylum}</strong><br/>
+                <span style="display:inline-block;width:10px;height:10px;background:${dark};border-radius:2px;margin-right:4px;"></span>EBP std: ${formatNumber(ebpStd)} species<br/>
+                <span style="display:inline-block;width:10px;height:10px;background:${light};border-radius:2px;margin-right:4px;"></span>INSDC std: ${formatNumber(insdcStd)} species<br/>
+                <span style="display:inline-block;width:10px;height:10px;background:#ddd;border-radius:2px;margin-right:4px;"></span>Total: ${formatNumber(total)} species`;
+            },
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            borderColor: '#ccc',
+            borderWidth: 1,
+            textStyle: { color: '#333' }
+          },
+          grid: {
+            left: '2%',
+            right: '6%',
+            bottom: '2%',
+            top: '20%',
+            containLabel: true
+          },
+          xAxis: {
+            type: 'value',
+            name: '',
+            position: 'top',
+            min: 0,
+            axisLabel: {
+              fontSize: 12,
+              color: '#333',
+              formatter: function(val) { return formatNumber(val); }
+            },
+            axisLine: { show: true, lineStyle: { color: '#333', width: 1 } },
+            splitLine: { show: true, lineStyle: { color: '#eee' } },
+            axisTick: { show: true, lineStyle: { color: '#333' }, length: 4 }
+          },
+          yAxis: {
+            type: 'category',
+            data: categories,
+            inverse: true,
+            axisLabel: {
+              interval: 0,
+              color: '#333',
+              fontSize: 12
+            },
+            axisLine: { lineStyle: { color: '#ccc' } }
+          },
+          graphic: [
+            {
+              type: 'text',
+              left: 'center',
+              top: '14%',
+              style: {
+                text: 'Count of Species',
+                font: 'bold 16px sans-serif',
+                fill: '#333'
+              }
+            },
+          ],
+          series: [
+            {
+              name: 'EBP std',
+              type: 'bar',
+              stack: 'coverage',
+              data: ebpStdSeriesData,
+              barCategoryGap: '40%'
+            },
+            {
+              name: 'INSDC std',
+              type: 'bar',
+              stack: 'coverage',
+              data: insdcStdSeriesData
+            }
+          ]
+        };
+
+        ebpStandardChart.setOption(option);
+        document.getElementById('downloadButtons2').style.display = 'flex';
+      }
+
+      function showLoadingIndicator(containerId) {
+        const container = document.getElementById(containerId);
+        if (container) {
+          container.innerHTML = `
+            <div style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100%;
+              font-family: Arial, sans-serif;
+              color: #333;
+              background-color: #f9f9f9;
+              border-radius: 8px;
+            ">
+              <div style="
+                width: 60px;
+                height: 60px;
+                border: 6px solid #e3e3e3;
+                border-top: 6px solid #3498db;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 20px;
+              "></div>
+              <div style="
+                font-size: 16px;
+                font-weight: normal;
+                color: #666;
+              ">Fetching data...</div>
+            </div>
+          `;
+        }
+      }
+
+      function hideLoadingIndicator(containerId) {
+        // ECharts automatically replaces container content on init
+      }
+
+      window.onload = function () {
+        showLoadingIndicator('combinedPhylumContainer');
+        const ebpSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&fields=bioproject&size=100&offset=0&names=&ranks=phylum";
+        const ebpHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=bioproject%3DPRJNA533106%20AND%20tax_tree%28eukaryota%29&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&xOpts=PRJNA533106%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true";
+        const insdcSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29&taxonomy=ncbi&includeEstimates=true&size=1";
+        const insdcHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29&rank=species&result=taxon&cat=phylum%5B200%5D%2B&taxonomy=ncbi&includeEstimates=true";
+        const totalSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%282759%5BEukaryota%5D%29&taxonomy=ncbi&includeEstimates=true&size=1";
+        const totalHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree%28eukaryota%29&rank=species&result=taxon&cat=phylum%5B200%5D%2B&taxonomy=ncbi&includeEstimates=true";
+
+        const allPhylaUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28phylum%29&taxonomy=ncbi&includeEstimates=true&size=200";
+
+        // EBP standard (ebp_standard_criteria) URLs
+        const ebpStdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20bioproject%3DPRJNA533106%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&size=1";
+        const ebpStdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=bioproject%3DPRJNA533106%20AND%20tax_tree%28eukaryota%29%20AND%20ebp_standard_criteria&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&xOpts=PRJNA533106%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true";
+        const insdcStdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%282759%5BEukaryota%5D%29%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=ebp_standard_criteria&size=1";
+        const insdcStdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29%20AND%20ebp_standard_criteria&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeMissing%5B0%5D=ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true";
+
+        showLoadingIndicator('ebpStandardPhylumContainer');
+        Promise.allSettled([
+          fetchData(ebpSearchUrl),
+          fetchData(ebpHistogramUrl),
+          fetchData(insdcSearchUrl),
+          fetchData(insdcHistogramUrl),
+          fetchData(totalSearchUrl),
+          fetchData(totalHistogramUrl),
+          fetchData(allPhylaUrl),
+          fetchData(ebpStdSearchUrl),
+          fetchData(ebpStdHistogramUrl),
+          fetchData(insdcStdSearchUrl),
+          fetchData(insdcStdHistogramUrl)
+        ]).then((results) => {
+          const [ebpSearch, ebpHisto, insdcSearch, insdcHisto, totalSearch, totalHisto, allPhylaSearch,
+                 ebpStdSearch, ebpStdHisto, insdcStdSearch, insdcStdHisto] =
+            results.map(r => r.status === 'fulfilled' ? r.value : null);
+          if (!insdcSearch || !insdcHisto) {
+            throw new Error('Failed to load required INSDC data');
+          }
+          // Extract totals
+          const ebpTotal = (ebpSearch?.status?.hits) || 0;
+          const insdcTotal = (insdcSearch?.status?.hits) || 0;
+          const totalTotal = (totalSearch?.status?.hits) || 0;
+
+          // Build full maps (up to 200 phyla) used for both chart and CSV
+          const ebpMapFull = processPhylumCats(ebpHisto?.report?.report?.histogram?.cats || [], ebpTotal, 200);
+          const insdcMapFull = processPhylumCats(insdcHisto?.report?.report?.histogram?.cats || [], insdcTotal, 200);
+          const totalMap = processPhylumCats(totalHisto?.report?.report?.histogram?.cats || [], totalTotal, 200);
+
+          // Chart uses top 20 from EBP
+          const ebpTop20Entries = Object.entries(ebpMapFull)
+            .filter(([k]) => k !== 'Other')
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 20);
+          const ebpTop20Names = ebpTop20Entries.map(([k]) => k);
+          const ebpTop20Sum = ebpTop20Entries.reduce((s, [, v]) => s + v, 0);
+          const ebpOther = Math.max(0, ebpTotal - ebpTop20Sum);
+
+          // allPhyla = EBP top-20 named phyla + "Other", sorted by EBP count descending
+          const allPhyla = [...ebpTop20Names, 'Other'];
+          allPhyla.sort((a, b) => {
+            if (a === 'Other') return 1;
+            if (b === 'Other') return -1;
+            return (ebpMapFull[b] || 0) - (ebpMapFull[a] || 0);
+          });
+
+          // INSDC and total: use actual counts from full maps for each EBP top-20 phylum,
+          // falling back to their real count even if not in INSDC/total top 20.
+          const insdcInEbpTop20Sum = ebpTop20Names.reduce((s, p) => s + (insdcMapFull[p] || 0), 0);
+          const insdcOther = Math.max(0, insdcTotal - insdcInEbpTop20Sum);
+          const totalInEbpTop20Sum = ebpTop20Names.reduce((s, p) => s + (totalMap[p] || 0), 0);
+          const totalOther = Math.max(0, totalTotal - totalInEbpTop20Sum);
+
+          const ebpData = allPhyla.map(p => p === 'Other' ? ebpOther : (ebpMapFull[p] || 0));
+          const insdcData = allPhyla.map(p => p === 'Other' ? insdcOther : (insdcMapFull[p] || 0));
+          const totalData = allPhyla.map(p => p === 'Other' ? totalOther : (totalMap[p] || 0));
+
+          // For CSV: seed from taxonomy-level phyla list (all eukaryotic phyla, including those with
+          // no assemblies). Falls back to INSDC/total histogram union if taxonomy fetch failed.
+          const allPhylumNames = (allPhylaSearch?.results || [])
+            .map(r => r.result?.scientific_name)
+            .filter(Boolean);
+          const csvPhyla = allPhylumNames.length > 0
+            ? [...allPhylumNames]
+            : Object.keys(insdcMapFull).filter(p => p !== 'Other');
+          // Union with histogram maps as fallback for any phyla the taxonomy search may have missed
+          Object.keys(insdcMapFull).filter(p => p !== 'Other' && !csvPhyla.includes(p))
+            .forEach(p => csvPhyla.push(p));
+          Object.keys(totalMap).filter(p => p !== 'Other' && !csvPhyla.includes(p))
+            .forEach(p => csvPhyla.push(p));
+          csvPhyla.sort((a, b) => (ebpMapFull[b] || 0) - (ebpMapFull[a] || 0));
+          // Append Unclassified row — species with no phylum-level assignment in NCBI taxonomy.
+          // Values read directly from the histogram 'Other' bucket (totalCount - sum of named phyla).
+          csvPhyla.push('Unclassified');
+
+          exportData = {
+            categories: csvPhyla,
+            ebpData: [...csvPhyla.slice(0, -1).map(p => ebpMapFull[p] || 0), ebpMapFull['Other'] || 0],
+            insdcData: [...csvPhyla.slice(0, -1).map(p => insdcMapFull[p] || 0), insdcMapFull['Other'] || 0],
+            totalData: csvPhyla.map(p => 0)  // filled in after async batch; Unclassified total computed there
+          };
+          initCombinedChart(allPhyla, ebpData, insdcData, totalData, ebpTotal, insdcTotal, totalTotal);
+
+          // EBP-standard chart: process quality-filtered histogram data using same allPhyla categories
+          const ebpStdTotal   = ebpStdSearch?.status?.hits || 0;
+          const insdcStdTotal = insdcStdSearch?.status?.hits || 0;
+          const ebpStdMapFull   = processPhylumCats(ebpStdHisto?.report?.report?.histogram?.cats || [], ebpStdTotal, 200);
+          const insdcStdMapFull = processPhylumCats(insdcStdHisto?.report?.report?.histogram?.cats || [], insdcStdTotal, 200);
+
+          // Select top 20 independently from EBP std dataset
+          const ebpStdTop20Entries = Object.entries(ebpStdMapFull)
+            .filter(([k]) => k !== 'Other')
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 20);
+          const ebpStdTop20Names = ebpStdTop20Entries.map(([k]) => k);
+          const ebpStdTop20Sum   = ebpStdTop20Entries.reduce((s, [, v]) => s + v, 0);
+          const ebpStdOther      = Math.max(0, ebpStdTotal - ebpStdTop20Sum);
+          const insdcStdInTop20Sum = ebpStdTop20Names.reduce((s, p) => s + (insdcStdMapFull[p] || 0), 0);
+          const insdcStdOther      = Math.max(0, insdcStdTotal - insdcStdInTop20Sum);
+
+          const stdPhyla = [...ebpStdTop20Names, 'Other'];
+          stdPhyla.sort((a, b) => {
+            if (a === 'Other') return 1;
+            if (b === 'Other') return -1;
+            return (ebpStdMapFull[b] || 0) - (ebpStdMapFull[a] || 0);
+          });
+          const ebpStdData   = stdPhyla.map(p => p === 'Other' ? ebpStdOther   : (ebpStdMapFull[p]   || 0));
+          const insdcStdData = stdPhyla.map(p => p === 'Other' ? insdcStdOther : (insdcStdMapFull[p] || 0));
+          const totalStdData = stdPhyla.map(p => p === 'Other' ? totalOther    : (totalMap[p]         || 0));
+
+          exportData2 = {
+            categories: csvPhyla,
+            ebpData:   [...csvPhyla.slice(0, -1).map(p => ebpStdMapFull[p]   || 0), ebpStdMapFull['Other']   || 0],
+            insdcData: [...csvPhyla.slice(0, -1).map(p => insdcStdMapFull[p] || 0), insdcStdMapFull['Other'] || 0],
+            totalData: csvPhyla.map(p => 0)  // filled in by async batch below
+          };
+          initEbpStandardChart(stdPhyla, ebpStdData, insdcStdData, totalStdData, ebpStdTotal, insdcStdTotal, totalTotal);
+
+          // Fetch total species per phylum for phyla absent from totalMap (zero-assembly phyla).
+          // Phyla already in totalMap reuse that count directly, avoiding duplicate API calls.
+          (async () => {
+            const batchSize = 5;
+            // csvPhyla ends with 'Unclassified' — query only the named phyla
+            const namedCsvPhyla = csvPhyla.slice(0, -1);
+            const namedTotalCounts = namedCsvPhyla.map(p => totalMap[p] || 0);
+            const missingPhyla = namedCsvPhyla.filter(p => !totalMap[p]);
+            for (let i = 0; i < missingPhyla.length; i += batchSize) {
+              const batch = missingPhyla.slice(i, i + batchSize);
+              const results = await Promise.all(batch.map(phylum =>
+                fetchData('https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%28' + encodeURIComponent(phylum) + '%29&taxonomy=ncbi&includeEstimates=true&size=1')
+                  .then(d => d?.status?.hits || 0)
+                  .catch(() => 0)
+              ));
+              batch.forEach((phylum, j) => {
+                namedTotalCounts[namedCsvPhyla.indexOf(phylum)] = results[j];
+              });
+            }
+            // Unclassified total = totalTotal minus all named phyla totals
+            const namedSum = namedTotalCounts.reduce((s, v) => s + v, 0);
+            const unclassifiedTotal = Math.max(0, totalTotal - namedSum);
+            const csvTotalCounts = [...namedTotalCounts, unclassifiedTotal];
+            // Update CSV export data for both charts
+            exportData.totalData = csvTotalCounts;
+            if (exportData2) exportData2.totalData = csvTotalCounts;
+            // Also update totalData in place so the chart tooltip reflects the full counts.
+            // The tooltip formatter closes over the same array reference, so mutations are visible immediately.
+            const fullTotalMap = {};
+            namedCsvPhyla.forEach((p, i) => { fullTotalMap[p] = namedTotalCounts[i]; });
+            let namedTotal = 0;
+            allPhyla.forEach((p, i) => {
+              if (p !== 'Other' && fullTotalMap[p] !== undefined) {
+                totalData[i] = fullTotalMap[p];
+                namedTotal += fullTotalMap[p];
+              }
+            });
+            // Recompute Other total with accurate per-phylum data
+            const otherIdx = allPhyla.indexOf('Other');
+            if (otherIdx !== -1) totalData[otherIdx] = Math.max(0, totalTotal - namedTotal);
+            // Also update totalStdData so chart 2 tooltip reflects accurate totals
+            let namedStdTotal = 0;
+            stdPhyla.forEach((p, i) => {
+              if (p !== 'Other' && fullTotalMap[p] !== undefined) {
+                totalStdData[i] = fullTotalMap[p];
+                namedStdTotal += fullTotalMap[p];
+              }
+            });
+            const otherStdIdx = stdPhyla.indexOf('Other');
+            if (otherStdIdx !== -1) totalStdData[otherStdIdx] = Math.max(0, totalTotal - namedStdTotal);
+          })();
+        }).catch(error => {
+          console.error('Error loading phylum data:', error);
+          const errorMessage = document.getElementById('error-message');
+          errorMessage.textContent = `Error loading data: ${error.message}`;
+          errorMessage.style.display = 'block';
+        });
+
+        setTimeout(function () { window.scrollTo(0, 0); }, 100);
+      };
+
+      // Store data for CSV export
+      let exportData = null;
+      let exportData2 = null;
+
+      function downloadChartImage() {
+        if (!combinedChart) { alert('Chart not available. Please wait for data to load.'); return; }
+        const url = combinedChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: 'transparent' });
+        const link = document.createElement('a');
+        link.download = `EBP_Phylum_Coverage_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      function downloadCSV() {
+        if (!exportData) { alert('Data not available. Please wait for data to load.'); return; }
+        const { categories, ebpData, insdcData, totalData } = exportData;
+        let csv = 'Phylum,EBP Species,INSDC Species,Total Eukaryota Species\n';
+        categories.forEach((phylum, i) => {
+          const name = phylum.includes(',') ? `"${phylum}"` : phylum;
+          csv += `${name},${ebpData[i] || 0},${insdcData[i] || 0},${totalData[i] || 0}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `EBP_Phylum_Coverage_${new Date().toISOString().split('T')[0]}.csv`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      function downloadChartImage2() {
+        if (!ebpStandardChart) { alert('Chart not available. Please wait for data to load.'); return; }
+        const url = ebpStandardChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: 'transparent' });
+        const link = document.createElement('a');
+        link.download = `EBP_Standard_Phylum_Coverage_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      function downloadCSV2() {
+        if (!exportData2) { alert('Data not available. Please wait for data to load.'); return; }
+        const { categories, ebpData, insdcData, totalData } = exportData2;
+        let csv = 'Phylum,EBP Std Species,INSDC Std Species,Total Eukaryota Species\n';
+        categories.forEach((phylum, i) => {
+          const name = phylum.includes(',') ? `"${phylum}"` : phylum;
+          csv += `${name},${ebpData[i] || 0},${insdcData[i] || 0},${totalData[i] || 0}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `EBP_Standard_Phylum_Coverage_${new Date().toISOString().split('T')[0]}.csv`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('downloadChartBtn').addEventListener('click', downloadChartImage);
+        document.getElementById('downloadCSVBtn').addEventListener('click', downloadCSV);
+        document.getElementById('downloadChartBtn2').addEventListener('click', downloadChartImage2);
+        document.getElementById('downloadCSVBtn2').addEventListener('click', downloadCSV2);
+      });
+
+      // Add copyright notice with fallback
+      try {
+        const copyrightElement = document.getElementById('copyright');
+        if (window.copyright && window.copyright.notice) {
+          copyrightElement.textContent = copyright.notice;
+        }
+      } catch (e) {
+        console.warn('Copyright configuration not loaded:', e);
+      }
+    </script>
+    <script>
+      (function () {
+        const hint   = document.getElementById('scrollHint');
+        const dots   = document.querySelectorAll('.nav-dot');
+        const blocks = [
+          document.getElementById('chart1Block'),
+          document.getElementById('chart2Block')
+        ];
+
+        function onScroll() {
+          const chart2Top = blocks[1].getBoundingClientRect().top;
+          if (chart2Top < window.innerHeight * 0.85) {
+            hint.classList.add('hidden');
+          } else {
+            hint.classList.remove('hidden');
+          }
+          let activeIndex = 0;
+          blocks.forEach((block, i) => {
+            const rect = block.getBoundingClientRect();
+            if (rect.top <= window.innerHeight / 2) activeIndex = i;
+          });
+          dots.forEach((dot, i) => dot.classList.toggle('active', i === activeIndex));
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+
+        dots.forEach(dot => {
+          dot.addEventListener('click', () => {
+            document.getElementById(dot.dataset.target)
+              .scrollIntoView({ behavior: 'smooth' });
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

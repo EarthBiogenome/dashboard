@@ -20,6 +20,8 @@ geocoding/~$*.xls
 *.csv
 *.xlsx
 *.tsv
+*.png
+!source files/geoMap/logo.png
 
 # Python
 __pycache__/
