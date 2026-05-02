@@ -72,7 +72,7 @@ graph TD
 - Underscore.js: Utility functions
 
 ## Data Organization
-- Source files in `source files/` directory
+- Source files in `pages/` directory
 - Individual visualization HTML files
 - Common utilities in `utils.js`
 - Geographic data in `world.js`

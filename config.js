@@ -22,37 +22,37 @@ const pages = [
     pages: [
       {
         name: "Progress Over the Years", 
-        file: "./source files/progress_Family_Species.html",
+        file: "./pages/family-species.html",
         description: "Annual assembly progress at the family and species level",
         icon: "fa-chart-line"
       },
       {
         name: "Progress at all Taxonomic Levels",
-        file: "./source files/progress_StackedRainbow.html", 
+        file: "./pages/taxonomy.html",
         description: "Animation display of assembly progress at main taxonomic ranks",
         icon: "fa-rainbow"
       },
       {
         name: "Progress by Phylum Groups",
-        file: "./source files/progress_Phylum_INSDCtop20.html",
+        file: "./pages/phylum.html",
         description: "Number of eukaryotic species sequenced by EBP grouped by phylum",
         icon: "fa-chart-column"
       },
       {
         name: "Genome Assemblies Meeting EBP-standard Metrics",
-        file: "./source files/progress_EBPmetrics.html",
+        file: "./pages/metrics.html",
         description: "Contribution of EBP to assemblies meeting EBP-standard metrics at all taxonomic levels",
         icon: "fa-chart-bar"
       },
       {
         name: "Phylogenomic Display of Progress at Order Level",
-        file: "./source files/PhyloTree_order.html",
+        file: "./pages/phylotree.html",
         description: "Phylogenomic tree of orders with at least one species sequenced by EBP",
         icon: "fa-tree"
       },
       {
         name: "Affiliate & Regional Node Progress",
-        file: "./source files/Affiliates_Node_Species_Progress.html",
+        file: "./pages/affiliates.html",
         description: "Assembly progress across EBP affiliate projects and regional nodes",
         icon: "fa-chart-column"
       }
@@ -63,13 +63,13 @@ const pages = [
     pages: [
       {
         name: "Affiliate Network",
-        file: "./source files/WireMaps.html",
+        file: "./pages/wiremaps.html",
         description: "Wired map showing EBP and affiliate network connections",
         icon: "fa-network-wired" 
       },
       {
         name: "Global Distribution",
-        file: "./source files/projectsMap.html",
+        file: "./pages/map.html",
         description: "Geographic distribution of EBP affiliates",
         icon: "fa-globe"
       }

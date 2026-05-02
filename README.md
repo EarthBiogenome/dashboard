@@ -49,7 +49,7 @@ To run this dashboard locally:
 ## Repository Structure
 - `index.html` - Main dashboard entry point with navigation interface
 - `config.js` - Configuration file defining available visualizations and their metadata
-- `source files/` - Directory containing individual visualization HTML files
+- `pages/` - Directory containing individual visualization HTML files
 - `geoMap/` - Geographic mapping visualizations and supporting files
 
 ## Technologies Used

@@ -23,14 +23,14 @@ The **EBP Dashboard** is a static web frontend for the Earth BioGenome Project (
 - `config.js` — Defines all visualization pages in two categories: "Assembly Progress" and "Network Visualization"; also holds the `copyright` object
 
 ### Visualization Files
-All visualization HTML files live in [source files/](source files/). Each file is self-contained — it includes its own `<script>` and `<style>` tags and loads data via `fetch()` from external GOAT/EBP APIs or local JSON.
+All visualization HTML files live in [pages/](pages/). Each file is self-contained — it includes its own `<script>` and `<style>` tags and loads data via `fetch()` from external GOAT/EBP APIs or local JSON.
 
 
 ### Shared Utilities (loaded via `<script>` tags in visualization files)
-- [source files/utils.js](source files/utils.js) — `calculateCumulativeSums()`, `formatNumber()`, `getProjectValue()`
-- [source files/services.js](source files/services.js) — Data fetching (`fetchData`, `getTreeData`, `getUmbrellaData`), ECharts data formatters, assembly level color mapping
-- [source files/projectsList.js](source files/projectsList.js) — Static project data
-- [source files/ergaList.js](source files/ergaList.js) — ERGA affiliate list
+- [pages/utils.js](pages/utils.js) — `calculateCumulativeSums()`, `formatNumber()`, `getProjectValue()`
+- [pages/services.js](pages/services.js) — Data fetching (`fetchData`, `getTreeData`, `getUmbrellaData`), ECharts data formatters, assembly level color mapping
+- [pages/projectsList.js](pages/projectsList.js) — Static project data
+- [pages/ergaList.js](pages/ergaList.js) — ERGA affiliate list
 
 ### Geographic Map Components
 `geoMap/` contains separate map visualizations with Bootstrap 4, jQuery, and `world.js` (GeoJSON). These are distinct from the D3/ECharts visualizations.
@@ -44,7 +44,7 @@ All visualization HTML files live in [source files/](source files/). Each file i
 ## Key Patterns
 
 ### Adding a New Visualization
-1. Create a new HTML file in `source files/`
+1. Create a new HTML file in `pages/`
 2. Add an entry to the `pages` array in `config.js` with `name`, `file`, `description`, `icon` (Font Awesome class), and `category`
 3. The landing page reads `config.js` and auto-renders the card
 
@@ -52,7 +52,7 @@ All visualization HTML files live in [source files/](source files/). Each file i
 See `STYLE_SPEC.md` for the full color palette, typography, spacing, footer rules, and per-file checklist. No CSS framework on main dashboard (Bootstrap 4 only in `geoMap/`).
 
 ## Dependencies
-- **D3.js v6** — bundled as `source files/d3.v6.js`
-- **ECharts** — bundled as `source files/echarts.min.js`
-- **Phylotree** — npm package (`source files/package.json`), used in phylogenetic tree visualization
-- **Underscore.js** — bundled as `source files/underscore-min.js`
+- **D3.js v6** — bundled as `pages/d3.v6.js`
+- **ECharts** — bundled as `pages/echarts.min.js`
+- **Phylotree** — npm package (`pages/package.json`), used in phylogenetic tree visualization
+- **Underscore.js** — bundled as `pages/underscore-min.js`

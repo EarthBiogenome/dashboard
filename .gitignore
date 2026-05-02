@@ -50,7 +50,7 @@ ENV/
 *.xlsx
 *.tsv
 *.png
-!source files/geoMap/logo.png
+!pages/geoMap/logo.png
 
 # Google Analytics 4 - Keep credentials secret but allow data files
 web-analytics/ga4_service_account.json

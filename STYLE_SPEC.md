@@ -22,7 +22,7 @@ Use it as the reference when auditing or creating files.
 --border:        #e5e7eb
 ```
 
-### Visualization files (`source files/*.html`) — inline values
+### Visualization files (`pages/*.html`) — inline values
 | Purpose | Value |
 |---|---|
 | Body text / labels | `#333` or `#333333` |
@@ -172,7 +172,7 @@ Placed **immediately below** the chart container it describes, with minimal gap:
 
 ## 6. Required `<head>` Tags (visualization files)
 
-Every `source files/*.html` must include:
+Every `pages/*.html` must include:
 
 ```html
 <meta charset="UTF-8" />
