@@ -12,10 +12,21 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
             background: transparent;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
             padding: 1rem;
+            box-sizing: border-box;
         }
 
         .progress-section {
@@ -290,9 +301,14 @@
             progressText.textContent = `${count.toLocaleString()} (${percentage.toFixed(1)}%)`;
         }
 
+        function notifyParentHeight() {
+            window.parent.postMessage({ iframeHeight: document.body.scrollHeight }, '*');
+        }
+
         // Initialize
         createAxisTicks();
-        fetchSpeciesCount();
+        fetchSpeciesCount().finally(notifyParentHeight);
+        window.addEventListener('load', notifyParentHeight);
     </script>
 </body>
 </html>

@@ -22,25 +22,25 @@ const pages = [
     pages: [
       {
         name: "Progress Over the Years", 
-        file: "./pages/family-species.html",
+        file: "./pages/progress_Family_Species.html",
         description: "Annual assembly progress at the family and species level",
         icon: "fa-chart-line"
       },
       {
         name: "Progress at all Taxonomic Levels",
-        file: "./pages/taxonomy.html",
+        file: "./pages/progress_all_taxa.html",
         description: "Animation display of assembly progress at main taxonomic ranks",
         icon: "fa-rainbow"
       },
       {
         name: "Progress by Phylum Groups",
-        file: "./pages/phylum.html",
+        file: "./pages/progress_Phylum.html",
         description: "Number of eukaryotic species sequenced by EBP grouped by phylum",
         icon: "fa-chart-column"
       },
       {
         name: "Genome Assemblies Meeting EBP-standard Metrics",
-        file: "./pages/metrics.html",
+        file: "./pages/progress_quality_metrics.html",
         description: "Contribution of EBP to assemblies meeting EBP-standard metrics at all taxonomic levels",
         icon: "fa-chart-bar"
       },
@@ -52,7 +52,7 @@ const pages = [
       },
       {
         name: "Affiliate & Regional Node Progress",
-        file: "./pages/affiliates.html",
+        file: "./pages/progress_affiliates_nodes.html",
         description: "Assembly progress across EBP affiliate projects and regional nodes",
         icon: "fa-chart-column"
       }
@@ -69,7 +69,7 @@ const pages = [
       },
       {
         name: "Global Distribution",
-        file: "./pages/map.html",
+        file: "./pages/distribution_map.html",
         description: "Geographic distribution of EBP affiliates",
         icon: "fa-globe"
       }
