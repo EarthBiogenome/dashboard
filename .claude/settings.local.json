@@ -7,10 +7,34 @@
       "Bash(git -C \"c:/Users/fchen13/ASU Dropbox/Fang Chen/Work Documents/EBP/Dashboard reports\" log --oneline -10)",
       "Bash(git -C \"c:/Users/fchen13/ASU Dropbox/Fang Chen/Work Documents/EBP/Dashboard reports\" status --short)",
       "Bash(git -C \"c:/Users/fchen13/ASU Dropbox/Fang Chen/Work Documents/EBP/Dashboard reports\" remote -v)",
-      "Read(//c/c/Users/fchen13/ASU Dropbox/Fang Chen/Work Documents/EBP/Dashboard reports/**)"
+      "Read(//c/c/Users/fchen13/ASU Dropbox/Fang Chen/Work Documents/EBP/Dashboard reports/**)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:genomehubs.github.io)",
+      "WebFetch(domain:blobtoolkit.genomehubs.org)",
+      "WebFetch(domain:genomehubs.readthedocs.io)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-api/src/api/v2/reports/histogram.js\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-api/src/api/v2/routes/report.js\")",
+      "Bash(curl -s \"https://api.github.com/search/code?q=xField+repo:genomehubs/genomehubs+language:JavaScript\" -H \"Accept: application/vnd.github.v3+json\")",
+      "Bash(python3 -c \"import sys,json; [print\\(i['path']\\) for i in json.load\\(sys.stdin\\).get\\('items',[]\\)]\")",
+      "Bash(curl -s \"https://api.github.com/search/code?q=xField+repo:genomehubs/genomehubs\" -H \"Accept: application/vnd.github.v3+json\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-ui/src/client/views/hooks/useReportQuery.jsx\")",
+      "Bash(curl -s \"https://api.github.com/repos/genomehubs/genomehubs/git/trees/main?recursive=1\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-api/src/api/v2/reports/queryParams.js\")",
+      "Bash(curl -s \"https://goat.genomehubs.org/api-docs/swagger.json\")",
+      "Bash(curl -sv \"https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree\\(eukaryota\\)&rank=species&result=taxon&xField=bioproject&cat=phylum%5B5%5D%2B&taxonomy=ncbi&includeEstimates=true&size=1\")",
+      "Bash(curl -s \"https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree%282759%5BEukaryota%5D%29&rank=species&result=taxon&xField=bioproject&cat=phylum%5B5%5D%2B&taxonomy=ncbi&includeEstimates=true\")",
+      "Bash(grep -o '\"xQuery\":[^,}]*\\\\|\"xLabel\":[^,}]*\\\\|\"status\":{[^}]*}')",
+      "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-ui/src/client/views/components/ReportHistogram.jsx\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-ui/src/client/views/components/ReportEdit.jsx\")"
     ],
     "additionalDirectories": [
-      "c:\\c\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports"
+      "c:\\c\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports",
+      "C:\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports\\https:\\raw.githubusercontent.com\\genomehubs\\genomehubs\\main\\src\\genomehubs-ui\\src\\client\\views\\components",
+      "c:\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports\\https:\\raw.githubusercontent.com\\genomehubs\\genomehubs\\main\\src\\genomehubs-ui\\src\\client\\views\\components"
     ]
   }
 }

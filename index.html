@@ -652,11 +652,32 @@
                 const response = await fetch(SPECIES_API_URL);
                 if (!response.ok) throw new Error('HTTP error: ' + response.status);
                 const data = await response.json();
-                const speciesCount = data.status && data.status.hits ? data.status.hits : 0;
+                const speciesCount = (data.status && data.status.hits) ? data.status.hits : 0;
+                if (speciesCount === 0) throw new Error('Zero hits returned');
                 updateProgressBar(speciesCount);
             } catch (error) {
                 console.error('Error fetching species count:', error);
-                document.getElementById('progress-text').textContent = 'Data unavailable';
+                // Retry once after 3 seconds
+                setTimeout(async () => {
+                    try {
+                        const response = await fetch(SPECIES_API_URL);
+                        if (!response.ok) throw new Error('HTTP error: ' + response.status);
+                        const data = await response.json();
+                        const speciesCount = (data.status && data.status.hits) ? data.status.hits : 0;
+                        if (speciesCount > 0) {
+                            updateProgressBar(speciesCount);
+                        } else {
+                            document.getElementById('progress-text').textContent = 'Data unavailable';
+                            createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
+                        }
+                    } catch (retryError) {
+                        console.error('Retry failed:', retryError);
+                        const textEl = document.getElementById('progress-text');
+                        textEl.textContent = 'Data unavailable';
+                        textEl.style.cssText = 'color:#666;padding-left:8px;white-space:nowrap;position:absolute;left:0;';
+                        createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
+                    }
+                }, 3000);
             }
         }
 
