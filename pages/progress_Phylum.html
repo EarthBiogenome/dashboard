@@ -355,10 +355,11 @@
               const total = totalData[i] || 0;
               const dark = getPhylumDarkColor(i);
               const light = getPhylumLightColor(i);
+              const totalStr = total > 0 ? `${formatNumber(total)} species` : 'loading...';
               return `<strong>${phylum}</strong><br/>
                 <span style="display:inline-block;width:10px;height:10px;background:${dark};border-radius:2px;margin-right:4px;"></span>EBP: ${formatNumber(ebp)} species<br/>
                 <span style="display:inline-block;width:10px;height:10px;background:${light};border-radius:2px;margin-right:4px;"></span>INSDC: ${formatNumber(insdc)} species<br/>
-                <span style="display:inline-block;width:10px;height:10px;background:#ddd;border-radius:2px;margin-right:4px;"></span>Total: ${formatNumber(total)} species`;
+                <span style="display:inline-block;width:10px;height:10px;background:#ddd;border-radius:2px;margin-right:4px;"></span>Total: ${totalStr}`;
             },
             backgroundColor: 'rgba(255,255,255,0.95)',
             borderColor: '#ccc',
@@ -485,10 +486,11 @@
               const total = totalData[i] || 0;
               const dark = getPhylumDarkColor(i);
               const light = getPhylumLightColor(i);
+              const totalStr = total > 0 ? `${formatNumber(total)} species` : 'loading...';
               return `<strong>${phylum}</strong><br/>
                 <span style="display:inline-block;width:10px;height:10px;background:${dark};border-radius:2px;margin-right:4px;"></span>EBP std: ${formatNumber(ebpStd)} species<br/>
                 <span style="display:inline-block;width:10px;height:10px;background:${light};border-radius:2px;margin-right:4px;"></span>INSDC std: ${formatNumber(insdcStd)} species<br/>
-                <span style="display:inline-block;width:10px;height:10px;background:#ddd;border-radius:2px;margin-right:4px;"></span>Total: ${formatNumber(total)} species`;
+                <span style="display:inline-block;width:10px;height:10px;background:#ddd;border-radius:2px;margin-right:4px;"></span>Total: ${totalStr}`;
             },
             backgroundColor: 'rgba(255,255,255,0.95)',
             borderColor: '#ccc',
