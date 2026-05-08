@@ -321,7 +321,7 @@
         const option = {
           title: {
             text: 'Sequenced eukaryotic species by Phylum',
-            subtext: `EBP: ${formatNumber(ebpTotal)} species  |  INSDC: ${formatNumber(insdcTotal)} species  |  Total Eukaryota: ${formatNumber(totalTotal)} species`,
+            subtext: `EBP: ${formatNumber(ebpTotal)} species  |  INSDC: ${formatNumber(insdcTotal)} species  |  Total Eukaryota: ${typeof totalTotal === 'number' ? formatNumber(totalTotal) + ' species' : totalTotal}`,
             left: 'center',
             top: 5,
             textStyle: {
@@ -451,7 +451,7 @@
         const option = {
           title: {
             text: 'EBP-standard eukaryotic species by Phylum',
-            subtext: `EBP std: ${formatNumber(ebpStdTotal)} species  |  INSDC std: ${formatNumber(insdcStdTotal)} species  |  Total Eukaryota: ${formatNumber(totalTotal)} species`,
+            subtext: `EBP std: ${formatNumber(ebpStdTotal)} species  |  INSDC std: ${formatNumber(insdcStdTotal)} species  |  Total Eukaryota: ${typeof totalTotal === 'number' ? formatNumber(totalTotal) + ' species' : totalTotal}`,
             left: 'center',
             top: 5,
             textStyle: {
@@ -615,182 +615,195 @@
         const insdcStdSearchUrl = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%282759%5BEukaryota%5D%29%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=ebp_standard_criteria&size=1";
         const insdcStdHistogramUrl = "https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_level%20AND%20tax_tree%282759%5BEukaryota%5D%29%20AND%20ebp_standard_criteria&rank=species&result=taxon&cat=phylum%5B200%5D%2B&excludeMissing%5B0%5D=ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true";
 
+        // Fire 9 requests immediately (totalSearch + totalHisto deferred — they are slow)
+        const ebpSearchP      = fetchData(ebpSearchUrl);
+        const ebpHistoP       = fetchData(ebpHistogramUrl);
+        const insdcSearchP    = fetchData(insdcSearchUrl);
+        const insdcHistoP     = fetchData(insdcHistogramUrl);
+        const allPhylaP       = fetchData(allPhylaUrl);
+        const ebpStdSearchP   = fetchData(ebpStdSearchUrl);
+        const ebpStdHistoP    = fetchData(ebpStdHistogramUrl);
+        const insdcStdSearchP = fetchData(insdcStdSearchUrl);
+        const insdcStdHistoP  = fetchData(insdcStdHistogramUrl);
+        // totalSearch and totalHisto are the slowest (~6s and ~32s); fire them in parallel
+        // but don't block chart rendering on them
+        const totalSearchP = fetchData(totalSearchUrl);
+        const totalHistoP  = fetchData(totalHistogramUrl);
+
         showLoadingIndicator('ebpStandardPhylumContainer');
-        Promise.allSettled([
-          fetchData(ebpSearchUrl),
-          fetchData(ebpHistogramUrl),
-          fetchData(insdcSearchUrl),
-          fetchData(insdcHistogramUrl),
-          fetchData(totalSearchUrl),
-          fetchData(totalHistogramUrl),
-          fetchData(allPhylaUrl),
-          fetchData(ebpStdSearchUrl),
-          fetchData(ebpStdHistogramUrl),
-          fetchData(insdcStdSearchUrl),
-          fetchData(insdcStdHistogramUrl)
-        ]).then((results) => {
-          const [ebpSearch, ebpHisto, insdcSearch, insdcHisto, totalSearch, totalHisto, allPhylaSearch,
-                 ebpStdSearch, ebpStdHisto, insdcStdSearch, insdcStdHisto] =
-            results.map(r => r.status === 'fulfilled' ? r.value : null);
-          if (!insdcSearch || !insdcHisto) {
-            throw new Error('Failed to load required INSDC data');
-          }
-          // Extract totals
-          const ebpTotal = (ebpSearch?.status?.hits) || 0;
-          const insdcTotal = (insdcSearch?.status?.hits) || 0;
-          const totalTotal = (totalSearch?.status?.hits) || 0;
 
-          // Build full maps (up to 200 phyla) used for both chart and CSV
-          const ebpMapFull = processPhylumCats(ebpHisto?.report?.report?.histogram?.cats || [], ebpTotal, 200);
-          const insdcMapFull = processPhylumCats(insdcHisto?.report?.report?.histogram?.cats || [], insdcTotal, 200);
-          const totalMap = processPhylumCats(totalHisto?.report?.report?.histogram?.cats || [], totalTotal, 200);
-
-          // Chart uses top 20 from INSDC
-          const insdcTop20Entries = Object.entries(insdcMapFull)
-            .filter(([k]) => k !== 'Other')
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 20);
-          const insdcTop20Names = insdcTop20Entries.map(([k]) => k);
-          const insdcTop20Sum = insdcTop20Entries.reduce((s, [, v]) => s + v, 0);
-          const insdcOther = Math.max(0, insdcTotal - insdcTop20Sum);
-
-          // allPhyla = INSDC top-20 named phyla + "Other", sorted by INSDC count descending
-          const allPhyla = [...insdcTop20Names, 'Other'];
-          allPhyla.sort((a, b) => {
-            if (a === 'Other') return 1;
-            if (b === 'Other') return -1;
-            return (insdcMapFull[b] || 0) - (insdcMapFull[a] || 0);
-          });
-
-          // EBP and total: use actual counts from full maps for each INSDC top-20 phylum,
-          // falling back to their real count even if not in EBP/total top 20.
-          const ebpInInsdcTop20Sum = insdcTop20Names.reduce((s, p) => s + (ebpMapFull[p] || 0), 0);
-          const ebpOther = Math.max(0, ebpTotal - ebpInInsdcTop20Sum);
-          const totalInInsdcTop20Sum = insdcTop20Names.reduce((s, p) => s + (totalMap[p] || 0), 0);
-          const totalOther = Math.max(0, totalTotal - totalInInsdcTop20Sum);
-
-          const ebpData = allPhyla.map(p => p === 'Other' ? ebpOther : (ebpMapFull[p] || 0));
-          const insdcData = allPhyla.map(p => p === 'Other' ? insdcOther : (insdcMapFull[p] || 0));
-          const totalData = allPhyla.map(p => p === 'Other' ? totalOther : (totalMap[p] || 0));
-
-          // For CSV: seed from taxonomy-level phyla list (all eukaryotic phyla, including those with
-          // no assemblies). Falls back to INSDC/total histogram union if taxonomy fetch failed.
-          const allPhylumNames = (allPhylaSearch?.results || [])
-            .map(r => r.result?.scientific_name)
-            .filter(Boolean);
-          const csvPhyla = allPhylumNames.length > 0
-            ? [...allPhylumNames]
-            : Object.keys(insdcMapFull).filter(p => p !== 'Other');
-          // Union with histogram maps as fallback for any phyla the taxonomy search may have missed
-          Object.keys(insdcMapFull).filter(p => p !== 'Other' && !csvPhyla.includes(p))
-            .forEach(p => csvPhyla.push(p));
-          Object.keys(totalMap).filter(p => p !== 'Other' && !csvPhyla.includes(p))
-            .forEach(p => csvPhyla.push(p));
-          csvPhyla.sort((a, b) => (insdcMapFull[b] || 0) - (insdcMapFull[a] || 0));
-          // Append Unclassified row — species with no phylum-level assignment in NCBI taxonomy.
-          // Values read directly from the histogram 'Other' bucket (totalCount - sum of named phyla).
-          csvPhyla.push('Unclassified');
-
-          exportData = {
-            categories: csvPhyla,
-            ebpData: [...csvPhyla.slice(0, -1).map(p => ebpMapFull[p] || 0), ebpMapFull['Other'] || 0],
-            insdcData: [...csvPhyla.slice(0, -1).map(p => insdcMapFull[p] || 0), insdcMapFull['Other'] || 0],
-            totalData: csvPhyla.map(p => 0)  // filled in after async batch; Unclassified total computed there
-          };
-          initCombinedChart(allPhyla, ebpData, insdcData, totalData, ebpTotal, insdcTotal, totalTotal);
-
-          // EBP-standard chart: process quality-filtered histogram data using same allPhyla categories
-          const ebpStdTotal   = ebpStdSearch?.status?.hits || 0;
-          const insdcStdTotal = insdcStdSearch?.status?.hits || 0;
-          const ebpStdMapFull   = processPhylumCats(ebpStdHisto?.report?.report?.histogram?.cats || [], ebpStdTotal, 200);
-          const insdcStdMapFull = processPhylumCats(insdcStdHisto?.report?.report?.histogram?.cats || [], insdcStdTotal, 200);
-
-          // Select top 20 independently from INSDC std dataset
-          const insdcStdTop20Entries = Object.entries(insdcStdMapFull)
-            .filter(([k]) => k !== 'Other')
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 20);
-          const insdcStdTop20Names = insdcStdTop20Entries.map(([k]) => k);
-          const insdcStdTop20Sum   = insdcStdTop20Entries.reduce((s, [, v]) => s + v, 0);
-          const insdcStdOther      = Math.max(0, insdcStdTotal - insdcStdTop20Sum);
-          const ebpStdInTop20Sum   = insdcStdTop20Names.reduce((s, p) => s + (ebpStdMapFull[p] || 0), 0);
-          const ebpStdOther        = Math.max(0, ebpStdTotal - ebpStdInTop20Sum);
-
-          const stdPhyla = [...insdcStdTop20Names, 'Other'];
-          stdPhyla.sort((a, b) => {
-            if (a === 'Other') return 1;
-            if (b === 'Other') return -1;
-            return (insdcStdMapFull[b] || 0) - (insdcStdMapFull[a] || 0);
-          });
-          const ebpStdData   = stdPhyla.map(p => p === 'Other' ? ebpStdOther   : (ebpStdMapFull[p]   || 0));
-          const insdcStdData = stdPhyla.map(p => p === 'Other' ? insdcStdOther : (insdcStdMapFull[p] || 0));
-          const totalStdData = stdPhyla.map(p => p === 'Other' ? totalOther    : (totalMap[p] || 0));
-
-          exportData2 = {
-            categories: csvPhyla,
-            ebpData:   [...csvPhyla.slice(0, -1).map(p => ebpStdMapFull[p]   || 0), ebpStdMapFull['Other']   || 0],
-            insdcData: [...csvPhyla.slice(0, -1).map(p => insdcStdMapFull[p] || 0), insdcStdMapFull['Other'] || 0],
-            totalData: csvPhyla.map(p => 0)  // filled in by async batch below
-          };
-          initEbpStandardChart(stdPhyla, ebpStdData, insdcStdData, totalStdData, ebpStdTotal, insdcStdTotal, totalTotal);
-
-          // Fetch total species per phylum for phyla absent from totalMap (zero-assembly phyla).
-          // Phyla already in totalMap reuse that count directly, avoiding duplicate API calls.
-          (async () => {
-            const batchSize = 5;
-            // csvPhyla ends with 'Unclassified' — query only the named phyla
-            const namedCsvPhyla = csvPhyla.slice(0, -1);
-            const namedTotalCounts = namedCsvPhyla.map(p => totalMap[p] || 0);
-            const missingPhyla = namedCsvPhyla.filter(p => !totalMap[p]);
-            for (let i = 0; i < missingPhyla.length; i += batchSize) {
-              const batch = missingPhyla.slice(i, i + batchSize);
-              const results = await Promise.all(batch.map(phylum =>
-                fetchData('https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%28' + encodeURIComponent(phylum) + '%29&taxonomy=ncbi&includeEstimates=true&size=1')
-                  .then(d => d?.status?.hits || 0)
-                  .catch(() => 0)
-              ));
-              batch.forEach((phylum, j) => {
-                namedTotalCounts[namedCsvPhyla.indexOf(phylum)] = results[j];
-              });
+        // Chart 1: render as soon as its 5 fast requests settle
+        Promise.allSettled([ebpSearchP, ebpHistoP, insdcSearchP, insdcHistoP, allPhylaP])
+          .then((results) => {
+            const [ebpSearch, ebpHisto, insdcSearch, insdcHisto, allPhylaSearch] =
+              results.map(r => r.status === 'fulfilled' ? r.value : null);
+            if (!insdcSearch || !insdcHisto) {
+              throw new Error('Failed to load required INSDC data');
             }
-            // Unclassified total = totalTotal minus all named phyla totals
-            const namedSum = namedTotalCounts.reduce((s, v) => s + v, 0);
-            const unclassifiedTotal = Math.max(0, totalTotal - namedSum);
-            const csvTotalCounts = [...namedTotalCounts, unclassifiedTotal];
-            // Update CSV export data for both charts
-            exportData.totalData = csvTotalCounts;
-            if (exportData2) exportData2.totalData = csvTotalCounts;
-            // Also update totalData in place so the chart tooltip reflects the full counts.
-            // The tooltip formatter closes over the same array reference, so mutations are visible immediately.
-            const fullTotalMap = {};
-            namedCsvPhyla.forEach((p, i) => { fullTotalMap[p] = namedTotalCounts[i]; });
-            let namedTotal = 0;
-            allPhyla.forEach((p, i) => {
-              if (p !== 'Other' && fullTotalMap[p] !== undefined) {
-                totalData[i] = fullTotalMap[p];
-                namedTotal += fullTotalMap[p];
-              }
+            // Extract totals (totalTotal starts as 'loading...', updated when totalSearch resolves)
+            const ebpTotal   = ebpSearch?.status?.hits   || 0;
+            const insdcTotal = insdcSearch?.status?.hits || 0;
+            let totalTotal = 'loading...';
+
+            // totalMap starts empty; populated when totalHisto resolves in the background
+            const totalMap = {};
+
+            // Chart uses top 20 from INSDC
+            const insdcTop20Entries = Object.entries(
+                processPhylumCats(insdcHisto?.report?.report?.histogram?.cats || [], insdcTotal, 200)
+              )
+              .filter(([k]) => k !== 'Other')
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 20);
+
+            // Build full maps (up to 200 phyla) used for both chart and CSV
+            const ebpMapFull   = processPhylumCats(ebpHisto?.report?.report?.histogram?.cats   || [], ebpTotal,   200);
+            const insdcMapFull = processPhylumCats(insdcHisto?.report?.report?.histogram?.cats || [], insdcTotal, 200);
+
+            const insdcTop20Names = insdcTop20Entries.map(([k]) => k);
+            const insdcTop20Sum   = insdcTop20Entries.reduce((s, [, v]) => s + v, 0);
+            const insdcOther      = Math.max(0, insdcTotal - insdcTop20Sum);
+
+            // allPhyla = INSDC top-20 named phyla + "Other", sorted by INSDC count descending
+            const allPhyla = [...insdcTop20Names, 'Other'];
+            allPhyla.sort((a, b) => {
+              if (a === 'Other') return 1;
+              if (b === 'Other') return -1;
+              return (insdcMapFull[b] || 0) - (insdcMapFull[a] || 0);
             });
-            // Recompute Other total with accurate per-phylum data
-            const otherIdx = allPhyla.indexOf('Other');
-            if (otherIdx !== -1) totalData[otherIdx] = Math.max(0, totalTotal - namedTotal);
-            // Also update totalStdData so chart 2 tooltip reflects accurate totals
-            let namedStdTotal = 0;
-            stdPhyla.forEach((p, i) => {
-              if (p !== 'Other' && fullTotalMap[p] !== undefined) {
-                totalStdData[i] = fullTotalMap[p];
-                namedStdTotal += fullTotalMap[p];
-              }
-            });
-            const otherStdIdx = stdPhyla.indexOf('Other');
-            if (otherStdIdx !== -1) totalStdData[otherStdIdx] = Math.max(0, totalTotal - namedStdTotal);
-          })();
-        }).catch(error => {
-          console.error('Error loading phylum data:', error);
-          const errorMessage = document.getElementById('error-message');
-          errorMessage.textContent = `Error loading data: ${error.message}`;
-          errorMessage.style.display = 'block';
-        });
+
+            const ebpInInsdcTop20Sum = insdcTop20Names.reduce((s, p) => s + (ebpMapFull[p] || 0), 0);
+            const ebpOther           = Math.max(0, ebpTotal - ebpInInsdcTop20Sum);
+
+            const ebpData   = allPhyla.map(p => p === 'Other' ? ebpOther   : (ebpMapFull[p]   || 0));
+            const insdcData = allPhyla.map(p => p === 'Other' ? insdcOther : (insdcMapFull[p] || 0));
+            // totalData starts at 0; async batch + totalHisto will fill it in
+            const totalData = allPhyla.map(() => 0);
+
+            // For CSV: seed from taxonomy-level phyla list
+            const allPhylumNames = (allPhylaSearch?.results || [])
+              .map(r => r.result?.scientific_name)
+              .filter(Boolean);
+            const csvPhyla = allPhylumNames.length > 0
+              ? [...allPhylumNames]
+              : Object.keys(insdcMapFull).filter(p => p !== 'Other');
+            Object.keys(insdcMapFull).filter(p => p !== 'Other' && !csvPhyla.includes(p))
+              .forEach(p => csvPhyla.push(p));
+            csvPhyla.sort((a, b) => (insdcMapFull[b] || 0) - (insdcMapFull[a] || 0));
+            csvPhyla.push('Unclassified');
+
+            exportData = {
+              categories: csvPhyla,
+              ebpData:   [...csvPhyla.slice(0, -1).map(p => ebpMapFull[p]   || 0), ebpMapFull['Other']   || 0],
+              insdcData: [...csvPhyla.slice(0, -1).map(p => insdcMapFull[p] || 0), insdcMapFull['Other'] || 0],
+              totalData: csvPhyla.map(p => 0)
+            };
+            initCombinedChart(allPhyla, ebpData, insdcData, totalData, ebpTotal, insdcTotal, totalTotal);
+
+            // Chart 2: std requests were already in-flight; wait for them now
+            Promise.allSettled([ebpStdSearchP, ebpStdHistoP, insdcStdSearchP, insdcStdHistoP])
+              .then((stdResults) => {
+                const [ebpStdSearch, ebpStdHisto, insdcStdSearch, insdcStdHisto] =
+                  stdResults.map(r => r.status === 'fulfilled' ? r.value : null);
+
+                const ebpStdTotal   = ebpStdSearch?.status?.hits   || 0;
+                const insdcStdTotal = insdcStdSearch?.status?.hits || 0;
+                const ebpStdMapFull   = processPhylumCats(ebpStdHisto?.report?.report?.histogram?.cats   || [], ebpStdTotal,   200);
+                const insdcStdMapFull = processPhylumCats(insdcStdHisto?.report?.report?.histogram?.cats || [], insdcStdTotal, 200);
+
+                // Select top 20 independently from INSDC std dataset
+                const insdcStdTop20Entries = Object.entries(insdcStdMapFull)
+                  .filter(([k]) => k !== 'Other')
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 20);
+                const insdcStdTop20Names = insdcStdTop20Entries.map(([k]) => k);
+                const insdcStdTop20Sum   = insdcStdTop20Entries.reduce((s, [, v]) => s + v, 0);
+                const insdcStdOther      = Math.max(0, insdcStdTotal - insdcStdTop20Sum);
+                const ebpStdInTop20Sum   = insdcStdTop20Names.reduce((s, p) => s + (ebpStdMapFull[p] || 0), 0);
+                const ebpStdOther        = Math.max(0, ebpStdTotal - ebpStdInTop20Sum);
+
+                const stdPhyla = [...insdcStdTop20Names, 'Other'];
+                stdPhyla.sort((a, b) => {
+                  if (a === 'Other') return 1;
+                  if (b === 'Other') return -1;
+                  return (insdcStdMapFull[b] || 0) - (insdcStdMapFull[a] || 0);
+                });
+                const ebpStdData   = stdPhyla.map(p => p === 'Other' ? ebpStdOther   : (ebpStdMapFull[p]   || 0));
+                const insdcStdData = stdPhyla.map(p => p === 'Other' ? insdcStdOther : (insdcStdMapFull[p] || 0));
+                const totalStdData = stdPhyla.map(() => 0);
+
+                exportData2 = {
+                  categories: csvPhyla,
+                  ebpData:   [...csvPhyla.slice(0, -1).map(p => ebpStdMapFull[p]   || 0), ebpStdMapFull['Other']   || 0],
+                  insdcData: [...csvPhyla.slice(0, -1).map(p => insdcStdMapFull[p] || 0), insdcStdMapFull['Other'] || 0],
+                  totalData: csvPhyla.map(p => 0)
+                };
+                initEbpStandardChart(stdPhyla, ebpStdData, insdcStdData, totalStdData, ebpStdTotal, insdcStdTotal, totalTotal);
+
+                // Async batch: wait for totalSearch + totalHisto first (already in-flight),
+                // then fill in total counts for CSV and tooltips
+                (async () => {
+                  const [totalSearchRes, totalHistoRes] = await Promise.allSettled([totalSearchP, totalHistoP])
+                    .then(r => r.map(x => x.status === 'fulfilled' ? x.value : null));
+                  totalTotal = totalSearchRes?.status?.hits || 0;
+                  const fetchedTotalMap = processPhylumCats(totalHistoRes?.report?.report?.histogram?.cats || [], totalTotal, 200);
+                  Object.assign(totalMap, fetchedTotalMap);
+
+                  // Update chart subtitles with accurate totalTotal
+                  if (combinedChart) combinedChart.setOption({ title: { subtext: `EBP: ${formatNumber(ebpTotal)} species  |  INSDC: ${formatNumber(insdcTotal)} species  |  Total Eukaryota: ${formatNumber(totalTotal)} species` } });
+                  if (ebpStandardChart) ebpStandardChart.setOption({ title: { subtext: `EBP std: ${formatNumber(ebpStdTotal)} species  |  INSDC std: ${formatNumber(insdcStdTotal)} species  |  Total Eukaryota: ${formatNumber(totalTotal)} species` } });
+
+
+                  const batchSize = 5;
+                  const namedCsvPhyla = csvPhyla.slice(0, -1);
+                  const namedTotalCounts = namedCsvPhyla.map(p => totalMap[p] || 0);
+                  const missingPhyla = namedCsvPhyla.filter(p => !totalMap[p]);
+                  for (let i = 0; i < missingPhyla.length; i += batchSize) {
+                    const batch = missingPhyla.slice(i, i + batchSize);
+                    const results = await Promise.all(batch.map(phylum =>
+                      fetchData('https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20tax_tree%28' + encodeURIComponent(phylum) + '%29&taxonomy=ncbi&includeEstimates=true&size=1')
+                        .then(d => d?.status?.hits || 0)
+                        .catch(() => 0)
+                    ));
+                    batch.forEach((phylum, j) => {
+                      namedTotalCounts[namedCsvPhyla.indexOf(phylum)] = results[j];
+                    });
+                  }
+                  const namedSum = namedTotalCounts.reduce((s, v) => s + v, 0);
+                  const unclassifiedTotal = Math.max(0, totalTotal - namedSum);
+                  const csvTotalCounts = [...namedTotalCounts, unclassifiedTotal];
+                  exportData.totalData = csvTotalCounts;
+                  if (exportData2) exportData2.totalData = csvTotalCounts;
+                  const fullTotalMap = {};
+                  namedCsvPhyla.forEach((p, i) => { fullTotalMap[p] = namedTotalCounts[i]; });
+                  let namedTotal = 0;
+                  allPhyla.forEach((p, i) => {
+                    if (p !== 'Other' && fullTotalMap[p] !== undefined) {
+                      totalData[i] = fullTotalMap[p];
+                      namedTotal += fullTotalMap[p];
+                    }
+                  });
+                  const otherIdx = allPhyla.indexOf('Other');
+                  if (otherIdx !== -1) totalData[otherIdx] = Math.max(0, totalTotal - namedTotal);
+                  let namedStdTotal = 0;
+                  stdPhyla.forEach((p, i) => {
+                    if (p !== 'Other' && fullTotalMap[p] !== undefined) {
+                      totalStdData[i] = fullTotalMap[p];
+                      namedStdTotal += fullTotalMap[p];
+                    }
+                  });
+                  const otherStdIdx = stdPhyla.indexOf('Other');
+                  if (otherStdIdx !== -1) totalStdData[otherStdIdx] = Math.max(0, totalTotal - namedStdTotal);
+                })();
+              }).catch(error => {
+                console.error('Error loading EBP-standard data:', error);
+              });
+          }).catch(error => {
+            console.error('Error loading phylum data:', error);
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = `Error loading data: ${error.message}`;
+            errorMessage.style.display = 'block';
+          });
 
         setTimeout(function () { window.scrollTo(0, 0); }, 100);
       };
