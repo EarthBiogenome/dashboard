@@ -29,7 +29,8 @@
       "Bash(curl -s \"https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree%282759%5BEukaryota%5D%29&rank=species&result=taxon&xField=bioproject&cat=phylum%5B5%5D%2B&taxonomy=ncbi&includeEstimates=true\")",
       "Bash(grep -o '\"xQuery\":[^,}]*\\\\|\"xLabel\":[^,}]*\\\\|\"status\":{[^}]*}')",
       "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-ui/src/client/views/components/ReportHistogram.jsx\")",
-      "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-ui/src/client/views/components/ReportEdit.jsx\")"
+      "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-ui/src/client/views/components/ReportEdit.jsx\")",
+      "Bash(grep -ao \"[0-9]\\\\{1,2\\\\}\\\\.[0-9]\\\\{1,2\\\\}\\\\.[0-9]\\\\{1,2\\\\}\" \"c:\\\\Users\\\\fchen13\\\\ASU Dropbox\\\\Fang Chen\\\\Work Documents\\\\EBP\\\\Dashboard reports\\\\pages\\\\echarts.min.js\")"
     ],
     "additionalDirectories": [
       "c:\\c\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports",

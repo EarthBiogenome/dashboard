@@ -6,6 +6,7 @@
     <meta name="author" content="Fang Chen" />
     <title>EBP Global Distribution</title>
     <script src="./echarts.min.js"></script>
+    <script src="./d3.v6.js"></script>
     <script src="./geoMap/world.zh.js"></script>
     <script src="./geoMap/projectsGeographics.js"></script>
     <!-- <script src="./geoMap/updated_projectsWebsites.js"></script> -->
@@ -292,8 +293,18 @@
                     }]
                 };
 
+                const proj = d3.geoEqualEarth();
                 echarts.registerMap('world', worldJson);
-                myChart.setOption(option);
+                myChart.setOption({
+                    ...option,
+                    geo: {
+                        ...option.geo,
+                        projection: {
+                            project: (point) => proj(point),
+                            unproject: (point) => proj.invert(point)
+                        }
+                    }
+                });
 
                 // Click event to display the relationship diagram
                 myChart.on('click', function (params) {
