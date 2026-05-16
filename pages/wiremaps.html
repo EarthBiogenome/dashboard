@@ -8,6 +8,7 @@
     <title>EBP Network Connections</title>
     <script src="../config.js"></script>
     <script src="./echarts.min.js"></script>
+    <script src="./d3.v6.js"></script>
     <script src="./geoMap/world.zh.js"></script>
     <!-- Replace with new JS data file -->
     <script src="./geoMap/EBPnetwork_20260421.js"></script>
@@ -171,7 +172,7 @@
             symbolSize:
               item.type === "Center" ? 8 : item.type === "Node" ? 8 : item.type === "Headquarters" ? 5 : 4,
             itemStyle: {
-              color: "#303030",
+              color: "#2c4a52",
               borderColor:
                 item.type === "Headquarters"
                   ? "transparent"
@@ -282,20 +283,21 @@
             lineStyle: {
               normal: {
                 curveness: point.value[0] >= center.value[0] ? 0.4 : -0.4,
-                color: "#303030",
+                color: "#5a7a8a",
                 width: 1,
-                opacity: 0.5,
+                opacity: 0.35,
               },
             },
             visible: false, // Set initial visibility to false
           }));
 
         const myChart = echarts.init(document.getElementById("mapContainer"));
+        const proj = d3.geoEqualEarth();
         echarts.registerMap("world", worldJson);
 
         // Store current zoom level
-        let currentZoom = 1.1;
-        let currentCenter = [0, 10];
+        let currentZoom = null;
+        let currentCenter = null;
 
         // Function to update visualization based on filter state
         function updateVisualization() {
@@ -317,7 +319,7 @@
               symbol: 'circle',
               zlevel: 6,
               itemStyle: { 
-                color: "#303030",
+                color: "#2c4a52",
                 borderColor: "#dbc649",
                 borderWidth: 2,
                 opacity: 1 
@@ -331,7 +333,7 @@
               symbolSize: 3,
               symbol: 'circle',
               itemStyle: {
-                color: "#303030",
+                color: "#2c4a52",
                 borderColor: "transparent",
                 borderWidth: 0,
                 opacity: 1
@@ -349,9 +351,9 @@
                 lineStyle: {
                   normal: {
                     curveness: point.value[0] >= ergaNode.value[0] ? 0.4 : -0.4,
-                    color: "#303030",
+                    color: "#5a7a8a",
                     width: 1.0,
-                    opacity: 0.5,
+                    opacity: 0.35,
                   },
                 },
               }));
@@ -386,9 +388,9 @@
                 lineStyle: {
                   normal: {
                     curveness: site.value[0] >= headquarters.value[0] ? 0.4 : -0.4,
-                    color: "#303030",
+                    color: "#5a7a8a",
                     width: 1,
-                    opacity: 0.4,
+                    opacity: 0.35,
                   },
                 },
               }));
@@ -427,8 +429,12 @@
                 normal: { areaColor: "#f3f3f3", borderColor: "#999" },
                 emphasis: { areaColor: "#FFFF00" },
               },
-              center: currentCenter,
-              zoom: currentZoom
+              ...(currentCenter && { center: currentCenter }),
+              ...(currentZoom && { zoom: currentZoom }),
+              projection: {
+                project: (point) => proj(point),
+                unproject: (point) => proj.invert(point)
+              }
             },
             series: [
               {
@@ -448,9 +454,9 @@
                 data: [...visibleLinks, ...visibleSiteLinks, ...visibleRegionalLinks],
                 lineStyle: {
                   normal: {
-                    color: "#303030",
+                    color: "#5a7a8a",
                     width: 1,
-                    opacity: 0.5,
+                    opacity: 0.35,
                     curveness: 0.4,
                   },
                 },
@@ -558,9 +564,9 @@
                     data: links,
                     lineStyle: {
                       normal: {
-                        color: "#303030",
+                        color: "#5a7a8a",
                         width: 1,
-                        opacity: 0.5,
+                        opacity: 0.35,
                         curveness: 0.4,
                       },
                     },
@@ -583,9 +589,9 @@
                     data: visibleLinks,
                     lineStyle: {
                       normal: {
-                        color: "#303030",
+                        color: "#5a7a8a",
                         width: 1,
-                        opacity: 0.5,
+                        opacity: 0.35,
                         curveness: 0.4,
                       },
                     },
