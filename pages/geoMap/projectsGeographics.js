@@ -1,4 +1,4 @@
-// 04/21/2026: Updated EBP Secretariat entry and 65 EBP affiliates with GoaT-consistent project names and geographic information
+// 05/25/2026: Updated EBP Secretariat entry and 65 EBP affiliates with GoaT-consistent project names and geographic information
 
 const projectsData = [
   {
@@ -111,7 +111,7 @@ const projectsData = [
     projectName: "africabp",
     continent: "Africa",
     website: "http://africanbiogenome.org/",
-    address: "Madagascar",
+    address: "Republic of Madagascar",
     latitude: 18.7669,
     longitude: 46.8691,
     isNew: true,
@@ -1125,7 +1125,7 @@ const projectsData = [
     projectName: "bat1k",
     continent: "Asia",
     website: "https://bat1k.com/",
-    address: "Paikstan",
+    address: "Pakistan",
     latitude: 30.375321,
     longitude: 69.345116,
     isNew: true,
@@ -1247,7 +1247,7 @@ const projectsData = [
   {
     projectName: "erga-bge",
     continent: "Europe",
-    address: "Bosnia and Herzergovina",
+    address: "Bosnia and Herzegovina",
     latitude: 43.85643,
     longitude: 18.413029,
     isNew: true,

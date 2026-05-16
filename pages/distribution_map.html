@@ -135,7 +135,6 @@
     <div id="mapContainer"></div>
     <div id="mapLegend">
         <div><span class="legend-dot" style="background:#dbc649;"></span> Project central operation</div>
-        <div><span class="legend-dot" style="background:#759f98;"></span> Affiliate / sample collection site</div>
         <div><span class="legend-swatch" style="background:#759f98;"></span> Country with EBP presence</div>
     </div>
     <div id="barContainer"></div>
@@ -218,20 +217,26 @@
                 // Country list
                 const countries = new Set()
                 // const projectMap = Object.fromEntries(projectsData.map(project => ([project.projectName, project])))
+                const countryNameMap = {
+                    "united states": "United States of America",
+                    "democratic republic of the congo": "Democratic Republic of the Congo",
+                    "türkiye": "Turkey",
+                    "czech republic": "Czech Republic",
+                    "trinidad": "Trinidad and Tobago",
+                    "côte d'ivoire": "Côte d'Ivoire",
+                    "bosnia and herzegovina": "Bosnia and Herzegovina",
+                    "united republic of tanzania": "Tanzania",
+                    "republic of madagascar": "Madagascar",
+                }
                 projectsData.forEach(project => {
-                    if(project.isCenter) return 
-                    const map = {
-                        "United States": "United States of America",
-                        "Democratic Republic Of The Congo": "Dem. Rep. Congo",
-                        "Türkiye": "Turkey",
-                        "Czech Republic": "Czech Rep.",
-                        "Trinidad": "Trinidad and Tobago",
-                        "Côte d'Ivoire": "Côte d'Ivoire"
-                    }
+                    if(project.isCenter) return
                     const { address } = project
                     if(!address) return
-                    const country = address.split(', ').at(-1)?.toLowerCase().split(" ").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-                    countries.add(map[country] || country)
+                    const raw = address.split(', ').at(-1)?.trim() ?? ''
+                    if(!raw || /\d/.test(raw)) return
+                    const lower = raw.toLowerCase()
+                    const country = countryNameMap[lower] || raw
+                    countries.add(country)
                 })
                 
                 // Configure the map options
