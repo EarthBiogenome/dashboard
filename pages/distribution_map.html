@@ -60,10 +60,13 @@
         .btns .selected {
             background-color: #aaa;
         }
-        #downloadBtn {
+        #downloadDropdown {
             position: absolute;
             right: 16px;
             bottom: 20px;
+            z-index: 99999999;
+        }
+        #downloadDropdown .dropdown-toggle {
             height: 40px;
             padding: 0 16px;
             border: 1px solid #000;
@@ -71,10 +74,14 @@
             background-color: #fff;
             cursor: pointer;
             font-size: 13px;
-            z-index: 99999999;
         }
-        #downloadBtn:hover {
+        #downloadDropdown .dropdown-toggle:hover {
             background-color: #eee;
+        }
+        #downloadDropdown .dropdown-menu {
+            min-width: 120px;
+            border-radius: 8px;
+            font-size: 13px;
         }
         #relationshipGraph {
             width: 766px;
@@ -95,18 +102,7 @@
             margin: 10px;
         }
         #mapLegend {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(27, 42, 88, 0.75);
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 13px;
-            line-height: 1.8;
-            color: #e8e8e8;
-            z-index: 99999999;
-            pointer-events: none;
+            display: none;
         }
         .legend-dot {
             display: inline-block;
@@ -131,7 +127,13 @@
         <button>Map</button>
         <button>Statistic</button>
     </div>
-    <button id="downloadBtn" title="Download map as PNG">&#8595; Download Map </button>
+    <div id="downloadDropdown" class="dropdown">
+        <button class="dropdown-toggle" data-toggle="dropdown">&#8595; Download Map</button>
+        <div class="dropdown-menu dropdown-menu-right">
+            <a class="dropdown-item" id="downloadSvgBtn" href="#">SVG (vector)</a>
+            <a class="dropdown-item" id="downloadPngBtn" href="#">PNG (high-res)</a>
+        </div>
+    </div>
     <div id="mapContainer"></div>
     <div id="mapLegend">
         <div><span class="legend-dot" style="background:#dbc649;"></span> Project central operation</div>
@@ -217,7 +219,7 @@
             });
 
             Promise.all(promiseArr).then(arr => {
-                const myChart = echarts.init(document.getElementById('mapContainer'));
+                const myChart = echarts.init(document.getElementById('mapContainer'), null, { renderer: 'svg' });
                 mapChartInstance = myChart;
 
                 // Country list
@@ -302,6 +304,49 @@
                         encode: {
                             tooltip: 0
                         }
+                    }],
+                    graphic: [{
+                        type: 'group',
+                        left: 16,
+                        top: 'middle',
+                        z: 100,
+                        children: [
+                            {
+                                type: 'rect',
+                                shape: { x: 0, y: -30, width: 220, height: 58, r: 8 },
+                                style: { fill: 'rgba(27, 42, 88, 0.75)' }
+                            },
+                            {
+                                type: 'circle',
+                                shape: { cx: 20, cy: -12, r: 6 },
+                                style: { fill: '#dbc649' }
+                            },
+                            {
+                                type: 'text',
+                                style: {
+                                    x: 34, y: -19,
+                                    text: 'Project central operation',
+                                    font: '13px sans-serif',
+                                    fill: '#e8e8e8',
+                                    textBaseline: 'top'
+                                }
+                            },
+                            {
+                                type: 'rect',
+                                shape: { x: 12, y: 8, width: 16, height: 12, r: 3 },
+                                style: { fill: '#759f98' }
+                            },
+                            {
+                                type: 'text',
+                                style: {
+                                    x: 34, y: 8,
+                                    text: 'Country with EBP presence',
+                                    font: '13px sans-serif',
+                                    fill: '#e8e8e8',
+                                    textBaseline: 'top'
+                                }
+                            }
+                        ]
                     }]
                 };
 
@@ -597,41 +642,64 @@
                 const map = document.getElementById('mapContainer');
                 const bar = document.getElementById('barContainer');
                 const legend = document.getElementById('mapLegend');
-                const downloadBtn = document.getElementById('downloadBtn');
+                const downloadDropdown = document.getElementById('downloadDropdown');
                 if (type == 'Map') {
                     map.style.display = 'block';
                     bar.style.display = 'none';
                     legend.style.display = 'block';
-                    downloadBtn.style.display = 'block';
+                    downloadDropdown.style.display = 'block';
                 } else {
                     map.style.display = 'none';
                     bar.style.display = 'block';
                     legend.style.display = 'none';
-                    downloadBtn.style.display = 'none';
+                    downloadDropdown.style.display = 'none';
                 }
             };
         });
         document.querySelector('button').click();
 
-        document.getElementById('downloadBtn').onclick = function () {
+        document.getElementById('downloadSvgBtn').onclick = function (e) {
+            e.preventDefault();
             if (!mapChartInstance) return;
-            const chartDataURL = mapChartInstance.getDataURL({ type: 'png', pixelRatio: 2 });
-            // Composite: draw navy background then chart on top
+            const svgEl = mapChartInstance.getDom().querySelector('svg');
+            const svgStr = svgEl.outerHTML.replace(
+                /(<svg[^>]*>)/,
+                '$1<rect width="100%" height="100%" fill="white"/>'
+            );
+            const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = 'EBP_global_distribution.svg';
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        document.getElementById('downloadPngBtn').onclick = function (e) {
+            e.preventDefault();
+            if (!mapChartInstance) return;
+            const svgEl = mapChartInstance.getDom().querySelector('svg');
+            const svgStr = svgEl.outerHTML.replace(
+                /(<svg[^>]*>)/,
+                '$1<rect width="100%" height="100%" fill="#1b2a58"/>'
+            );
             const img = new Image();
+            const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
             img.onload = function () {
                 const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
+                canvas.width = img.width * 4;
+                canvas.height = img.height * 4;
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#1b2a58';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.scale(4, 4);
                 ctx.drawImage(img, 0, 0);
                 const a = document.createElement('a');
                 a.download = 'EBP_global_distribution.png';
                 a.href = canvas.toDataURL('image/png');
                 a.click();
+                URL.revokeObjectURL(url);
             };
-            img.src = chartDataURL;
+            img.src = url;
         };
 
     </script>
