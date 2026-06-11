@@ -1,3 +1,5 @@
+// 04/21/2026: Updated EBP Secretariat entry and 65 EBP affiliates with GoaT-consistent project names and geographic information
+
 const projectsData = [
   {
     projectName: "EBP Secretariat",
@@ -1292,8 +1294,8 @@ const projectsData = [
     type: "Site",
     activities: "Collecting, Biobanking",
     address: "10th St. & Constitution Ave. NW, Washington, DC 20560",
-    latitude: null,
-    longitude: null
+    latitude: 38.891014,
+    longitude: -77.026703
   },
   {
     projectName: "Vertebrate Genomes Project (VGP)",
