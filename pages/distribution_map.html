@@ -314,7 +314,7 @@
                             {
                                 type: 'rect',
                                 shape: { x: 0, y: -30, width: 220, height: 58, r: 8 },
-                                style: { fill: 'rgba(27, 42, 88, 0.75)' }
+                                style: { fill: 'rgba(27, 42, 88, 0.75)' }   
                             },
                             {
                                 type: 'circle',
@@ -664,7 +664,7 @@
             const svgEl = mapChartInstance.getDom().querySelector('svg');
             const svgStr = svgEl.outerHTML.replace(
                 /(<svg[^>]*>)/,
-                '$1<rect width="100%" height="100%" fill="white"/>'
+                '$1<rect width="100%" height="100%" fill="#1b2a58"/>'
             );
             const blob = new Blob([svgStr], { type: 'image/svg+xml' });
             const url = URL.createObjectURL(blob);
