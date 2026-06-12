@@ -1,4 +1,4 @@
-// 04/21/2026: Updated EBP Secretariat entry and 65 EBP affiliates with GoaT-consistent project names and geographic information
+// 06/12/2026: Updated EBP Secretariat entry and 65 EBP affiliates with GoaT-consistent project names and geographic information
 
 const projectsData = [
   {
@@ -45,6 +45,15 @@ const projectsData = [
     website: "http://i5k.github.io/",
     latitude: 39.0455425,
     longitude: -76.90668289999999
+  },
+  {
+    projectName: "Ancient Environmental Genomics Initiative for Sustainability (AEGIS)",
+    continent: "Europe",
+    type: "Headquarters",
+    address: "Øster Voldgade 5-7, Fronthouse 1350, Copenhagen, Denmark",
+    website: "https://aegisearth.bio/en",
+    latitude: 55.6875,
+    longitude: 12.5767
   },
   {
     projectName: "African BioGenome Project (AfricaBP)",
@@ -553,6 +562,7 @@ const projectsData = [
   {
     projectName: "Protist 10,000 Genomes Project (P10K)",
     continent: "Asia",
+    type: "Headquarters",
     address: "Institute of Hydrobiology, Chinese Academy of Sciences, Donghu South Road 7, Wuhan 430072, China",
     website: "https://ngdc.cncb.ac.cn/p10k/about",
     latitude: 30.5522,
@@ -2802,8 +2812,8 @@ const projectsData = [
   {
     projectName: "An Atlas of Eukaryotic Marine Genomes (ATLASea)",
     institution: "Genoscope, Commissariat à l'énergie atomique et aux énergies alternatives (CEA)",
-    type: "Site, DNA Sequencing (long reads), DNA Sequencing (short reads), RNA Sequencing, Bioinformatics (assembly), Bioinformatics (annotation)",
-    activities: "Affiliate, DNA Sequencing (long reads), DNA Sequencing (short reads), RNA Sequencing, Bioinformatics (assembly and annotation)",
+    type: "Site",
+    activities: "DNA Sequencing (long reads), DNA Sequencing (short reads), RNA Sequencing, Bioinformatics (assembly and annotation)",
     address: "2 rue Gaston Crémieux, 91000 Evry, France",
     latitude: 48.6233486,
     longitude: 2.4394112
@@ -2856,7 +2866,7 @@ const projectsData = [
   {
     projectName: "An Atlas of Eukaryotic Marine Genomes (ATLASea)",
     institution: "Campus de Fouillole BP250 97157 Pointe-à-Pitre, Guadeloupe",
-    type: "Site, Collecting",
+    type: "Site",
     activities: "Collecting",
     address: "Campus de Fouillole BP250 97157 Pointe-à-Pitre, Guadeloupe",
     latitude: 16.2248318,
@@ -3429,22 +3439,4 @@ const projectsData = [
     latitude: 35.6762,
     longitude: 139.6503,
   },
-  {
-    projectName: "Protist 10,000 Genomes Project (P10K)",
-    continent: "Asia",
-    type: "Headquarters",
-    address: "Institute of Hydrobiology, Chinese Academy of Sciences, Donghu South Road 7, Wuhan 430072, China",
-    website: "https://ngdc.cncb.ac.cn/p10k/about",
-    latitude: 30.5522,
-    longitude: 114.3597,
-  },
-  {
-    projectName: "Rodent2k (r2k)",
-    continent: "North America",
-    type: "Headquarters",
-    address: "Peter Gilgan Centre for Research and Learning, 686 Bay Street Toronto, ON, M5G 0A4, Canada",
-    website: "https://rodent2k.org/",
-    latitude: 43.657094,
-    longitude: -79.388836,
-  }
 ];

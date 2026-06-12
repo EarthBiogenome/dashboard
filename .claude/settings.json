@@ -1,4 +1,5 @@
 {
+  "cleanupPeriodDays": 180,
   "permissions": {
     "allow": [
       "WebFetch(domain:goat.genomehubs.org)",
@@ -9,7 +10,8 @@
       "Bash(where gh)",
       "Bash(claude mcp add github -- npx -y @modelcontextprotocol/server-github)",
       "Bash(claude mcp list)",
-      "Edit(/.claude/skills/style-check/**)"
+      "Edit(/.claude/skills/style-check/**)",
+      "Bash(node -e ' *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports\\.claude\\skills\\style-check"
@@ -27,6 +29,5 @@
         ]
       }
     ]
-  },
-  "cleanupPeriodDays": 180
+  }
 }
