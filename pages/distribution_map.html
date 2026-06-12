@@ -38,8 +38,8 @@
         }
         .btns {
             position: absolute;
-            right: 20px;
-            top: 10px;
+            left: 230px;
+            bottom: 20px;
             display: flex;
             border-radius: 25px;
             overflow: hidden;
@@ -67,10 +67,10 @@
             z-index: 99999999;
         }
         #downloadDropdown .dropdown-toggle {
-            height: 40px;
-            padding: 0 16px;
+            height: 60px;
+            padding: 0 36px;
             border: 1px solid #000;
-            border-radius: 25px;
+            border-radius: 35px;
             background-color: #fff;
             cursor: pointer;
             font-size: 13px;
@@ -87,19 +87,73 @@
             width: 766px;
             height: 400px;
         }
-        #mapCaption {
+        #mapSidebar {
             position: absolute;
-            bottom: 0px;
-            left: 16px;
-            right:160px;
-            z-index: 9999;
-            background: rgba(27, 42, 88, 0.82);
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background-color: #1b2a58;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px 20px 16px;
             color: #d8dce8;
-            font-size: 11.5px;
-            line-height: 1.55;
-            padding: 8px 14px;
-            border-radius: 8px;
-            pointer-events: none;
+        }
+        #mapSidebar .sidebar-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.03em;
+            margin-bottom: 20px;
+        }
+        #mapSidebar .sidebar-subtitle {
+            font-size: 11px;
+            color: #8fa0c0;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+        #mapSidebar .legend-heading {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #8fa0c0;
+            margin-bottom: 12px;
+        }
+        #mapSidebar .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 12.5px;
+            line-height: 1.35;
+            color: #ffffff;
+        }
+        #mapSidebar .lc {
+            flex-shrink: 0;
+            border-radius: 50%;
+        }
+        #mapSidebar .ls {
+            flex-shrink: 0;
+            width: 16px;
+            height: 11px;
+            border-radius: 3px;
+        }
+        #mapSidebar .sidebar-divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin: 20px 0;
+        }
+        #mapSidebar .sidebar-caption {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #ffffff;
+            flex: 1;
+        }
+        #mapSidebar .sidebar-caption p {
+            margin-bottom: 10px;
         }
         #total {
             position: absolute;
@@ -129,14 +183,30 @@
             <a class="dropdown-item" id="downloadPngBtn" href="#">PNG (high-res)</a>
         </div>
     </div>
-    <div id="mapContainer"></div>
-    <div id="mapCaption">
-        <strong>Figure.</strong> Global distribution of Earth BioGenome Project (EBP) network of networks.
-        <strong>Yellow circles</strong> mark project headquarters, coordination centers, and regional network nodes.
-        <strong>Teal circles</strong> indicate associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.
-        <strong>Teal-shaded countries</strong> host at least one EBP-affiliated project or operational site.
-        Click any marker to visit the project website.
+    <div id="mapSidebar">
+        <div class="sidebar-title">EBP Global Network</div>
+        <div class="legend-item">
+            <span class="lc" style="width:12px;height:12px;background:#dbc649;"></span>
+            <span>Project central operation</span>
+        </div>
+        <div class="legend-item">
+            <span class="lc" style="width:8px;height:8px;background:#759f98;"></span>
+            <span>Coordination / collection site</span>
+        </div>
+        <div class="legend-item">
+            <span class="ls" style="background:#759f98;"></span>
+            <span>Country with EBP presence</span>
+        </div>
+        <hr class="sidebar-divider">
+        <div class="sidebar-caption">
+            <p>Global distribution of the EBP network of networks.</p>
+            <p><strong>Yellow circles</strong> mark project headquarters, coordination centers, and regional network nodes.</p>
+            <p><strong>Teal circles</strong> indicate associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.</p>
+            <p><strong>Teal-shaded countries</strong> host at least one EBP-affiliated project or site.</p>
+            <p>Click any marker to visit the project website.</p>
+        </div>
     </div>
+    <div id="mapContainer"></div>
     <div id="barContainer"></div>
     <!-- Modal for displaying project list by country -->
     <div class="modal fade" id="relationshipModal" tabindex="-1" aria-labelledby="relationshipModalLabel" aria-hidden="true">
@@ -254,6 +324,10 @@
                     geo: {
                         map: 'world',
                         roam: true,
+                        left: '220px',
+                        top: '2%',
+                        bottom: '2%',
+                        right: '0%',
                         label: {
                             show: false
                         },
@@ -299,67 +373,7 @@
                             tooltip: 0
                         }
                     }],
-                    graphic: [{
-                        type: 'group',
-                        left: 16,
-                        top: 'middle',
-                        z: 100,
-                        children: [
-                            {
-                                type: 'rect',
-                                shape: { x: 0, y: -30, width: 230, height: 84, r: 8 },
-                                style: { fill: 'rgba(27, 42, 88, 0.75)' }
-                            },
-                            // Row 1 — yellow circle: headquarters
-                            {
-                                type: 'circle',
-                                shape: { cx: 20, cy: -12, r: 6 },
-                                style: { fill: '#dbc649' }
-                            },
-                            {
-                                type: 'text',
-                                style: {
-                                    x: 34, y: -19,
-                                    text: 'Project central operation',
-                                    font: '13px sans-serif',
-                                    fill: '#e8e8e8',
-                                    textBaseline: 'top'
-                                }
-                            },
-                            // Row 2 — teal circle: sites
-                            {
-                                type: 'circle',
-                                shape: { cx: 20, cy: 14, r: 4 },
-                                style: { fill: '#759f98' }
-                            },
-                            {
-                                type: 'text',
-                                style: {
-                                    x: 34, y: 7,
-                                    text: 'Coordination / collection site',
-                                    font: '13px sans-serif',
-                                    fill: '#e8e8e8',
-                                    textBaseline: 'top'
-                                }
-                            },
-                            // Row 3 — teal swatch: country fill
-                            {
-                                type: 'rect',
-                                shape: { x: 12, y: 30, width: 16, height: 12, r: 3 },
-                                style: { fill: '#759f98' }
-                            },
-                            {
-                                type: 'text',
-                                style: {
-                                    x: 34, y: 30,
-                                    text: 'Country with EBP presence',
-                                    font: '13px sans-serif',
-                                    fill: '#e8e8e8',
-                                    textBaseline: 'top'
-                                }
-                            }
-                        ]
-                    }]
+                    graphic: []
                 };
 
                 const proj = d3.geoEqualEarth();
@@ -556,18 +570,18 @@
                 e.target.className = 'selected';
                 const map = document.getElementById('mapContainer');
                 const bar = document.getElementById('barContainer');
+                const sidebar = document.getElementById('mapSidebar');
                 const downloadDropdown = document.getElementById('downloadDropdown');
-                const caption = document.getElementById('mapCaption');
                 if (type == 'Map') {
                     map.style.display = 'block';
                     bar.style.display = 'none';
+                    sidebar.style.display = 'flex';
                     downloadDropdown.style.display = 'block';
-                    caption.style.display = 'block';
                 } else {
                     map.style.display = 'none';
                     bar.style.display = 'block';
+                    sidebar.style.display = 'none';
                     downloadDropdown.style.display = 'none';
-                    caption.style.display = 'none';
                 }
             };
         });
