@@ -14,6 +14,7 @@
     <script src="./ergaList.js"></script>
     <style>
         #chartContainer1,
+        #chartContainer1b,
         #chartContainer2 {
             height: 90vh;  /* Increased height for better vertical proportion */
             width: 85%;    /* Increased width for smaller screens */
@@ -22,6 +23,10 @@
         }
         #chartContainer1 {
             margin-bottom: -60px;  /* Pull hint/buttons up under the slider */
+        }
+        #chartContainer1b {
+            margin-top: 0px;
+            margin-bottom: -60px;  /* Match EBP: remove empty strip below slider */
         }
         #chartContainer2 {
             margin-top: 0px;
@@ -247,7 +252,25 @@
        Download Data (CSV)
      </button>
    </div>
-   
+
+   <div id="chartContainer1b">
+     <div class="loading">
+       <div class="spinner"></div>
+       <div class="progress-text">Fetching data...</div>
+     </div>
+   </div>
+   <div class="click-hint" id="clickHint1b" style="display: none;">Tip: click any project bar to view its annual assembly breakdown, or scroll the slider to view more projects.</div>
+   <div class="download-buttons" id="downloadButtons1b">
+     <button type="button" class="download-btn" id="downloadChart1bBtn">
+       <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+       Download Chart
+     </button>
+     <button type="button" class="download-btn csv-btn" id="downloadCSV1bBtn">
+       <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+       Download Data (CSV)
+     </button>
+   </div>
+
    <div id="chartContainer2">
      <div class="loading">
        <div class="spinner"></div>
@@ -304,14 +327,18 @@
 
     <script>
         let chartInstance1 = null
+        let chartInstance1b = null
         let chartInstance2 = null
         let drilldownChartInstance = null
-        
+
         // Store annual data per project for drill-down
         const projectAnnualData = {};
-        
+        // Separate annual data for species meeting EBP standard criteria (used for chart 1b CSV export)
+        const projectAnnualDataEbpStandard = {};
+
         // Store chart data for CSV export
         let chart1Data = { categories: [], series: [] };
+        let chart1bData = { categories: [], series: [] };
         let chart2Data = { categories: [], series: [] };
 
       // Cache for API responses
@@ -347,7 +374,7 @@
       }
 
       // Fetch all data for a project with automatic pagination if needed
-      async function fetchAllProjectData(projectId, projectName) {
+      async function fetchAllProjectData(projectId, projectName, extraQuery = '') {
         let allResults = [];
         let offset = 0;
         let pageSize = API_CONFIG.initialPageSize;
@@ -355,7 +382,7 @@
         let totalFetched = 0;
 
         while (hasMoreData) {
-          const searchUrl = `https://goat.genomehubs.org/api/v2/search?query=bioproject%3D${projectId}%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=${pageSize}&offset=${offset}&fields=genome_size%2Cassembly_level%2Cassembly_span%2Cassembly_date`;
+          const searchUrl = `https://goat.genomehubs.org/api/v2/search?query=bioproject%3D${projectId}%20AND%20tax_rank%28species%29${extraQuery}&result=taxon&includeEstimates=true&taxonomy=ncbi&size=${pageSize}&offset=${offset}&fields=genome_size%2Cassembly_level%2Cassembly_span%2Cassembly_date`;
           
           try {
             const response = await fetchDataWithCache(searchUrl);
@@ -681,6 +708,84 @@
           document.getElementById('clickHint1').style.display = 'block';
           document.getElementById('downloadButtons1').style.display = 'flex';
 
+          // ===== EBP STANDARD CHART DATA FETCHING AND PROCESSING =====
+          // Same EBP affiliate projects, filtered to species meeting EBP standard criteria
+          const ebpStandardSpeciesCounts = {
+            'chromosome': new Array(validCategories.length).fill(0),
+            'complete genome': new Array(validCategories.length).fill(0),
+            'contig': new Array(validCategories.length).fill(0),
+            'scaffold': new Array(validCategories.length).fill(0)
+          };
+
+          const ebpStandardPromises = projectsToFetch.map((project) => {
+            return fetchAllProjectData(project.projectId, project.projectName, '%20AND%20ebp_standard_criteria');
+          });
+
+          const ebpStandardResults = await Promise.all(ebpStandardPromises);
+
+          const failedEbpStandardProjects = ebpStandardResults.filter(r => r.error);
+          if (failedEbpStandardProjects.length > 0) {
+            console.warn('⚠️ EBP Standard Projects with errors:', failedEbpStandardProjects.map(p => `${p.projectName}: ${p.error}`));
+          }
+
+          ebpStandardResults.forEach((projectResult, index) => {
+            if (projectResult.results) {
+              const projectName = projectResult.projectName;
+
+              if (!projectAnnualDataEbpStandard[projectName]) {
+                projectAnnualDataEbpStandard[projectName] = {};
+              }
+
+              projectResult.results.forEach(item => {
+                const fields = item.result.fields;
+                const assemblyLevel = fields.assembly_level;
+                const assemblyDate = fields.assembly_date;
+
+                if (assemblyLevel && assemblyLevel.value) {
+                  const level = assemblyLevel.value.toLowerCase();
+
+                  if (ebpStandardSpeciesCounts.hasOwnProperty(level)) {
+                    ebpStandardSpeciesCounts[level][index]++;
+
+                    if (assemblyDate && assemblyDate.value) {
+                      let dateValue = assemblyDate.value;
+                      if (Array.isArray(dateValue)) {
+                        dateValue = dateValue[0];
+                      }
+                      const year = String(dateValue).substring(0, 4);
+                      if (year && !isNaN(parseInt(year))) {
+                        if (!projectAnnualDataEbpStandard[projectName][year]) {
+                          projectAnnualDataEbpStandard[projectName][year] = {
+                            'chromosome': 0,
+                            'complete genome': 0,
+                            'contig': 0,
+                            'scaffold': 0
+                          };
+                        }
+                        projectAnnualDataEbpStandard[projectName][year][level]++;
+                      }
+                    }
+                  }
+                }
+              });
+            }
+          });
+
+          // Create EBP Standard chart data structure
+          const ebpStandardChartData = {
+            data: { report: { report: { yLabel: "Count of Species", histogram: { histograms: { byCat: ebpStandardSpeciesCounts, buckets: [] } } } } },
+            title: 'Count of Species',
+            containerId: 'chartContainer1b'
+          };
+
+          // Initialize EBP Standard chart
+          const { series: ebpStandardSeries } = getDefaultStackedBarData(ebpStandardChartData.data);
+          chartInstance1b = initEchart({series: ebpStandardSeries, categories: validCategories}, ebpStandardChartData.containerId, ebpStandardChartData.title);
+
+          // Show click hint and download buttons for EBP Standard chart
+          document.getElementById('clickHint1b').style.display = 'block';
+          document.getElementById('downloadButtons1b').style.display = 'flex';
+
           // ===== ERGA CHART DATA FETCHING AND PROCESSING =====
           // Loading indicator already shows "Fetching data..."
 
@@ -793,6 +898,7 @@
         } catch (error) {
           console.error('Error loading data:', error);
           showError('chartContainer1', 'Failed to load data. Please try refreshing the page.');
+          showError('chartContainer1b', 'Failed to load EBP standard data. Please try refreshing the page.');
           showError('chartContainer2', 'Failed to load ERGA data. Please try refreshing the page.');
         }
       };
@@ -845,6 +951,8 @@
         // before we filter zeros out of the rendered chart.
         if (containerId === 'chartContainer1') {
           chart1Data = { categories: sortedCategories.slice(), series: JSON.parse(JSON.stringify(data.series)) };
+        } else if (containerId === 'chartContainer1b') {
+          chart1bData = { categories: sortedCategories.slice(), series: JSON.parse(JSON.stringify(data.series)) };
         } else if (containerId === 'chartContainer2') {
           chart2Data = { categories: sortedCategories.slice(), series: JSON.parse(JSON.stringify(data.series)) };
         }
@@ -867,7 +975,7 @@
         // Calculate total count and project count for species chart
         let totalCount = 0;
         let projectsWithSpecies = 0;
-        if (containerId === 'chartContainer1' || containerId === 'chartContainer2') {
+        if (containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2') {
           data.series.forEach(series => {
             series.data.forEach(value => {
               totalCount += value || 0;
@@ -901,6 +1009,20 @@
               fontWeight: 'bold',
               color: '#000'  // Match y-axis title color
             }
+          } : containerId === 'chartContainer1b' ? {
+            text: '',
+            subtext: `Species count meeting EBP standard by assembly level | EBP affiliates`,
+            left: 'center',
+            textStyle: {
+              fontSize: 16,
+              fontWeight: 'bold',
+              color: '#000'
+            },
+            subtextStyle: {
+              fontSize: 16,
+              fontWeight: 'bold',
+              color: '#000'  // Match y-axis title color
+            }
           } : containerId === 'chartContainer2' ? {
             text: '',
             subtext: `Species count by assembly level - ERGA umbrella`,
@@ -920,7 +1042,7 @@
             show: true,
             selectedMode: false,
             data: ['contig', 'scaffold', 'chromosome', 'complete genome'], // Reorder legend items
-            top: containerId === 'chartContainer1' || containerId === 'chartContainer2' ? '10%' : 'top',
+            top: containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2' ? '10%' : 'top',
             textStyle: {
               color: '#000',
               fontSize: 12,
@@ -931,8 +1053,8 @@
           grid: {
             left: '7%',  // Decreased left margin
             right: '2%',
-            top: containerId === 'chartContainer1' || containerId === 'chartContainer2' ? '18%' : '8%',  // More space for title in species chart
-            bottom: containerId === 'chartContainer1' || containerId === 'chartContainer2' ? '25%' : '20%',  // Extra room for dataZoom slider
+            top: containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2' ? '18%' : '8%',  // More space for title in species chart
+            bottom: containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2' ? '25%' : '20%',  // Extra room for dataZoom slider
             containLabel: true
           },
           yAxis: {
@@ -958,7 +1080,7 @@
               fontSize: 12,
               margin: 5, // Move labels closer to the axis
               formatter: function (value) {
-                if (containerId === 'chartContainer1' || containerId === 'chartContainer2') {
+                if (containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2') {
                   return value.toLocaleString(); // Show complete numbers for count of species
                 } else if (containerId === 'chartContainer3') {
                   return (value / 1e12).toFixed(1) + 'T'; // Convert to T format for genome size and assembly span
@@ -972,9 +1094,9 @@
                 color: '#ccc'
               }
             },
-            interval: containerId === 'chartContainer1' || containerId === 'chartContainer2' ? 500 : 
+            interval: containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2' ? 500 : 
                       containerId === 'chartContainer3' ? 0.5e12 : 'auto', // Set interval to 0.5T for genome size and assembly span
-            minInterval: containerId === 'chartContainer1' || containerId === 'chartContainer2' ? 500 : 
+            minInterval: containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2' ? 500 : 
                         containerId === 'chartContainer3' ? 0.5e12 : 1, // Ensure minimum interval of 0.5T for genome size and assembly span
           },
           xAxis: {
@@ -991,14 +1113,14 @@
             axisLabel: {
               show: true,
               color: "#000",
-              fontSize: (containerId === 'chartContainer1' || containerId === 'chartContainer2') ? 14 : 12,
+              fontSize: (containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2') ? 14 : 12,
               rotate: 45,
               interval: 0, // Force every project label to render (no auto-skipping)
             },
-            name: (containerId === 'chartContainer1' || containerId === 'chartContainer2') ? '' : (xAxisLabel || "EBP affiliates"), // Hide x-axis name for both charts since it's in the title
+            name: (containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2') ? '' : (xAxisLabel || "EBP affiliates"), // Hide x-axis name for both charts since it's in the title
             nameLocation: 'middle', // Place the label in the middle 
-            nameGap: (containerId === 'chartContainer1' || containerId === 'chartContainer2') ? 0 : 80,  // No gap when name is hidden
-            nameTextStyle: (containerId === 'chartContainer1' || containerId === 'chartContainer2') ? {} : {
+            nameGap: (containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2') ? 0 : 80,  // No gap when name is hidden
+            nameTextStyle: (containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2') ? {} : {
               fontWeight: 'bold',
               fontSize: 14,
               padding: [10, 0, 0, 0], // Adjust padding to move the label slightly away from the axis
@@ -1054,7 +1176,7 @@
           series: data.series,
           // Slider below the x-axis lets the user scan long project lists without
           // overlapping labels. Auto-sized: show ~25 bars at a time; if fewer, show all.
-          dataZoom: (containerId === 'chartContainer1' || containerId === 'chartContainer2') ? [
+          dataZoom: (containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2') ? [
             {
               type: 'slider',
               xAxisIndex: 0,
@@ -1291,9 +1413,9 @@
 
       // Download chart as PNG image
       function downloadChartImage(chartNum) {
-        const chart = chartNum === 1 ? chartInstance1 : chartInstance2;
-        const chartName = chartNum === 1 ? 'EBP_Affiliates_Species_Count' : 'ERGA_Umbrella_Species_Count';
-        
+        const chart = chartNum === 1 ? chartInstance1 : chartNum === '1b' ? chartInstance1b : chartInstance2;
+        const chartName = chartNum === 1 ? 'EBP_Affiliates_Species_Count' : chartNum === '1b' ? 'EBP_Standard_Species_Count' : 'ERGA_Umbrella_Species_Count';
+
         if (!chart) {
           alert('Chart not available. Please wait for data to load.');
           return;
@@ -1317,18 +1439,20 @@
 
       // Download data as CSV with annual totals
       function downloadCSV(chartNum) {
-        const chartData = chartNum === 1 ? chart1Data : chart2Data;
-        const chartName = chartNum === 1 ? 'EBP_Affiliates_Species_Data' : 'ERGA_Umbrella_Species_Data';
+        const chartData = chartNum === 1 ? chart1Data : chartNum === '1b' ? chart1bData : chart2Data;
+        const chartName = chartNum === 1 ? 'EBP_Affiliates_Species_Data' : chartNum === '1b' ? 'EBP_Standard_Species_Data' : 'ERGA_Umbrella_Species_Data';
         
         if (!chartData || !chartData.categories || chartData.categories.length === 0) {
           alert('Data not available. Please wait for data to load.');
           return;
         }
-        
+
+        const annualDataSource = chartNum === '1b' ? projectAnnualDataEbpStandard : projectAnnualData;
+
         // Collect all unique years from all projects
         const allYears = new Set();
         chartData.categories.forEach(projectName => {
-          const annualData = projectAnnualData[projectName];
+          const annualData = annualDataSource[projectName];
           if (annualData) {
             Object.keys(annualData).forEach(year => allYears.add(year));
           }
@@ -1370,7 +1494,7 @@
           let row = `${escapedName},${contig},${scaffold},${chromosome},${completeGenome},${total}`;
           
           // Add annual totals
-          const annualData = projectAnnualData[projectName] || {};
+          const annualData = annualDataSource[projectName] || {};
           sortedYears.forEach(year => {
             const yearData = annualData[year] || {};
             const yearTotal = (yearData['contig'] || 0) + (yearData['scaffold'] || 0) + 
@@ -1404,7 +1528,15 @@
         document.getElementById('downloadCSV1Btn').addEventListener('click', function() {
           downloadCSV(1);
         });
-        
+
+        // Chart 1b (EBP Standard) buttons
+        document.getElementById('downloadChart1bBtn').addEventListener('click', function() {
+          downloadChartImage('1b');
+        });
+        document.getElementById('downloadCSV1bBtn').addEventListener('click', function() {
+          downloadCSV('1b');
+        });
+
         // Chart 2 (ERGA) buttons
         document.getElementById('downloadChart2Btn').addEventListener('click', function() {
           downloadChartImage(2);
