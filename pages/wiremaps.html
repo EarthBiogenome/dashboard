@@ -31,7 +31,8 @@
         flex-grow: 1;
         overflow: hidden;
         background-color: #b1c6ca;
-        height: 100vh;
+        height: 100%;
+        min-height: 0;
       }
 
       /* Add styles for the wrapper */
@@ -168,6 +169,7 @@
             ],
             type: item.type,
             website: item.website,
+            cursor: item.website ? "pointer" : "default",
             isCenter: item.type === "Center",
             symbolSize:
               item.type === "Center" ? 8 : item.type === "Node" ? 8 : item.type === "Headquarters" ? 5 : 4,
@@ -230,6 +232,7 @@
         // Add headquarters filters
         filteredData
           .filter(point => point.type === "Headquarters")
+          .sort((a, b) => a.name.localeCompare(b.name))
           .forEach(point => {
             const checkbox = document.createElement('div');
             checkbox.className = 'filter-item';
@@ -292,6 +295,7 @@
           }));
 
         const myChart = echarts.init(document.getElementById("mapContainer"));
+        myChart.resize();
         const proj = d3.geoEqualEarth();
         echarts.registerMap("world", worldJson);
 
@@ -406,16 +410,26 @@
           myChart.setOption({
             tooltip: {
               trigger: "item",
+              enterable: true,
               formatter: (params) => {
                 if (params.seriesType === "scatter") {
                   const item = params.data;
                   let tooltipContent = `<strong>${item.name}</strong><br/>`;
-                  
-                  // Add institution if available
+
                   if (item.rawData.institution) {
-                    tooltipContent += `Institution: ${item.rawData.institution}`;
+                    tooltipContent += `Institution: ${item.rawData.institution}<br/>`;
                   }
-                  
+
+                  if (item.website) {
+                    let displayUrl;
+                    try {
+                      displayUrl = new URL(item.website).hostname.replace(/^www\./, '');
+                    } catch {
+                      displayUrl = item.website;
+                    }
+                    tooltipContent += `<a href="${item.website}" target="_blank" style="color:inherit;text-decoration:underline;">${displayUrl}</a>`;
+                  }
+
                   return tooltipContent;
                 }
                 return null;
@@ -424,10 +438,14 @@
             geo: {
               map: "world",
               roam: true,
+              top: 20,
+              bottom: 20,
+              left: 0,
+              right: 0,
               label: { show: false },
               itemStyle: {
                 normal: { areaColor: "#f3f3f3", borderColor: "#999" },
-                emphasis: { areaColor: "#FFFF00" },
+                emphasis: { areaColor: "#b8d4b8" },
               },
               ...(currentCenter && { center: currentCenter }),
               ...(currentZoom && { zoom: currentZoom }),
@@ -613,6 +631,13 @@
           }
         });
 
+        myChart.on("click", function (params) {
+          if (params.seriesType === "scatter") {
+            const website = params.data.website;
+            if (website) window.open(website, "_blank");
+          }
+        });
+
         // Add event listener for zoom and pan
         myChart.on('georoam', function (params) {
           const option = myChart.getOption();
@@ -623,6 +648,12 @@
 
       // Initialize map
       initMap(worldJson);
+
+      // Keep chart filling its container on window resize
+      window.addEventListener('resize', () => {
+        const chart = echarts.getInstanceByDom(document.getElementById('mapContainer'));
+        if (chart) chart.resize();
+      });
 
       // Copyright information
       if (typeof copyright !== "undefined") {

@@ -57,10 +57,10 @@ const projectsData = [
   },
   {
     projectName: "African BioGenome Project (AfricaBP)",
-    continent: "Africa",
-    type: "Headquarters",
+    institution: "Jomo Kenyatta University of Agriculture and Technology",
+    type: "Site",
+    activities: "Affiliate",
     address: "Jomo Kenyatta University of Agriculture and Technology, Kenya",
-    website: "http://africanbiogenome.org/",
     latitude: -1.0913809,
     longitude: 37.0116893
   },
@@ -3099,10 +3099,10 @@ const projectsData = [
   },
   {
     projectName: "African BioGenome Project (AfricaBP)",
-    institution: "African Genome Center",
-    type: "Site",
-    activities: "Affiliate",
+    continent: "Africa",
+    type: "Headquarters",
     address: "African Genome Center, Morocco",
+    website: "http://africanbiogenome.org/",
     latitude: 31.791702,
     longitude: -7.092619999999999
   },
