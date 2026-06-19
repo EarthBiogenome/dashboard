@@ -688,10 +688,18 @@
                             itemStyle: { color: '#EA580C', opacity: 0.88 },
                             label: {
                                 show: true,
+                                position: 'inside',
+                                align: 'center',
+                                verticalAlign: 'middle',
                                 formatter: String(c.count),
                                 color: '#ffffff',
                                 fontSize: labelFontSize,
                                 fontWeight: 'bold',
+                                // Match line height to font size and zero the padding so
+                                // the digits sit exactly in the bubble's center rather
+                                // than being nudged by the default text baseline/box.
+                                lineHeight: labelFontSize,
+                                padding: 0,
                             },
                             _cluster: c,
                         };
