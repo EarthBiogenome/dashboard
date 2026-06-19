@@ -11,7 +11,15 @@
       "Bash(claude mcp add github -- npx -y @modelcontextprotocol/server-github)",
       "Bash(claude mcp list)",
       "Edit(/.claude/skills/style-check/**)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(node -e \"require\\('fs'\\).readFileSync\\('pages/progress_affiliates_nodes.html','utf8'\\)\")",
+      "Bash(node --check pages/progress_affiliates_nodes_extracted.js)",
+      "Bash(python3 -)",
+      "PowerShell(Start-Process \"c:\\\\Users\\\\fchen13\\\\ASU Dropbox\\\\Fang Chen\\\\Work Documents\\\\EBP\\\\Dashboard reports\\\\pages\\\\progress_affiliates_nodes.html\")",
+      "Bash(git fetch *)",
+      "Bash(git merge *)",
+      "Bash(git push *)",
+      "Bash(grep -iE '\\\\.\\(csv|png\\)$')"
     ],
     "additionalDirectories": [
       "c:\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports\\.claude\\skills\\style-check"
