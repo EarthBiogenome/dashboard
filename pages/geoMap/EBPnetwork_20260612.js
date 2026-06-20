@@ -3430,13 +3430,4 @@ const projectsData = [
     latitude: 39.4836936,
     longitude: -0.3404766
   },
-  {
-    projectName: "Kazusa Genome Project (Kazusa)",
-    continent: "Asia",
-    type: "Headquarters",
-    address: "〒292-0818 千葉県木更津市かずさ鎌足 2-6-7, Japan",
-    website: "https://www.kazusa.or.jp/",
-    latitude: 35.6762,
-    longitude: 139.6503,
-  },
 ];

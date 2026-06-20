@@ -574,7 +574,7 @@
             }));
 
             Promise.all(promiseArr).then(arr => {
-                const myChart = echarts.init(document.getElementById('mapContainer'), null, { renderer: 'svg' });
+                const myChart = echarts.init(document.getElementById('mapContainer'), null, { renderer: 'canvas' });
                 mapChartInstance = myChart;
 
                 // Raw markers — source of truth for clustering
@@ -708,7 +708,7 @@
 
                 /** Re-clusters at current zoom and pushes updated data to the chart. */
                 function updateClusters() {
-                    currentClusters = clusterPoints(40);
+                    currentClusters = clusterPoints(5);
                     myChart.setOption({ series: [{ data: buildSeriesData(currentClusters) }] });
                 }
 
@@ -790,13 +790,15 @@
                 // always snap back to the initial global overview.
                 let homeView = { zoom: 1, center: proj([0, 0]) };
 
-                // First cluster pass after the map finishes its initial render
-                myChart.on('finished', function onFirstRender() {
-                    myChart.off('finished', onFirstRender);
+                // First cluster pass after the map's initial render. The chart's
+                // 'finished' event never fires for this geo + custom-projection setup
+                // (confirmed: it doesn't trigger even after a long idle wait), so the
+                // first pass can't be gated on it — call directly instead.
+                {
                     const g = myChart.getOption().geo[0];
                     homeView = { zoom: g.zoom || 1, center: g.center || proj([0, 0]) };
                     updateClusters();
-                });
+                }
 
                 // Re-cluster after each user pan/zoom once the render is settled
                 let roamPending = false;
