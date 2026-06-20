@@ -574,7 +574,7 @@
             }));
 
             Promise.all(promiseArr).then(arr => {
-                const myChart = echarts.init(document.getElementById('mapContainer'), null, { renderer: 'canvas' });
+                const myChart = echarts.init(document.getElementById('mapContainer'), null, { renderer: 'svg' });
                 mapChartInstance = myChart;
 
                 // Raw markers — source of truth for clustering
