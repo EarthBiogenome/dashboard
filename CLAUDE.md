@@ -51,6 +51,12 @@ All visualization HTML files live in [pages/](pages/). Each file is self-contain
 ### UI Theme & Colors
 See `STYLE_SPEC.md` for the full color palette, typography, spacing, footer rules, and per-file checklist. No CSS framework on main dashboard (Bootstrap 4 only in `geoMap/`).
 
+### Path Conventions
+- Use **forward slashes** for all repo-relative paths (`pages/foo.html`, not `pages\foo.html`).
+- Git stores paths POSIX-style; Windows backslash paths in tooling cause duplicate-looking entries.
+- One canonical file per dashboard visualization (via `config.js`); standalone variants such as `pages/distribution_map_white.html` are kept for special embed/export use and are not duplicates.
+- Agent skills live under `.claude/skills/` only.
+
 ## Dependencies
 - **D3.js v6** — bundled as `pages/d3.v6.js`
 - **ECharts** — bundled as `pages/echarts.min.js`

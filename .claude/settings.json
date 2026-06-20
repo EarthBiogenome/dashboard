@@ -15,14 +15,14 @@
       "Bash(node -e \"require\\('fs'\\).readFileSync\\('pages/progress_affiliates_nodes.html','utf8'\\)\")",
       "Bash(node --check pages/progress_affiliates_nodes_extracted.js)",
       "Bash(python3 -)",
-      "PowerShell(Start-Process \"c:\\\\Users\\\\fchen13\\\\ASU Dropbox\\\\Fang Chen\\\\Work Documents\\\\EBP\\\\Dashboard reports\\\\pages\\\\progress_affiliates_nodes.html\")",
+      "PowerShell(Start-Process \"./pages/progress_affiliates_nodes.html\")",
       "Bash(git fetch *)",
       "Bash(git merge *)",
       "Bash(git push *)",
       "Bash(grep -iE '\\\\.\\(csv|png\\)$')"
     ],
     "additionalDirectories": [
-      "c:\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports\\.claude\\skills\\style-check"
+      ".claude/skills/style-check"
     ]
   },
   "hooks": {

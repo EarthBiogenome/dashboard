@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Fang Chen" />
+    <title>EBP Global Distribution</title>
+    <script src="./echarts.min.js"></script>
+    <script src="./d3.v6.js"></script>
+    <script src="./geoMap/world.zh.js"></script>
+    <script src="./geoMap/EBPnetwork_20260612.js"></script>
+    <!-- <script src="./geoMap/updated_projectsWebsites.js"></script> -->
+    <link href="./geoMap/bootstrap.min.css" rel="stylesheet">
+    <script src="./geoMap/jquery-3.6.0.min.js"></script>
+    <script src="./geoMap/popper.min.js"></script>
+    <script src="./geoMap/bootstrap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #mapContainer {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: white;
+        }
+        #barContainer {
+            width: 80vw;
+            height: 160vh;
+            margin: 60px auto 80px auto;
+            overflow: hidden;
+        }
+        .btns {
+            position: fixed;
+            right: 16px;
+            bottom: 20px;
+            display: flex;
+            border-radius: 25px;
+            overflow: hidden;
+            height: 40px;
+            border: 1px solid #000;
+            z-index: 99999999;
+        }
+        .btns button {
+            display: inline-flex;
+            width: 80px;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            cursor: pointer;
+            background-color: #fff;
+            outline: none;
+        }
+        .btns .selected {
+            background-color: #aaa;
+        }
+        #downloadDropdown {
+            position: absolute;
+            left: 230px;
+            bottom: 20px;
+            z-index: 99999999;
+        }
+        #downloadDropdown .dropdown-toggle {
+            height: 40px;
+            padding: 0 24px;
+            border: 1px solid #000;
+            border-radius: 25px;
+            background-color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        #downloadDropdown .dropdown-toggle:hover {
+            background-color: #eee;
+        }
+        #downloadDropdown .dropdown-menu {
+            min-width: 120px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        #relationshipGraph {
+            width: 766px;
+            height: 400px;
+        }
+        #mapSidebar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background-color: white;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px 20px 16px;
+            color: #222;
+        }
+        #mapSidebar .sidebar-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #000;
+            letter-spacing: 0.03em;
+            margin-bottom: 20px;
+        }
+        #mapSidebar .sidebar-subtitle {
+            font-size: 11px;
+            color: #555;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+        #mapSidebar .legend-heading {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #555;
+            margin-bottom: 12px;
+        }
+        #mapSidebar .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 12.5px;
+            line-height: 1.35;
+            color: #000;
+        }
+        #mapSidebar .lc {
+            flex-shrink: 0;
+            border-radius: 50%;
+        }
+        #mapSidebar .ls {
+            flex-shrink: 0;
+            width: 16px;
+            height: 11px;
+            border-radius: 3px;
+        }
+        #mapSidebar .sidebar-divider {
+            border: none;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        #mapSidebar .sidebar-caption {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #222;
+            flex: 1;
+        }
+        #mapSidebar .sidebar-caption p {
+            margin-bottom: 10px;
+        }
+        #total {
+            position: absolute;
+            left: 50px;
+            bottom: 50px;
+            color: #000;
+            font-size: 26px;
+        }
+        #projectsList {
+            height: 500px;
+            overflow: auto;
+        }
+        #projectsList li {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="btns">
+        <button>Map</button>
+        <button>Statistic</button>
+    </div>
+    <div id="downloadDropdown" class="dropdown">
+        <button class="dropdown-toggle" data-toggle="dropdown">&#8595; Download Map</button>
+        <div class="dropdown-menu dropdown-menu-right">
+            <a class="dropdown-item" id="downloadSvgBtn" href="#">SVG (vector)</a>
+            <a class="dropdown-item" id="downloadPngBtn" href="#">PNG (high-res)</a>
+        </div>
+    </div>
+    <div id="mapSidebar">
+        <div class="sidebar-title">EBP Global Network</div>
+        <div class="legend-item">
+            <span class="lc" style="width:12px;height:12px;background:#dbc649;"></span>
+            <span>Project central operation</span>
+        </div>
+        <div class="legend-item">
+            <span class="lc" style="width:8px;height:8px;background:#759f98;"></span>
+            <span>Coordination / collection site</span>
+        </div>
+        <div class="legend-item">
+            <span class="ls" style="background:#759f98;"></span>
+            <span>Country with EBP presence</span>
+        </div>
+        <hr class="sidebar-divider">
+        <div class="sidebar-caption">
+            <p>Global distribution of the EBP network of networks.</p>
+            <p><strong>Yellow circles</strong> mark <span id="countYellow">—</span> project coordination centers and regional nodes.</p>
+            <p><strong>Teal circles</strong> indicate <span id="countTeal">—</span> associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.</p>
+            <p><strong>Teal-shaded countries</strong> (<span id="countCountries">—</span>) host at least one EBP-affiliated project or site.</p>
+        </div>
+    </div>
+    <div id="mapContainer"></div>
+    <div id="barContainer"></div>
+    <!-- Modal for displaying project list by country -->
+    <div class="modal fade" id="relationshipModal" tabindex="-1" aria-labelledby="relationshipModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="relationshipModalLabel">Project Relationships</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="projectsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const data = projectsData;
+        let mapChartInstance = null;
+        
+        function initMap (worldJson) {
+            const YELLOW_TYPES = new Set(['Center', 'Headquarters', 'Node']);
+
+            // Filter out entries with missing coordinates, then jitter duplicates
+            const addressMap = {};
+            const aggregatedData = data
+                .filter(item => item.latitude != null && item.longitude != null)
+                .map(item => {
+                    const address = item.address;
+                    if (!addressMap[address]) addressMap[address] = 1;
+                    else addressMap[address]++;
+                    const offsetX = addressMap[address] > 1 ? (Math.random() - 0.5) * 2 / 10 : 0;
+                    const offsetY = addressMap[address] > 1 ? (Math.random() - 0.5) * 2 / 10 : 0;
+                    return {
+                        name: item.projectName,
+                        value: [item.longitude + offsetX, item.latitude + offsetY, addressMap[address]],
+                        website: item.website,
+                        address: address,
+                        institution: item.institution || null,
+                        activities: item.activities || null,
+                        type: item.type,
+                        isYellow: YELLOW_TYPES.has(item.type)
+                    };
+                });
+
+            const colorMap =  [
+                "#dbc649", // color code for project headquarters
+                "#759f98", // color code for areas samples collected
+                "#F28C28",
+                "#B0B3B8", // Smoke gray
+                "#D4808B", // Golden
+                "#708090", // Slate gray
+                "#FFD700", // Rose pink
+                "#6B8E23", // Bright olive green
+                "#191970", // Midnight blue
+                "#FFF8E1"  // Light ivory
+            ];
+
+            // Render Sites first (below), then Headquarters/Center/Node on top
+            const promiseArr = aggregatedData.sort((a, b) => {
+                if (a.isYellow && !b.isYellow) return 1;
+                if (!a.isYellow && b.isYellow) return -1;
+                return 0;
+            }).map(item => Promise.resolve({
+                ...item,
+                symbol: 'circle',
+                size: item.isYellow ? 12 : 8,
+                color: item.isYellow ? colorMap[0] : colorMap[1]
+            }));
+
+            Promise.all(promiseArr).then(arr => {
+                const myChart = echarts.init(document.getElementById('mapContainer'), null, { renderer: 'svg' });
+                mapChartInstance = myChart;
+
+                // Country list
+                const countries = new Set()
+                // const projectMap = Object.fromEntries(projectsData.map(project => ([project.projectName, project])))
+                const countryNameMap = {
+                    "united states": "United States of America",
+                    "democratic republic of the congo": "Democratic Republic of the Congo",
+                    "türkiye": "Turkey",
+                    "czech republic": "Czech Republic",
+                    "trinidad": "Trinidad and Tobago",
+                    "côte d'ivoire": "Côte d'Ivoire",
+                    "bosnia and herzegovina": "Bosnia and Herzegovina",
+                    "united republic of tanzania": "Tanzania",
+                    "republic of madagascar": "Madagascar",
+                }
+                projectsData.forEach(project => {
+                    if (project.latitude == null || project.longitude == null) return;
+                    const { address } = project
+                    if(!address) return
+                    const raw = address.split(', ').at(-1)?.trim() ?? ''
+                    if(!raw || /\d/.test(raw)) return
+                    const lower = raw.toLowerCase()
+                    const country = countryNameMap[lower] || raw
+                    countries.add(country)
+                })
+
+                // Update sidebar caption counts
+                const yellowCount = aggregatedData.filter(d => d.isYellow && d.type !== 'Center').length;
+                const tealCount   = aggregatedData.filter(d => !d.isYellow).length;
+                document.getElementById('countYellow').textContent = yellowCount;
+                document.getElementById('countTeal').textContent = tealCount;
+
+                // Configure the map options
+                const option = {
+                    tooltip: {
+                        trigger: 'item',
+                        confine: true,
+                        formatter: function (params) {
+                            const item = aggregatedData[params.dataIndex];
+                            let html = `<strong>${item.name}</strong>`;
+                            if (item.institution) html += `<br/>Institution: ${item.institution}`;
+                            if (item.activities) html += `<br/>Activities: ${item.activities}`;
+                            if (item.website) html += `<br/>Website: <a href="${item.website}" target="_blank">${item.website}</a>`;
+                            return html;
+                        }
+                    },
+                    geo: {
+                        map: 'world',
+                        roam: true,
+                        left: '220px',
+                        top: '2%',
+                        bottom: '2%',
+                        right: '0%',
+                        label: {
+                            show: false
+                        },
+                        itemStyle: {
+                            normal: {
+                                areaColor: '#f3f3f3',
+                                borderColor: '#555'
+                            },
+                            emphasis: {
+                                areaColor: '#ffff00'
+                            }
+                        },
+                        regions: Array.from(countries).map(countryName => (
+                            {
+                            name: countryName,  // Country name (e.g. "United States")
+                            itemStyle: {
+                                areaColor: '#759f98' // color code for country presence
+                            }
+                        }))
+                    },
+                    series: [{
+                        type: 'scatter',
+                        coordinateSystem: 'geo',
+                        data: arr.map(item => ({
+                            name: item.name,
+                            value: item.value,
+                            label: {
+                                show: false,
+                                formatter: (a) => {
+                                    return a.value[2]
+                                }, // Show the count
+                                fontSize: 10,
+                                // color: '#fff',
+                                position: 'inside' // Position the label above the point
+                            },
+                            symbol: item.symbol,
+                            symbolSize: item.size,
+                            itemStyle: item.color ? { color: item.color } : undefined
+                        })),
+                        // symbol: 'image://./geoMap/logo.png',
+                        // symbolSize: 25, // Adjust symbol size based on count
+                        encode: {
+                            tooltip: 0
+                        }
+                    }],
+                    graphic: []
+                };
+
+                const proj = d3.geoEqualEarth();
+                echarts.registerMap('world', worldJson);
+                myChart.setOption({
+                    ...option,
+                    geo: {
+                        ...option.geo,
+                        projection: {
+                            project: (point) => proj(point),
+                            unproject: (point) => proj.invert(point)
+                        }
+                    }
+                });
+
+                // Click event to display the relationship diagram
+                myChart.on('click', function (params) {
+                    if (params.componentType === 'series') {
+                        const item = aggregatedData[params.dataIndex]
+                        if(item.website) {
+                            window.open(item.website, '_blank');
+                        } else {
+                            window.alert('no website!')
+                        }
+                    }
+                });
+
+                // Build color legend
+                // const colorsContainer = document.getElementById('colors');
+                // colorMap.forEach((color, index) => {
+                //     const colorDiv = document.createElement('div');
+                //     colorDiv.className = 'color-box';
+                //     colorDiv.style.backgroundColor = color;
+
+                //     const colorName = document.createElement('div');
+                //     colorName.className = 'color-name';
+                //     colorName.textContent = index + 1;
+
+                //     colorDiv.appendChild(colorName);
+                //     colorsContainer.appendChild(colorDiv);
+                // });
+            })
+
+            function showRelationshipGraph(aggregatedItem) {
+                const relationshipGraph = echarts.init(document.getElementById('relationshipGraph'));
+
+                // Prepare graph data
+                // const nodes = [{ name: aggregatedItem.name, symbolize: true, symbolSize: 40, category: 0 }];
+                const nodes = [{ name: aggregatedItem.name, symbolize: true, symbolSize: 40, category: 0, label: { show: false} }];
+                const links = [];
+
+                aggregatedItem.projects.forEach(project => {
+                    nodes.push({ name: project.projectName, url: project.website, symbolSize: 30, category: 1 });
+                    links.push({ source: aggregatedItem.name, target: project.projectName });
+                });
+
+                const graphOption = {
+                    tooltip: {},
+                    animation: false,
+                    series: [{
+                        type: 'graph',
+                        layout: 'force',
+                        data: nodes,
+                        links: links,
+                        categories: [
+                            { name: 'address' },
+                            { name: 'project' },
+                        ],
+                        focusNodeAdjacency: true,
+                        roam: true,
+                        edgeSymbol: ['circle', 'arrow'],
+                        edgeSymbolSize: [4, 10],
+                        force: {
+                            repulsion: 2000, // increase repulsion distance
+                        },
+                        label: {
+                            show: true,
+                            position: 'inside', // Center the labels inside the nodes
+                            formatter: params => params.data.name // Show name only for simplicity
+                        },
+                        lineStyle: {
+                            color: 'source',
+                            // curveness: 0.3
+                        }
+                    }]
+                };
+
+                relationshipGraph.setOption(graphOption);
+                
+                relationshipGraph.on('click', function (params) {
+                    if (params.data.url) {
+                        window.open(params.data.url, '_blank'); // open the link in a new tab
+                    } 
+                });
+            }
+        }
+
+        function initBar() {
+            const BAR_TYPES = new Set(['Headquarters', 'Node']);
+            const count = projectsData.filter(p => BAR_TYPES.has(p.type)).length;
+            // Canonical name corrections — city/district/neighbourhood → country
+            const barCountryMap = {
+                // United Kingdom
+                'uk': 'United Kingdom', 'united kingdom': 'United Kingdom',
+                'england': 'United Kingdom', 'scotland': 'United Kingdom', 'wales': 'United Kingdom',
+                'saffron walden': 'United Kingdom', 'hinxton': 'United Kingdom',
+                // United States
+                'usa': 'United States', 'united states': 'United States', 'united states of america': 'United States',
+                // Australia
+                'australia': 'Australia', 'sydney': 'Australia',
+                // China
+                'china': 'China', 'pingshan': 'China', 'yantian district': 'China',
+                'shenzhen': 'China', 'beijing': 'China', 'shanghai': 'China',
+                // Japan
+                'japan': 'Japan', 'chiba': 'Japan',
+                // Norway
+                'norway': 'Norway', 'blindern': 'Norway',
+                // Taiwan
+                'taiwan': 'Taiwan', 'taipei city': 'Taiwan',
+                // South Korea
+                'south korea': 'South Korea', 'korea': 'South Korea',
+                // Other
+                'hong kong': 'Hong Kong',
+                'uae': 'United Arab Emirates',
+            };
+            // US state abbreviations
+            const US_STATES = new Set(['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC','PR']);
+
+            function extractCountry(address) {
+                if (!address) return null;
+                const segments = address.split(', ').map(s => s.trim()).filter(Boolean);
+                for (let i = segments.length - 1; i >= 0; i--) {
+                    const seg = segments[i];
+                    const lower = seg.toLowerCase();
+                    // Clean alpha-only segment — treat as country/region name
+                    if (!/\d/.test(seg)) {
+                        return barCountryMap[lower] ||
+                            lower.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                    }
+                    // Segment has digits — try extracting country from last word(s)
+                    const words = seg.split(/\s+/);
+                    // Check last word alone
+                    const lastWord = words.at(-1).toLowerCase().replace(/[^a-z]/g, '');
+                    if (barCountryMap[lastWord]) return barCountryMap[lastWord];
+                    // Check last two words (e.g. "United States", "United Kingdom")
+                    if (words.length >= 2) {
+                        const lastTwo = words.slice(-2).join(' ').toLowerCase().replace(/[^a-z ]/g, '');
+                        if (barCountryMap[lastTwo]) return barCountryMap[lastTwo];
+                    }
+                    // US: state abbreviation + zip pattern (e.g. "CA 90007", "DC 20250")
+                    if (/^[A-Z]{2}\s+\d{4,5}/.test(seg) && US_STATES.has(seg.split(/\s+/)[0])) return 'United States';
+                    // US: city + state + zip (e.g. "Athens GA 30605")
+                    if (words.length >= 3 && US_STATES.has(words.at(-2)) && /^\d{4,5}/.test(words.at(-1))) return 'United States';
+                    // UK postcode pattern (e.g. "TW9 3AE", "CB10 1RQ")
+                    if (/^[A-Z]{1,2}\d{1,2}\s+\d[A-Z]{2}$/.test(seg)) return 'United Kingdom';
+                }
+                return null;
+            }
+
+            const countryProjects = {};
+            projectsData.forEach(project => {
+                if (!BAR_TYPES.has(project.type)) return;
+                if (project.latitude == null || project.longitude == null) return;
+                const country = extractCountry(project.address);
+                if (!country) return;
+                if (!countryProjects[country]) {
+                    countryProjects[country] = [];
+                }
+                countryProjects[country].push(project);
+            });
+
+            // Sort ascending so largest bar appears at the top
+            const sortedArr = Object.entries(countryProjects).sort((a, b) => a[1].length - b[1].length);
+            const keys = sortedArr.map(item => item[0]);
+            const barData = sortedArr.map(item => item[1].length);
+
+            document.getElementById('countCountries').textContent = sortedArr.length;
+
+            var myChart = echarts.init(document.getElementById('barContainer'));
+            var option = {
+                title: {
+                    text: `Distribution of ${count} EBP Affiliated Projects by Country`,
+                    left: 'center'
+                },
+                grid: {
+                    top: '8%',
+                    left: '1%',
+                    right: '12%',
+                    bottom: '5%',
+                    containLabel: true
+                },
+                tooltip: {},
+                xAxis: {
+                    type: 'value',
+                    name: 'Number of Projects',
+                    nameLocation: 'middle',
+                    nameGap: 30,
+                    nameTextStyle: { fontSize: 14 },
+                    splitLine: { show: true },
+                    axisLine: { show: true },
+                    minInterval: 1
+                },
+                yAxis: {
+                    type: 'category',
+                    data: keys,
+                    axisLabel: { fontSize: 12 }
+                },
+                series: [{
+                    name: 'Country',
+                    type: 'bar',
+                    data: barData,
+                    itemStyle: { color: '#38aadd' },
+                    barWidth: '60%',
+                    label: {
+                        show: true,
+                        position: 'right',
+                        fontSize: 12
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+
+            myChart.on('click', function (params) {
+                if (params.componentType === 'series') {
+                    const projects = countryProjects[params.name];
+                    document.getElementById('relationshipModalLabel').innerText = `${params.name}  (${projects.length})`;
+                    const projectsContainer = document.getElementById('projectsList');
+                    projectsContainer.innerHTML = projects.map(project => {
+                        const { projectName, institution, website } = project;
+                        const label = institution ? `${projectName} — ${institution}` : projectName;
+                        return website
+                            ? `<li><a href="${website}" title="${website}" target="_blank">${label}</a></li>`
+                            : `<li>${label}</li>`;
+                    }).join('');
+                    $('#relationshipModal').modal('show');
+                }
+            });
+        }
+
+        initMap(worldJson);
+        initBar();
+
+        document.querySelectorAll('button').forEach(btn => {
+            btn.onclick = e => {
+                const type = e.target.innerHTML;
+                if (type !== 'Map' && type !== 'Statistic') return;
+                document.querySelectorAll('button').forEach(b => { b.className = ''; });
+                e.target.className = 'selected';
+                const map = document.getElementById('mapContainer');
+                const bar = document.getElementById('barContainer');
+                const sidebar = document.getElementById('mapSidebar');
+                const downloadDropdown = document.getElementById('downloadDropdown');
+                if (type == 'Map') {
+                    map.style.display = 'block';
+                    bar.style.display = 'none';
+                    sidebar.style.display = 'flex';
+                    downloadDropdown.style.display = 'block';
+                } else {
+                    map.style.display = 'none';
+                    bar.style.display = 'block';
+                    sidebar.style.display = 'none';
+                    downloadDropdown.style.display = 'none';
+                }
+            };
+        });
+        document.querySelector('button').click();
+
+        function getSidebarOverlaySVG(svgHeight) {
+            const W = 220, PAD = 16, FONT = 13, LH = 21, MAX_CH = 25;
+            const yellowN  = document.getElementById('countYellow').textContent;
+            const tealN    = document.getElementById('countTeal').textContent;
+            const countryN = document.getElementById('countCountries').textContent;
+            const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+            function wrap(str) {
+                const words = str.split(' '), lines = [];
+                let line = '';
+                for (const w of words) {
+                    const test = line ? line + ' ' + w : w;
+                    if (test.length > MAX_CH && line) { lines.push(line); line = w; }
+                    else line = test;
+                }
+                if (line) lines.push(line);
+                return lines;
+            }
+
+            function para(boldPart, normalPart, x, y) {
+                const lines = wrap((boldPart || '') + (normalPart || ''));
+                return lines.map((line, i) => {
+                    const yPos = y + i * LH;
+                    if (boldPart && i === 0 && line.startsWith(boldPart)) {
+                        const rest = line.slice(boldPart.length);
+                        return `<text x="${x}" y="${yPos}" font-family="sans-serif" font-size="${FONT}" fill="#000"><tspan font-weight="bold">${esc(boldPart)}</tspan>${esc(rest)}</text>`;
+                    }
+                    return `<text x="${x}" y="${yPos}" font-family="sans-serif" font-size="${FONT}" fill="#000">${esc(line)}</text>`;
+                });
+            }
+
+            const captionParts = [
+                [null,                   'Global distribution of the EBP network of networks.'],
+                ['Yellow circles',       ` mark ${yellowN} project coordination centers and regional nodes.`],
+                ['Teal circles',         ` indicate ${tealN} associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.`],
+                ['Teal-shaded countries',` (${countryN}) host at least one EBP-affiliated project or site.`],
+            ];
+
+            let y = 185;
+            const captionLines = [];
+            for (const [bold, rest] of captionParts) {
+                const rendered = para(bold, rest, PAD, y);
+                captionLines.push(...rendered);
+                y += rendered.length * LH + 8;
+            }
+
+            return `
+                <rect x="0" y="0" width="${W}" height="${svgHeight}" fill="white"/>
+                <line x1="${W}" y1="0" x2="${W}" y2="${svgHeight}" stroke="#ccc" stroke-width="1"/>
+                <text x="${PAD}" y="44" font-family="sans-serif" font-size="15" font-weight="bold" fill="#000">EBP Global Network</text>
+                <circle cx="28" cy="82" r="6" fill="#dbc649"/>
+                <text x="46" y="87" font-family="sans-serif" font-size="12.5" fill="#000">Project central operation</text>
+                <circle cx="28" cy="110" r="4" fill="#759f98"/>
+                <text x="46" y="115" font-family="sans-serif" font-size="12.5" fill="#000">Coordination / collection site</text>
+                <rect x="20" y="128" width="16" height="11" rx="3" fill="#759f98"/>
+                <text x="46" y="137" font-family="sans-serif" font-size="12.5" fill="#000">Country with EBP presence</text>
+                <line x1="${PAD}" y1="158" x2="${W - PAD}" y2="158" stroke="#ccc" stroke-width="1"/>
+                ${captionLines.join('\n                ')}
+            `;
+        }
+
+        function buildDownloadSVG() {
+            const svgEl = mapChartInstance.getDom().querySelector('svg');
+            const svgH = svgEl.clientHeight || window.innerHeight;
+            return svgEl.outerHTML.replace(
+                /(<svg[^>]*>)/,
+                `$1<rect width="100%" height="100%" fill="white"/>${getSidebarOverlaySVG(svgH)}`
+            );
+        }
+
+        document.getElementById('downloadSvgBtn').onclick = function (e) {
+            e.preventDefault();
+            if (!mapChartInstance) return;
+            const svgStr = buildDownloadSVG();
+            const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = 'EBP_global_distribution.svg';
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        document.getElementById('downloadPngBtn').onclick = function (e) {
+            e.preventDefault();
+            if (!mapChartInstance) return;
+            const svgStr = buildDownloadSVG();
+            const img = new Image();
+            const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width * 4;
+                canvas.height = img.height * 4;
+                const ctx = canvas.getContext('2d');
+                ctx.scale(4, 4);
+                ctx.drawImage(img, 0, 0);
+                const a = document.createElement('a');
+                a.download = 'EBP_global_distribution.png';
+                a.href = canvas.toDataURL('image/png');
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+            img.src = url;
+        };
+
+    </script>
+</body>
+</html>

@@ -780,7 +780,7 @@
 
           // Initialize EBP Standard chart
           const { series: ebpStandardSeries } = getDefaultStackedBarData(ebpStandardChartData.data);
-          chartInstance1b = initEchart({series: ebpStandardSeries, categories: validCategories}, ebpStandardChartData.containerId, ebpStandardChartData.title);
+          chartInstance1b = initEchart({series: ebpStandardSeries, categories: validCategories}, ebpStandardChartData.containerId, ebpStandardChartData.title, undefined, projectAnnualDataEbpStandard);
 
           // Show click hint and download buttons for EBP Standard chart
           document.getElementById('clickHint1b').style.display = 'block';
@@ -893,6 +893,9 @@
           document.getElementById('clickHint2').style.display = 'block';
           document.getElementById('downloadButtons2').style.display = 'flex';
           
+          padAllProjectsYearGaps(projectAnnualData);
+          padAllProjectsYearGaps(projectAnnualDataEbpStandard);
+
           console.log('Project annual data collected:', Object.keys(projectAnnualData).length, 'projects');
 
         } catch (error) {
@@ -903,7 +906,7 @@
         }
       };
 
-      function initEchart(data, containerId, yLabel, xAxisLabel) {
+      function initEchart(data, containerId, yLabel, xAxisLabel, annualDataSource) {
         const chartDom = document.getElementById(containerId);
         const myChart = echarts.init(chartDom);
         const arr = []
@@ -1207,9 +1210,13 @@
         myChart.setOption(option);
         
         // Add click event for drill-down
+        // `annualDataSource` is captured in the closure so each chart uses
+        // its own correct data store (chart 1 / ERGA → projectAnnualData,
+        // chart 1b → projectAnnualDataEbpStandard).
+        const _src = annualDataSource || projectAnnualData;
         myChart.on('click', function(params) {
           if (params.name) {
-            showDrilldown(params.name);
+            showDrilldown(params.name, _src);
           }
         });
         
@@ -1226,9 +1233,66 @@
         return myChart
       }
 
-      // Show drill-down modal with annual data for a project
-      function showDrilldown(projectName) {
-        const annualData = projectAnnualData[projectName];
+      const EMPTY_YEAR_COUNTS = Object.freeze({
+        contig: 0,
+        scaffold: 0,
+        chromosome: 0,
+        'complete genome': 0
+      });
+
+      /**
+       * Ensures every consecutive calendar year from min to max exists in a
+       * project's annual map, filling gaps with zero assembly counts.
+       *
+       * @param {Object<string, Object>} annualData  Year-keyed count map.
+       * @returns {{ years: string[], data: Object<string, Object> }}
+       */
+      function padAnnualYearGaps(annualData) {
+        if (!annualData || typeof annualData !== 'object') {
+          return { years: [], data: {} };
+        }
+
+        const numericYears = Object.keys(annualData)
+          .map(y => parseInt(y, 10))
+          .filter(y => !isNaN(y) && y >= 1900 && y <= 2100);
+
+        if (numericYears.length === 0) {
+          return { years: [], data: {} };
+        }
+
+        const minYear = Math.min(...numericYears);
+        const maxYear = Math.max(...numericYears);
+        const paddedData = {};
+        const years = [];
+
+        for (let y = minYear; y <= maxYear; y++) {
+          const key = String(y);
+          years.push(key);
+          const existing = annualData[key] ?? annualData[y];
+          paddedData[key] = existing
+            ? { ...EMPTY_YEAR_COUNTS, ...existing }
+            : { ...EMPTY_YEAR_COUNTS };
+        }
+
+        return { years, data: paddedData };
+      }
+
+      /** Pads year gaps in place for every project in an annual-data map. */
+      function padAllProjectsYearGaps(dataMap) {
+        Object.keys(dataMap).forEach(projectName => {
+          const { years, data } = padAnnualYearGaps(dataMap[projectName]);
+          if (years.length) {
+            dataMap[projectName] = data;
+          }
+        });
+      }
+
+      // Show drill-down modal with annual data for a project.
+      // `dataSource` is the per-chart annual-data map (projectAnnualData or
+      // projectAnnualDataEbpStandard); defaults to projectAnnualData when omitted.
+      function showDrilldown(projectName, dataSource) {
+        const src = dataSource || projectAnnualData;
+        const annualData = src[projectName];
         
         if (!annualData || Object.keys(annualData).length === 0) {
           alert(`No annual data available for ${projectName}`);
@@ -1238,26 +1302,33 @@
         // Update modal title
         document.getElementById('modalTitle').textContent = `Annual Species Count - ${projectName}`;
         
-        // Show modal
+        // Show modal first so the chart container has layout dimensions.
         document.getElementById('drilldownModal').classList.add('active');
-        
-        // Sort years
-        const sortedYears = Object.keys(annualData).sort();
-        
-        // Prepare series data
+
+        const { years: sortedYears, data: paddedData } = padAnnualYearGaps(annualData);
+        if (!sortedYears.length) {
+          alert(`No annual data available for ${projectName}`);
+          document.getElementById('drilldownModal').classList.remove('active');
+          return;
+        }
+
+        // Prepare series data from the gap-free paddedData copy.
         const seriesData = {
-          'contig': sortedYears.map(year => annualData[year]['contig'] || 0),
-          'scaffold': sortedYears.map(year => annualData[year]['scaffold'] || 0),
-          'chromosome': sortedYears.map(year => annualData[year]['chromosome'] || 0),
-          'complete genome': sortedYears.map(year => annualData[year]['complete genome'] || 0)
+          'contig':          sortedYears.map(year => paddedData[year]['contig'] || 0),
+          'scaffold':        sortedYears.map(year => paddedData[year]['scaffold'] || 0),
+          'chromosome':      sortedYears.map(year => paddedData[year]['chromosome'] || 0),
+          'complete genome': sortedYears.map(year => paddedData[year]['complete genome'] || 0)
         };
-        
-        // Initialize or update the drill-down chart
+
         const chartDom = document.getElementById('drilldownChart');
         if (drilldownChartInstance) {
           drilldownChartInstance.dispose();
+          drilldownChartInstance = null;
         }
-        drilldownChartInstance = echarts.init(chartDom);
+
+        /** Renders the drill-down chart once the modal layout is settled. */
+        function renderDrilldownChart() {
+          drilldownChartInstance = echarts.init(chartDom);
         
         const option = {
           title: {
@@ -1303,12 +1374,15 @@
           xAxis: {
             type: 'category',
             data: sortedYears,
+            boundaryGap: true,
+            axisTick: { alignWithLabel: true },
             axisLine: {
               show: true,
               lineStyle: { color: '#000', width: 1 }
             },
             axisLabel: {
               show: true,
+              interval: 0,
               color: '#000',
               fontSize: 12
             },
@@ -1376,15 +1450,12 @@
             }
           ]
         };
-        
-        drilldownChartInstance.setOption(option);
-        
-        // Resize chart when window resizes
-        window.addEventListener('resize', function() {
-          if (drilldownChartInstance) {
-            drilldownChartInstance.resize();
-          }
-        });
+
+        drilldownChartInstance.setOption(option, { notMerge: true });
+        drilldownChartInstance.resize();
+        }
+
+        requestAnimationFrame(renderDrilldownChart);
       }
 
       // Close the modal
@@ -1395,6 +1466,12 @@
           drilldownChartInstance = null;
         }
       }
+
+      window.addEventListener('resize', function() {
+        if (drilldownChartInstance) {
+          drilldownChartInstance.resize();
+        }
+      });
 
       // Close modal when clicking outside
       document.addEventListener('click', function(event) {

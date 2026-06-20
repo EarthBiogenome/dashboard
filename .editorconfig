@@ -1,0 +1,18 @@
+# EditorConfig: cross-platform path and formatting conventions for this repo.
+# Use forward slashes in all repo-relative paths (HTML, JS, config, docs).
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{html,js,css,md,json,yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.py]
+indent_style = space
+indent_size = 4

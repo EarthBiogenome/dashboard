@@ -1,0 +1,9 @@
+# Normalize line endings and keep repo paths POSIX-style in Git (pages/foo, not pages\foo).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary

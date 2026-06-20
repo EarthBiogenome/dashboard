@@ -4,10 +4,9 @@
       "Bash(git rm *)",
       "Bash(git add *)",
       "Bash(git check-ignore *)",
-      "Bash(git -C \"c:/Users/fchen13/ASU Dropbox/Fang Chen/Work Documents/EBP/Dashboard reports\" log --oneline -10)",
-      "Bash(git -C \"c:/Users/fchen13/ASU Dropbox/Fang Chen/Work Documents/EBP/Dashboard reports\" status --short)",
-      "Bash(git -C \"c:/Users/fchen13/ASU Dropbox/Fang Chen/Work Documents/EBP/Dashboard reports\" remote -v)",
-      "Read(//c/c/Users/fchen13/ASU Dropbox/Fang Chen/Work Documents/EBP/Dashboard reports/**)",
+      "Bash(git log --oneline -10)",
+      "Bash(git status --short)",
+      "Bash(git remote -v)",
       "WebSearch",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
@@ -30,16 +29,11 @@
       "Bash(grep -o '\"xQuery\":[^,}]*\\\\|\"xLabel\":[^,}]*\\\\|\"status\":{[^}]*}')",
       "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-ui/src/client/views/components/ReportHistogram.jsx\")",
       "Bash(curl -s \"https://raw.githubusercontent.com/genomehubs/genomehubs/main/src/genomehubs-ui/src/client/views/components/ReportEdit.jsx\")",
-      "Bash(grep -ao \"[0-9]\\\\{1,2\\\\}\\\\.[0-9]\\\\{1,2\\\\}\\\\.[0-9]\\\\{1,2\\\\}\" \"c:\\\\Users\\\\fchen13\\\\ASU Dropbox\\\\Fang Chen\\\\Work Documents\\\\EBP\\\\Dashboard reports\\\\pages\\\\echarts.min.js\")",
+      "Bash(grep -ao \"[0-9]\\\\{1,2\\\\}\\\\.[0-9]\\\\{1,2\\\\}\\\\.[0-9]\\\\{1,2\\\\}\" pages/echarts.min.js)",
       "Bash(python -c ' *)",
       "Bash(git commit *)",
       "Bash(gh api *)",
       "Bash(node -e ' *)"
-    ],
-    "additionalDirectories": [
-      "c:\\c\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports",
-      "C:\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports\\https:\\raw.githubusercontent.com\\genomehubs\\genomehubs\\main\\src\\genomehubs-ui\\src\\client\\views\\components",
-      "c:\\Users\\fchen13\\ASU Dropbox\\Fang Chen\\Work Documents\\EBP\\Dashboard reports\\https:\\raw.githubusercontent.com\\genomehubs\\genomehubs\\main\\src\\genomehubs-ui\\src\\client\\views\\components"
     ]
   }
 }
