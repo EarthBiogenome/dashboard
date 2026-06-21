@@ -2,7 +2,7 @@
   // Define consistent color mapping based on assembly level names
   function getAssemblyLevelColor(assemblyLevel) {
     const assemblyLevelColors = {
-      'contig': '#ffff33',        // yellow
+      'contig': '#b8860b',        // dark amber
       'scaffold': '#22a884',     // teal
       'chromosome': '#404387',   // dark blue
       'complete genome': '#7ad151' // green

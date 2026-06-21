@@ -25,7 +25,14 @@
       "Bash(chromium-cli --help)",
       "Bash(npx --yes playwright --version)",
       "Bash(node -e \"require\\('playwright'\\)\")",
-      "Bash(npm ls *)"
+      "Bash(npm ls *)",
+      "Bash(cat /tmp/static_server.log; which python3 python 2>&1)",
+      "Read(//tmp/**)",
+      "Read(//c/tmp/**)",
+      "Bash(node -e \"require.resolve\\('playwright'\\)\")",
+      "Bash(pkill -f \"serve -l 8123\")",
+      "Bash(where chromium-cli *)",
+      "Bash(grep -n \"id=\\\\\"footer\\\\\"\\\\|</div>\\\\s*$\" \"pages/progress_affiliates_nodes.html\")"
     ],
     "additionalDirectories": [
       ".claude/skills/style-check",

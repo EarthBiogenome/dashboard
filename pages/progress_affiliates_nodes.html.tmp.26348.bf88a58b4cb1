@@ -104,28 +104,25 @@
             max-width: 600px;
             text-align: center;
         }
-        /* Details drawer — slides in from the right edge of the viewport instead
-           of pushing the main chart layout around. Fixed position means the
-           overview bars, slider, and download buttons never shift or jump. */
+        /* Inline details panel — expands directly beneath the chart that was
+           clicked, instead of floating a modal over the whole screen, so the
+           overview bars stay visible while the annual breakdown is open. */
         .details-panel {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 35vw;
-            min-width: 340px;
-            max-width: 600px;
-            height: 100vh;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
             background-color: #fff;
-            border-left: 1px solid #e0e0e0;
-            box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
-            transform: translateX(100%);
-            transition: transform 0.35s ease;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            margin: 0 auto 30px auto;
+            width: 85%;
+            max-width: 1400px;
+            transition: max-height 0.4s ease, opacity 0.3s ease, margin-bottom 0.4s ease;
         }
         .details-panel.active {
-            transform: translateX(0);
+            max-height: 600px;
+            opacity: 1;
         }
         .details-panel-header {
             display: flex;
@@ -134,7 +131,7 @@
             padding: 15px 20px;
             border-bottom: 1px solid #e0e0e0;
             background-color: #f8f9fa;
-            flex: 0 0 auto;
+            border-radius: 12px 12px 0 0;
         }
         .details-panel-title {
             font-size: 18px;
@@ -156,9 +153,8 @@
             color: #e74c3c;
         }
         .details-panel-body {
-            flex: 1 1 auto;
+            height: 540px;
             padding: 10px;
-            min-height: 0;
         }
         .details-panel-body .drilldown-chart {
             width: 100%;
@@ -242,6 +238,7 @@
        Download Data (CSV)
      </button>
    </div>
+
    <div id="chartContainer1b">
      <div class="loading">
        <div class="spinner"></div>
@@ -259,6 +256,7 @@
        Download Data (CSV)
      </button>
    </div>
+
    <div id="chartContainer2">
      <div class="loading">
        <div class="spinner"></div>
@@ -276,6 +274,7 @@
        Download Data (CSV)
      </button>
    </div>
+   
    <!-- Notes -->
    <div id="disclaimer" class="chartNote">
      <p><strong>Notes:</strong> Some assemblies appear across multiple projects, reflecting the collaborative nature of the global research community. Projects without a BioProject ID are not listed.</p>
@@ -299,15 +298,16 @@
     </div>
     </div>
 
-    <!-- Shared details drawer — slides in from the right edge for whichever
-         chart's bar was clicked; only one project can be inspected at a time. -->
-    <div class="details-panel" id="detailsPanel">
-      <div class="details-panel-header">
-        <h3 class="details-panel-title" id="detailsPanelTitle">Annual Species Count</h3>
-        <button class="details-panel-close" onclick="closeDetailsPanel()">&times;</button>
-      </div>
-      <div class="details-panel-body">
-        <div class="drilldown-chart" id="drilldownChart"></div>
+    <!-- Modal for drill-down annual view -->
+    <div id="drilldownModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="modalTitle">Annual Species Count</h3>
+          <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="drilldownChart"></div>
+        </div>
       </div>
     </div>
 
@@ -315,9 +315,7 @@
         let chartInstance1 = null
         let chartInstance1b = null
         let chartInstance2 = null
-        // One drill-down chart instance per details panel (1, 1b, 2), keyed by the
-        // same suffix used in their DOM ids, so all three can stay open independently.
-        let drilldownChartInstance = null;
+        let drilldownChartInstance = null
 
         // Store annual data per project for drill-down
         const projectAnnualData = {};
@@ -1257,26 +1255,14 @@
         // Add click event for drill-down
         // `annualDataSource` is captured in the closure so each chart uses
         // its own correct data store (chart 1 / ERGA → projectAnnualData,
-        // chart 1b → projectAnnualDataEbpStandard). All three charts share the
-        // same right-side drawer, since only one project is inspected at a time.
+        // chart 1b → projectAnnualDataEbpStandard).
         const _src = annualDataSource || projectAnnualData;
         myChart.on('click', function(params) {
           if (params.name) {
             showDrilldown(params.name, _src);
           }
         });
-
-        // Clicking empty canvas (inside the grid but not on a bar) dismisses
-        // the drawer, same as clicking its close button. `params.target` is
-        // only set when the click actually hit a rendered graphic (a bar);
-        // an empty-canvas click leaves it undefined.
-        myChart.getZr().on('click', function(params) {
-          const pointInPixel = [params.offsetX, params.offsetY];
-          if (!params.target && myChart.containPixel('grid', pointInPixel)) {
-            closeDetailsPanel();
-          }
-        });
-
+        
         // Change cursor to pointer on bar hover
         myChart.getZr().on('mousemove', function(params) {
           const pointInPixel = [params.offsetX, params.offsetY];
@@ -1344,30 +1330,30 @@
         });
       }
 
-      // Show the shared right-side drawer with the annual breakdown for the
-      // clicked project. `dataSource` is the per-chart annual-data map
-      // (projectAnnualData or projectAnnualDataEbpStandard); defaults to
-      // projectAnnualData when omitted. Only one project is inspected at a
-      // time, so all three overview charts open the same drawer.
+      // Show drill-down modal with annual data for a project.
+      // `dataSource` is the per-chart annual-data map (projectAnnualData or
+      // projectAnnualDataEbpStandard); defaults to projectAnnualData when omitted.
       function showDrilldown(projectName, dataSource) {
         const src = dataSource || projectAnnualData;
         const annualData = src[projectName];
-
+        
         if (!annualData || Object.keys(annualData).length === 0) {
           alert(`No annual data available for ${projectName}`);
           return;
         }
+        
+        // Update modal title
+        document.getElementById('modalTitle').textContent = `Annual Species Count - ${projectName}`;
+        
+        // Show modal first so the chart container has layout dimensions.
+        document.getElementById('drilldownModal').classList.add('active');
 
         const { years: sortedYears, data: paddedData } = padAnnualYearGaps(annualData);
         if (!sortedYears.length) {
           alert(`No annual data available for ${projectName}`);
+          document.getElementById('drilldownModal').classList.remove('active');
           return;
         }
-
-        // Update drawer title and slide it in (CSS transition animates transform).
-        const panelWasOpen = document.getElementById('detailsPanel').classList.contains('active');
-        document.getElementById('detailsPanelTitle').textContent = `Annual Species Count - ${projectName}`;
-        document.getElementById('detailsPanel').classList.add('active');
 
         // Prepare series data from the gap-free paddedData copy.
         const seriesData = {
@@ -1378,191 +1364,146 @@
         };
 
         const chartDom = document.getElementById('drilldownChart');
+        if (drilldownChartInstance) {
+          drilldownChartInstance.dispose();
+          drilldownChartInstance = null;
+        }
 
-        // Thin out year labels on longer timelines so they never overlap at a
-        // narrow drawer width — every 2nd or 3rd year, hover tooltip still
-        // reveals the exact year via axis trigger.
-        const yearLabelInterval = sortedYears.length > 12 ? 2 : (sortedYears.length > 8 ? 1 : 0);
-
-        /** Renders the drill-down chart once the drawer's slide-in transition has given it layout dimensions. */
+        /** Renders the drill-down chart once the modal layout is settled. */
         function renderDrilldownChart() {
-          // Reuse the existing chart instance so ECharts can diff and animate
-          // each line's points to its new position when switching projects
-          // while the drawer is already open. Only init fresh on first open.
-          if (!drilldownChartInstance) {
-            drilldownChartInstance = echarts.init(chartDom);
-          }
-
-          const option = {
-            title: {
-              text: '',
-              left: 'center',
-              textStyle: {
-                fontSize: 14,
-                fontWeight: 'bold'
-              }
-            },
-            legend: {
+          drilldownChartInstance = echarts.init(chartDom);
+        
+        const option = {
+          title: {
+            text: '',
+            left: 'center',
+            textStyle: {
+              fontSize: 14,
+              fontWeight: 'bold'
+            }
+          },
+          legend: {
+            show: true,
+            selectedMode: false,
+            data: ['contig', 'scaffold', 'chromosome', 'complete genome'],
+            top: '2%',
+            textStyle: {
+              color: '#000',
+              fontSize: 12,
+              fontWeight: 'bold',
+            }
+          },
+          color: ['#b8860b', '#22a884', '#404387', '#7ad151'],
+          grid: {
+            left: '5%',
+            right: '5%',
+            top: '15%',
+            bottom: '15%',
+            containLabel: true
+          },
+          tooltip: {
+            trigger: 'axis',
+            formatter: function(params) {
+              let result = `<strong>Year: ${params[0].name}</strong><br/>`;
+              let total = 0;
+              params.forEach(item => {
+                result += `${item.seriesName}: ${(item.value || 0).toLocaleString()}<br/>`;
+                total += item.value || 0;
+              });
+              result += `<strong>Total: ${total.toLocaleString()}</strong>`;
+              return result;
+            }
+          },
+          xAxis: {
+            type: 'category',
+            data: sortedYears,
+            boundaryGap: true,
+            axisTick: { alignWithLabel: true },
+            axisLine: {
               show: true,
-              selectedMode: false,
-              data: ['contig', 'scaffold', 'chromosome', 'complete genome'],
-              top: '2%',
-              textStyle: {
-                color: '#000',
-                fontSize: 11,
-                fontWeight: 'bold',
-              }
+              lineStyle: { color: '#000', width: 1 }
             },
-            color: ['#b8860b', '#22a884', '#404387', '#7ad151'],
-            // Explicit left padding keeps the rotated y-axis title and its
-            // labels off the drawer's edge instead of jamming against it.
-            grid: {
-              left: '14%',
-              right: '6%',
-              top: '20%',
-              bottom: '14%',
-              containLabel: true
+            axisLabel: {
+              show: true,
+              interval: 0,
+              color: '#000',
+              fontSize: 12
             },
-            tooltip: {
-              trigger: 'axis',
-              formatter: function(params) {
-                let result = `<strong>Year: ${params[0].name}</strong><br/>`;
-                params.forEach(item => {
-                  result += `${item.marker} ${item.seriesName}: ${(item.value || 0).toLocaleString()}<br/>`;
-                });
-                return result;
-              }
+            name: 'Year',
+            nameLocation: 'middle',
+            nameGap: 30,
+            nameTextStyle: {
+              fontWeight: 'bold',
+              fontSize: 13
+            }
+          },
+          yAxis: {
+            type: 'value',
+            name: 'Count of Species',
+            nameLocation: 'middle',
+            nameRotate: 90,
+            nameGap: 40,
+            nameTextStyle: {
+              fontWeight: 'bold',
+              fontSize: 13
             },
-            xAxis: {
-              type: 'category',
-              data: sortedYears,
-              boundaryGap: false,
-              axisTick: { alignWithLabel: true },
-              axisLine: {
-                show: true,
-                lineStyle: { color: '#000', width: 1 }
-              },
-              axisLabel: {
-                show: true,
-                // Skip every Nth label on long timelines instead of cramming
-                // every year in at a steep rotation; tooltip still shows the
-                // exact year on hover.
-                interval: yearLabelInterval,
-                rotate: 45,
-                color: '#000',
-                fontSize: 11
-              },
-              name: 'Year',
-              nameLocation: 'middle',
-              nameGap: 30,
-              nameTextStyle: {
-                fontWeight: 'bold',
-                fontSize: 12
-              }
+            axisLine: {
+              show: true,
+              lineStyle: { color: '#000', width: 1 }
             },
-            yAxis: {
-              type: 'value',
-              name: 'Count of Species',
-              nameLocation: 'middle',
-              nameRotate: 90,
-              nameGap: 50,
-              nameTextStyle: {
-                fontWeight: 'bold',
-                fontSize: 12
-              },
-              axisLine: {
-                show: true,
-                lineStyle: { color: '#000', width: 1 }
-              },
-              axisLabel: {
-                show: true,
-                color: '#000',
-                fontSize: 11,
-                formatter: value => value.toLocaleString()
-              },
-              splitLine: {
-                show: true,
-                lineStyle: { color: '#ccc' }
-              }
+            axisLabel: {
+              show: true,
+              color: '#000',
+              fontSize: 12,
+              formatter: value => value.toLocaleString()
             },
-            // Independent (non-stacked) lines, not a stacked area chart: with
-            // a stacked area, each upper series' baseline shifts depending on
-            // the thickness of everything beneath it, producing wavy shapes
-            // that make it impossible to read whether a single metric grew or
-            // shrank year over year for diverse-composition projects (e.g.
-            // metainvert, tsi). Plain lines keep every category's true value
-            // on its own baseline.
-            series: [
-              {
-                name: 'contig',
-                type: 'line',
-                stack: null,
-                symbol: 'circle',
-                symbolSize: 5,
-                lineStyle: { width: 2 },
-                data: seriesData['contig'],
-                itemStyle: { color: '#b8860b' }
-              },
-              {
-                name: 'scaffold',
-                type: 'line',
-                stack: null,
-                symbol: 'circle',
-                symbolSize: 5,
-                lineStyle: { width: 2 },
-                data: seriesData['scaffold'],
-                itemStyle: { color: '#22a884' }
-              },
-              {
-                name: 'chromosome',
-                type: 'line',
-                stack: null,
-                symbol: 'circle',
-                symbolSize: 5,
-                lineStyle: { width: 2 },
-                data: seriesData['chromosome'],
-                itemStyle: { color: '#404387' }
-              },
-              {
-                name: 'complete genome',
-                type: 'line',
-                stack: null,
-                symbol: 'circle',
-                symbolSize: 5,
-                lineStyle: { width: 2 },
-                data: seriesData['complete genome'],
-                itemStyle: { color: '#7ad151' }
-              }
-            ]
-          };
+            splitLine: {
+              show: true,
+              lineStyle: { color: '#ccc' }
+            }
+          },
+          series: [
+            {
+              name: 'contig',
+              type: 'bar',
+              stack: 'total',
+              data: seriesData['contig'],
+              itemStyle: { color: '#b8860b' }
+            },
+            {
+              name: 'scaffold',
+              type: 'bar',
+              stack: 'total',
+              data: seriesData['scaffold'],
+              itemStyle: { color: '#22a884' }
+            },
+            {
+              name: 'chromosome',
+              type: 'bar',
+              stack: 'total',
+              data: seriesData['chromosome'],
+              itemStyle: { color: '#404387' }
+            },
+            {
+              name: 'complete genome',
+              type: 'bar',
+              stack: 'total',
+              data: seriesData['complete genome'],
+              itemStyle: { color: '#7ad151' }
+            }
+          ]
+        };
 
-          // notMerge: false (the default) lets ECharts diff against the
-          // currently rendered option and animate each line's points to its
-          // new position — so switching projects while the drawer is already
-          // open morphs the lines in place instead of a hard redraw.
-          drilldownChartInstance.setOption(option);
-          drilldownChartInstance.resize();
+        drilldownChartInstance.setOption(option, { notMerge: true });
+        drilldownChartInstance.resize();
         }
 
-        // The drawer's slide-in transition (0.35s) is what actually gives the
-        // chart container its real height on first open. On subsequent clicks
-        // the drawer is already laid out and stays locked in place — only the
-        // title and chart data update — so render immediately.
-        const panelEl = document.getElementById('detailsPanel');
-        if (panelWasOpen) {
-          renderDrilldownChart();
-        } else {
-          panelEl.addEventListener('transitionend', function onExpand(event) {
-            if (event.propertyName !== 'transform') return;
-            panelEl.removeEventListener('transitionend', onExpand);
-            renderDrilldownChart();
-          });
-        }
+        requestAnimationFrame(renderDrilldownChart);
       }
 
-      // Collapse the details drawer and dispose its chart.
-      function closeDetailsPanel() {
-        document.getElementById('detailsPanel').classList.remove('active');
+      // Close the modal
+      function closeModal() {
+        document.getElementById('drilldownModal').classList.remove('active');
         if (drilldownChartInstance) {
           drilldownChartInstance.dispose();
           drilldownChartInstance = null;
@@ -1570,13 +1511,23 @@
       }
 
       window.addEventListener('resize', function() {
-        if (drilldownChartInstance) drilldownChartInstance.resize();
+        if (drilldownChartInstance) {
+          drilldownChartInstance.resize();
+        }
       });
 
-      // Close the details drawer with Escape.
+      // Close modal when clicking outside
+      document.addEventListener('click', function(event) {
+        const modal = document.getElementById('drilldownModal');
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
+
+      // Close modal with Escape key
       document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-          closeDetailsPanel();
+          closeModal();
         }
       });
 

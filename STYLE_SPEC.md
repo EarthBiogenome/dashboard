@@ -39,10 +39,24 @@ Use it as the reference when auditing or creating files.
 ### Assembly level colors (defined in `services.js`)
 | Level | Color |
 |---|---|
-| contig | `#ffff33` |
+| contig | `#b8860b` |
 | scaffold | `#22a884` |
 | chromosome | `#404387` |
 | complete genome | `#7ad151` |
+
+### Buttons (download/action pills — pattern from `distribution_map.html`)
+```css
+height: 40px;
+padding: 0 20px;
+font-size: 13px;
+font-weight: 600;
+color: #1E293B;
+background-color: #ffffff;
+border: 1px solid #CBD5E1;
+border-radius: 25px;
+box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+```
+Hover: `background-color: #F1F5F9`. Differentiate button intent (e.g. CSV vs image export) via icon fill color, not a different background fill — keep all action buttons neutral white/slate pills.
 
 ---
 
