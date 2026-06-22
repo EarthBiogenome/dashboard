@@ -1,4 +1,4 @@
-// 04/21/2026: Updated 65 EBP projects with GoaT-consistent project names and bioproject IDs
+// 06/21/2026: Updated 65 EBP projects with GoaT-consistent project names and bioproject IDs
 
 const projectsList = {
     "10kp": "", // 10,000 Plants (10KP)
@@ -53,9 +53,9 @@ const projectsList = {
     "paftol": "", // Plant and Fungi Trees of Life (PAFTOL)
     "plantgarden": "", // Plant GARDEN (PlantGarden)
     "pgp": "", // Polar Genomes Project (PGP)
-    "prgp": "", // Primate Genome Project (PRGP)
+    "prgp": "PRJNA785018", // Primate Genome Project (PRGP)
     "psyche": "PRJEB71705", // Project Psyche (PSYCHE)
-    "p10k": "", // 10,000 Plant Genomes (P10K)
+    "p10k": "PRJNA1056319", // Protist 10,000 Genomes Project (P10K)
     "r2k": "PRJNA1399476", // Rodent 2k (R2K)
     "squalomix": "PRJNA707598", // Genome Sequencing and Assembly of Chondrichthyans (SQUALOMIX)
     "tbp": "", // Taiwan BioGenome Project (TBP)

@@ -32,7 +32,8 @@
       "Bash(node -e \"require.resolve\\('playwright'\\)\")",
       "Bash(pkill -f \"serve -l 8123\")",
       "Bash(where chromium-cli *)",
-      "Bash(grep -n \"id=\\\\\"footer\\\\\"\\\\|</div>\\\\s*$\" \"pages/progress_affiliates_nodes.html\")"
+      "Bash(grep -n \"id=\\\\\"footer\\\\\"\\\\|</div>\\\\s*$\" \"pages/progress_affiliates_nodes.html\")",
+      "Bash(curl -s \"https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree%282759%29%20AND%20long_list%20AND%20bioproject%3DPRJNA533106&rank=species&includeEstimates=false&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&xOpts=%2C%2C55%2C%2CEBP%20Affiliate&taxonomy=ncbi&result=taxon\" -H \"User-Agent: Mozilla/5.0\")"
     ],
     "additionalDirectories": [
       ".claude/skills/style-check",

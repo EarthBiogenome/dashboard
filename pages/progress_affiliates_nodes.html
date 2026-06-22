@@ -45,7 +45,7 @@
           background: #f8f9fa;
           border-left: 3px solid #aaa;
           border-radius: 4px;
-          font-size: 12px;
+          font-size: 20px;
           color: #555;
           line-height: 1.6;
         }
@@ -175,7 +175,7 @@
         /* Clickable bar hint */
         .click-hint {
             text-align: center;
-            font-size: 15px;
+            font-size: 18px;
             color: #444;
             margin-top: 12px;
             margin-bottom: 20px;
@@ -331,13 +331,6 @@
 
       // Cache for API responses
       const apiCache = new Map();
-      
-      // Configuration for API requests
-      const API_CONFIG = {
-        initialPageSize: 5000,  // Start with smaller size for faster initial load
-        maxPageSize: 10000,     // Maximum records per request
-        truncationWarningThreshold: 0.95 // Warn if we get >= 95% of requested records
-      };
 
       // Enhanced fetch with caching and error handling
       async function fetchDataWithCache(url, retries = 3) {
@@ -361,530 +354,108 @@
         }
       }
 
-      // Fetch all data for a project with automatic pagination if needed
-      async function fetchAllProjectData(projectId, projectName, extraQuery = '') {
-        let allResults = [];
-        let offset = 0;
-        let pageSize = API_CONFIG.initialPageSize;
-        let hasMoreData = true;
-        let totalFetched = 0;
-
-        while (hasMoreData) {
-          const searchUrl = `https://goat.genomehubs.org/api/v2/search?query=bioproject%3D${projectId}%20AND%20tax_rank%28species%29${extraQuery}&result=taxon&includeEstimates=true&taxonomy=ncbi&size=${pageSize}&offset=${offset}&fields=genome_size%2Cassembly_level%2Cassembly_span%2Cassembly_date`;
-          
-          try {
-            const response = await fetchDataWithCache(searchUrl);
-            
-            // Debug logging for problematic projects
-            if (projectName === 'lmgp') {
-              console.log(`🔍 LMGP API Response:`, response);
-              console.log(`🔍 LMGP URL:`, searchUrl);
-            }
-            
-            if (response.results && response.results.length > 0) {
-              allResults = allResults.concat(response.results);
-              totalFetched += response.results.length;
-              
-              // Check if we might have more data
-              if (response.results.length >= pageSize * API_CONFIG.truncationWarningThreshold) {
-                // Likely hitting the limit, fetch more
-                offset += pageSize;
-                // Increase page size for subsequent requests for better efficiency
-                pageSize = Math.min(API_CONFIG.maxPageSize, pageSize * 1.5);
-              } else {
-                hasMoreData = false;
-              }
-            } else {
-              // Log when no results are returned
-              if (projectName === 'lmgp') {
-                console.warn(`⚠️ LMGP: No results returned from API. Response:`, response);
-              }
-              hasMoreData = false;
-            }
-          } catch (error) {
-            console.error(`❌ Error fetching data for ${projectName} (${projectId}):`, error);
-            console.error(`❌ Failed URL:`, searchUrl);
-            // Return empty results instead of failing completely
-            return {
-              results: [],
-              totalFetched: 0,
-              projectName: projectName,
-              error: error.message
-            };
-          }
-
-          // Safety check to prevent infinite loops
-          if (offset > 50000) {
-            console.warn(`${projectName}: Stopped fetching after 50,000 records. Data may be incomplete.`);
-            break;
-          }
-        }
-
-        return {
-          results: allResults,
-          totalFetched: totalFetched,
-          projectName: projectName
-        };
-      }
-
-      // Show warning for potential data truncation
-      function showDataWarning(projects) {
-        const warningProjects = projects.filter(p => p.totalFetched >= API_CONFIG.initialPageSize * API_CONFIG.truncationWarningThreshold);
-        
-        if (warningProjects.length > 0) {
-          const warningDiv = document.createElement('div');
-          warningDiv.className = 'data-warning';
-          warningDiv.innerHTML = `
-            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin: 10px auto; max-width: 800px; font-size: 14px;">
-              <strong>📊 Large Dataset Notice:</strong> Some projects have extensive data:
-              <ul style="margin: 5px 0; padding-left: 20px;">
-                ${warningProjects.map(p => `<li><strong>${p.projectName}:</strong> ${p.totalFetched.toLocaleString()} records loaded</li>`).join('')}
-              </ul>
-              All available data has been included in the visualization.
-            </div>
-          `;
-          document.querySelector('.container').insertBefore(warningDiv, document.getElementById('chartContainer1'));
-        }
-      }
-
       // Show error message
       function showError(containerId, message) {
         const container = document.getElementById(containerId);
         container.innerHTML = `<div class="error-message">Error: ${message}</div>`;
       }
 
-      // Update progress text
-      function updateProgress(containerId, text) {
-        const container = document.getElementById(containerId);
-        const progressText = container.querySelector('.progress-text');
-        if (progressText) {
-          progressText.textContent = text;
+      // Fetch the per-assembly-level species counts for a single project via a
+      // single-bucket GoaT histogram report scoped to its exact bioproject ID
+      // (same x=bioproject=ID pattern progress_Phylum.html uses for the EBP-wide
+      // total). This is NOT the same as bucketing many projects at once by the
+      // "long_list" attribute — long_list is a non-exclusive "target list"
+      // membership field (a species can appear on multiple projects' lists), so
+      // bucketing on it double-counts species and inflates totals. Scoping by the
+      // literal bioproject field matches the species actually deposited under
+      // that project, which is what the original per-project full-record fetch
+      // computed.
+      async function fetchProjectAssemblyCounts(projectId, extraQuery = '') {
+        const levels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
+        const empty = {};
+        levels.forEach(level => { empty[level] = 0; });
+        if (!projectId) return empty;
+
+        let excludeMissing = 'excludeMissing%5B0%5D=bioproject';
+        if (extraQuery.includes('ebp_standard_criteria')) {
+          excludeMissing += '&excludeMissing%5B1%5D=ebp_standard_criteria';
         }
+        const url = `https://goat.genomehubs.org/api/v2/report?report=histogram&x=bioproject%3D${projectId}%20AND%20tax_tree%282759%29${extraQuery}&rank=species&result=taxon&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&excludeAncestral%5B0%5D=bioproject&${excludeMissing}&xOpts=${projectId}%2C%2C1%2C%2C&taxonomy=ncbi&includeEstimates=true`;
+
+        const res = await fetchDataWithCache(url);
+        const byCat = res?.report?.report?.histogram?.histograms?.byCat || {};
+        const counts = {};
+        levels.forEach(level => { counts[level] = (byCat[level] || [])[0] || 0; });
+        return counts;
       }
 
-      // Test if a project ID is valid in GoaT
-      async function testProjectIdInGoaT(projectId, projectName) {
-        try {
-          const testUrl = `https://goat.genomehubs.org/api/v2/search?query=bioproject%3D${projectId}&result=taxon&size=1&fields=bioproject`;
-          const response = await fetch(testUrl);
-          const data = await response.json();
-          
-          if (data.results && data.results.length > 0) {
-            console.log(`✅ ${projectName} (${projectId}): Project found in GoaT`);
-            return true;
-          } else {
-            console.warn(`⚠️ ${projectName} (${projectId}): Project NOT found in GoaT`);
-            return false;
-          }
-        } catch (error) {
-          console.error(`❌ ${projectName} (${projectId}): Error testing project ID:`, error);
-          return false;
+      // Build a {assemblyLevel: [counts]} map across a canonical project list by
+      // fetching each project's single-bucket histogram in small parallel batches.
+      // Each request is a lightweight pre-aggregated count (no species records
+      // downloaded), so this stays far faster than the original per-project
+      // paginated full-record fetch while keeping the same per-project, bioproject-
+      // exact semantics (and correct totals).
+      async function buildCategoryCounts(projectMap, allowedProjects, extraQuery = '') {
+        const levels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
+        const byCatFiltered = {};
+        levels.forEach(level => { byCatFiltered[level] = []; });
+
+        const batchSize = 8;
+        for (let i = 0; i < allowedProjects.length; i += batchSize) {
+          const batch = allowedProjects.slice(i, i + batchSize);
+          const results = await Promise.all(
+            batch.map(name => fetchProjectAssemblyCounts(projectMap[name], extraQuery))
+          );
+          results.forEach(counts => {
+            levels.forEach(level => byCatFiltered[level].push(counts[level]));
+          });
         }
+        return byCatFiltered;
       }
 
       window.onload = async function () {
         try {
-          // Charts will show "Fetching data..." until ready
+          // Canonical project lists (all configured projects with a bioproject ID), so
+          // zero-count projects still show up with 0 — matching prior behavior.
+          const validCategories = Object.entries(projectsList)
+            .filter(([, id]) => id && id.trim() !== '')
+            .map(([name]) => name);
+          const ergaValidCategories = Object.entries(ergaList)
+            .filter(([, id]) => id && id.trim() !== '')
+            .map(([name]) => name);
 
-          // First, try to get categories from GoaT API
-          const finalReportUrl = 'https://goat.genomehubs.org/api/v2/report?report=histogram&x=tax_tree%282759%29%20AND%20long_list%20AND%20bioproject%3DPRJNA533106&rank=species&includeEstimates=false&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&xOpts=%2C%2C55%2C%2CEBP%20Affiliate&caption=Assemblies%20available%20on%20INSDC%20for%20target%20species%20across%20EBP-affiliated%20projects.%20Note%20that%20umbrella%20projects%20will%20inherit%20counts%20from%20their%20sub-projects%20and%20that%20overlapping%20targets%20sequenced%20by%20at%20least%20one%20EBP%20affiliate%20will%20appear%20as%20complete%20in%20all%20projects%20targeting%20that%20taxon&taxonomy=ncbi&result=taxon&queryId=vLCkKyxY2S'
-          
-          let categories = [];
-          try {
-            const res = await fetchDataWithCache(finalReportUrl);
-            categories = res.report.report.histogram.histograms.buckets.filter(item => (!!item));
-          } catch (error) {
-            console.warn('Failed to fetch categories from GoaT API, using fallback approach:', error);
-          }
-          
-          const projectsToFetch = [];
-          const validCategories = [];
-          
-          // If we got categories from GoaT, use them
-          if (categories.length > 0) {
-            categories.forEach(projectName => {
-              const projectId = projectsList[projectName];
-              if(projectId) {
-                validCategories.push(projectName);
-                projectsToFetch.push({ projectId, projectName });
-              }
-            });
-          }
-          
-          // Fallback: ensure all projects with IDs from projectsList are included
-          if (projectsToFetch.length === 0) {
-            console.log('Using fallback: including all projects from projectsList.js');
-            Object.entries(projectsList).forEach(([projectName, projectId]) => {
-              if (projectId && projectId.trim() !== '') {
-                validCategories.push(projectName);
-                projectsToFetch.push({ projectId, projectName });
-              }
-            });
-          } else {
-            // Add any missing projects from projectsList that weren't returned by GoaT
-            Object.entries(projectsList).forEach(([projectName, projectId]) => {
-              if (projectId && projectId.trim() !== '' && !validCategories.includes(projectName)) {
-                console.log(`Adding missing project: ${projectName} (${projectId})`);
-                validCategories.push(projectName);
-                projectsToFetch.push({ projectId, projectName });
-              }
-            });
-          }
+          // Three batched sets of lightweight per-project histogram calls replace
+          // what used to be one paginated full-species-record fetch PER PROJECT
+          // (×3 chart variants). Each call pre-aggregates counts server-side for a
+          // single project, so we get the same totals the bar charts need without
+          // ever downloading individual species records.
+          const [speciesCounts, ebpStandardSpeciesCounts, ergaSpeciesCounts] = await Promise.all([
+            buildCategoryCounts(projectsList, validCategories),
+            buildCategoryCounts(projectsList, validCategories, '%20AND%20ebp_standard_criteria'),
+            buildCategoryCounts(ergaList, ergaValidCategories)
+          ]);
 
-          // Loading indicators already show "Fetching data..."
-          
-          // Debug: log which projects are being processed
-          console.log('Projects to fetch:', projectsToFetch.map(p => `${p.projectName} (${p.projectId})`));
-          console.log('Valid categories:', validCategories);
-          
-          // Check if lmgp is specifically included
-          const lmgpProject = projectsToFetch.find(p => p.projectName === 'lmgp');
-          if (lmgpProject) {
-            console.log('✅ lmgp project found:', lmgpProject);
-            
-            // Test if the lmgp project ID is valid in GoaT
-            console.log('🔍 Testing lmgp project ID in GoaT...');
-            const isLmgpValid = await testProjectIdInGoaT(lmgpProject.projectId, 'lmgp');
-            
-            if (!isLmgpValid) {
-              console.warn('⚠️ LMGP project ID may be incorrect or the project may not exist in GoaT');
-            }
-          } else {
-            console.warn('❌ lmgp project NOT found in projectsToFetch');
-            console.log('Available projects:', projectsToFetch.map(p => p.projectName));
-          }
-
-          // Pre-initialize data structures
-          const speciesCounts = {
-            'chromosome': new Array(validCategories.length).fill(0),
-            'complete genome': new Array(validCategories.length).fill(0),
-            'contig': new Array(validCategories.length).fill(0),
-            'scaffold': new Array(validCategories.length).fill(0)
-          };
-          /* const genomes = {
-            'chromosome': new Array(validCategories.length).fill(0),
-            'complete genome': new Array(validCategories.length).fill(0),
-            'contig': new Array(validCategories.length).fill(0),
-            'scaffold': new Array(validCategories.length).fill(0)
-          };
-          const assemblies = {
-            'chromosome': new Array(validCategories.length).fill(0),
-            'complete genome': new Array(validCategories.length).fill(0),
-            'contig': new Array(validCategories.length).fill(0),
-            'scaffold': new Array(validCategories.length).fill(0)
-          }; */
-
-          // Fetch all project data with automatic pagination
-          const projectPromises = projectsToFetch.map((project, index) => {
-            return fetchAllProjectData(project.projectId, project.projectName);
-          });
-
-          const results = await Promise.all(projectPromises);
-          
-          // Show data warning if needed
-          showDataWarning(results);
-          
-          // Log any projects that failed to load
-          const failedProjects = results.filter(r => r.error);
-          if (failedProjects.length > 0) {
-            console.warn('⚠️ Projects with errors:', failedProjects.map(p => `${p.projectName}: ${p.error}`));
-          }
-          
-          // Processing data - indicator already shows "Fetching data..."
-
-          // Optimized data processing
-          results.forEach((projectResult, index) => {
-            if (projectResult.results) {
-              const projectName = projectResult.projectName;
-              
-              // Initialize annual data storage for this project
-              if (!projectAnnualData[projectName]) {
-                projectAnnualData[projectName] = {};
-              }
-              
-              // Debug logging for lmgp
-              if (projectName === 'lmgp') {
-                console.log(`🔍 LMGP processing: ${projectResult.results.length} results, error: ${projectResult.error || 'none'}`);
-              }
-              
-              // Debug logging for dtol to investigate annual data discrepancy
-              if (projectName === 'dtol' && projectResult.results.length > 0) {
-                console.log(`🔍 DTOL: Total species = ${projectResult.results.length}`);
-                // Log first few items to see assembly_date structure
-                const sampleItems = projectResult.results.slice(0, 3);
-                sampleItems.forEach((item, idx) => {
-                  const ad = item.result.fields.assembly_date;
-                  console.log(`  Sample ${idx + 1} assembly_date:`, ad);
-                });
-              }
-              
-              projectResult.results.forEach(item => {
-                const fields = item.result.fields;
-                const assemblyLevel = fields.assembly_level;
-                const assemblyDate = fields.assembly_date;
-                
-                if (assemblyLevel && assemblyLevel.value) {
-                  const level = assemblyLevel.value.toLowerCase();
-                  
-                  if (speciesCounts.hasOwnProperty(level)) {
-                    speciesCounts[level][index]++;
-                    
-                    // Collect annual data for drill-down
-                    // Each species should only count once - use the first/primary assembly date
-                    if (assemblyDate && assemblyDate.value) {
-                      // Handle case where value might be an array (multiple assemblies)
-                      let dateValue = assemblyDate.value;
-                      if (Array.isArray(dateValue)) {
-                        dateValue = dateValue[0]; // Use first date (usually earliest)
-                      }
-                      const year = String(dateValue).substring(0, 4);
-                      if (year && !isNaN(parseInt(year))) {
-                        if (!projectAnnualData[projectName][year]) {
-                          projectAnnualData[projectName][year] = {
-                            'chromosome': 0,
-                            'complete genome': 0,
-                            'contig': 0,
-                            'scaffold': 0
-                          };
-                        }
-                        // Count each species once (matching the main chart)
-                        projectAnnualData[projectName][year][level]++;
-                      }
-                    }
-                  }
-                }
-              });
-            } else {
-              // Log when no results are available
-              if (projectResult.projectName === 'lmgp') {
-                console.warn(`⚠️ LMGP: No results available for processing`);
-              }
-            }
-          });
-
-          // Create chart data structures
-          const chartData = [
-            {
-              data: { report: { report: { yLabel: "Count of Species", histogram: { histograms: { byCat: speciesCounts, buckets: [] } } } } },
-              title: 'Count of Species',
-              containerId: 'chartContainer1'
-            }
-            /* ,
-            {
-              data: { report: { report: { yLabel: "Sum of genome_size", histogram: { histograms: { byCat: genomes, buckets: [] } } } } },
-              title: 'Sum of genome_size',
-              containerId: 'chartContainer2'
-            },
-            {
-              data: { report: { report: { yLabel: "Sum of assembly_span", histogram: { histograms: { byCat: assemblies, buckets: [] } } } } },
-              title: 'Sum of assembly_span',
-              containerId: 'chartContainer3'
-            } */
-          ];
-
-          // Initialize charts
-          chartData.forEach((chart, index) => {
-            const { series } = getDefaultStackedBarData(chart.data);
-            const chartInstance = initEchart({series: series, categories: validCategories}, chart.containerId, chart.title);
-            
-            if (index === 0) {
-              chartInstance1 = chartInstance;
-            }
-          });
-          
-          // Show click hint and download buttons for EBP chart
+          // ===== Chart 1: EBP Affiliates =====
+          const { series } = getDefaultStackedBarData({ report: { report: { yLabel: "Count of Species", histogram: { histograms: { byCat: speciesCounts, buckets: [] } } } } });
+          chartInstance1 = initEchart({series: series, categories: validCategories}, 'chartContainer1', 'Count of Species');
           document.getElementById('clickHint1').style.display = 'block';
           document.getElementById('downloadButtons1').style.display = 'flex';
 
-          // ===== EBP STANDARD CHART DATA FETCHING AND PROCESSING =====
-          // Same EBP affiliate projects, filtered to species meeting EBP standard criteria
-          const ebpStandardSpeciesCounts = {
-            'chromosome': new Array(validCategories.length).fill(0),
-            'complete genome': new Array(validCategories.length).fill(0),
-            'contig': new Array(validCategories.length).fill(0),
-            'scaffold': new Array(validCategories.length).fill(0)
-          };
-
-          const ebpStandardPromises = projectsToFetch.map((project) => {
-            return fetchAllProjectData(project.projectId, project.projectName, '%20AND%20ebp_standard_criteria');
-          });
-
-          const ebpStandardResults = await Promise.all(ebpStandardPromises);
-
-          const failedEbpStandardProjects = ebpStandardResults.filter(r => r.error);
-          if (failedEbpStandardProjects.length > 0) {
-            console.warn('⚠️ EBP Standard Projects with errors:', failedEbpStandardProjects.map(p => `${p.projectName}: ${p.error}`));
-          }
-
-          ebpStandardResults.forEach((projectResult, index) => {
-            if (projectResult.results) {
-              const projectName = projectResult.projectName;
-
-              if (!projectAnnualDataEbpStandard[projectName]) {
-                projectAnnualDataEbpStandard[projectName] = {};
-              }
-
-              projectResult.results.forEach(item => {
-                const fields = item.result.fields;
-                const assemblyLevel = fields.assembly_level;
-                const assemblyDate = fields.assembly_date;
-
-                if (assemblyLevel && assemblyLevel.value) {
-                  const level = assemblyLevel.value.toLowerCase();
-
-                  if (ebpStandardSpeciesCounts.hasOwnProperty(level)) {
-                    ebpStandardSpeciesCounts[level][index]++;
-
-                    if (assemblyDate && assemblyDate.value) {
-                      let dateValue = assemblyDate.value;
-                      if (Array.isArray(dateValue)) {
-                        dateValue = dateValue[0];
-                      }
-                      const year = String(dateValue).substring(0, 4);
-                      if (year && !isNaN(parseInt(year))) {
-                        if (!projectAnnualDataEbpStandard[projectName][year]) {
-                          projectAnnualDataEbpStandard[projectName][year] = {
-                            'chromosome': 0,
-                            'complete genome': 0,
-                            'contig': 0,
-                            'scaffold': 0
-                          };
-                        }
-                        projectAnnualDataEbpStandard[projectName][year][level]++;
-                      }
-                    }
-                  }
-                }
-              });
-            }
-          });
-
-          // Create EBP Standard chart data structure
-          const ebpStandardChartData = {
-            data: { report: { report: { yLabel: "Count of Species", histogram: { histograms: { byCat: ebpStandardSpeciesCounts, buckets: [] } } } } },
-            title: 'Count of Species',
-            containerId: 'chartContainer1b'
-          };
-
-          // Initialize EBP Standard chart
-          const { series: ebpStandardSeries } = getDefaultStackedBarData(ebpStandardChartData.data);
-          chartInstance1b = initEchart({series: ebpStandardSeries, categories: validCategories}, ebpStandardChartData.containerId, ebpStandardChartData.title, undefined, projectAnnualDataEbpStandard);
-
-          // Show click hint and download buttons for EBP Standard chart
+          // ===== Chart 1b: EBP Standard =====
+          const { series: ebpStandardSeries } = getDefaultStackedBarData({ report: { report: { yLabel: "Count of Species", histogram: { histograms: { byCat: ebpStandardSpeciesCounts, buckets: [] } } } } });
+          chartInstance1b = initEchart({series: ebpStandardSeries, categories: validCategories}, 'chartContainer1b', 'Count of Species', undefined, true);
           document.getElementById('clickHint1b').style.display = 'block';
           document.getElementById('downloadButtons1b').style.display = 'flex';
 
-          // ===== ERGA CHART DATA FETCHING AND PROCESSING =====
-          // Loading indicator already shows "Fetching data..."
-
-          // Prepare ERGA projects
-          const ergaProjectsToFetch = [];
-          const ergaValidCategories = [];
-
-          // Get all ERGA projects from ergaList
-          Object.entries(ergaList).forEach(([projectName, projectId]) => {
-            if (projectId && projectId.trim() !== '') {
-              ergaValidCategories.push(projectName);
-              ergaProjectsToFetch.push({ projectId, projectName });
-            }
-          });
-
-          console.log('ERGA Projects to fetch:', ergaProjectsToFetch.map(p => `${p.projectName} (${p.projectId})`));
-
-          // Pre-initialize ERGA data structures
-          const ergaSpeciesCounts = {
-            'chromosome': new Array(ergaValidCategories.length).fill(0),
-            'complete genome': new Array(ergaValidCategories.length).fill(0),
-            'contig': new Array(ergaValidCategories.length).fill(0),
-            'scaffold': new Array(ergaValidCategories.length).fill(0)
-          };
-
-          // Fetch all ERGA project data with automatic pagination
-          const ergaProjectPromises = ergaProjectsToFetch.map((project, index) => {
-            return fetchAllProjectData(project.projectId, project.projectName);
-          });
-
-          const ergaResults = await Promise.all(ergaProjectPromises);
-          
-          // Log any ERGA projects that failed to load
-          const failedErgaProjects = ergaResults.filter(r => r.error);
-          if (failedErgaProjects.length > 0) {
-            console.warn('⚠️ ERGA Projects with errors:', failedErgaProjects.map(p => `${p.projectName}: ${p.error}`));
-          }
-          
-          // Processing ERGA data - indicator already shows "Fetching data..."
-
-          // Process ERGA data
-          ergaResults.forEach((projectResult, index) => {
-            if (projectResult.results) {
-              const projectName = projectResult.projectName;
-              
-              // Check if this project was already processed in EBP affiliates
-              // If so, skip annual data collection to avoid double-counting
-              const alreadyProcessed = projectAnnualData.hasOwnProperty(projectName) && 
-                                       Object.keys(projectAnnualData[projectName]).length > 0;
-              
-              // Initialize annual data storage for this project (only if not already processed)
-              if (!projectAnnualData[projectName]) {
-                projectAnnualData[projectName] = {};
-              }
-              
-              projectResult.results.forEach(item => {
-                const fields = item.result.fields;
-                const assemblyLevel = fields.assembly_level;
-                const assemblyDate = fields.assembly_date;
-                
-                if (assemblyLevel && assemblyLevel.value) {
-                  const level = assemblyLevel.value.toLowerCase();
-                  
-                  if (ergaSpeciesCounts.hasOwnProperty(level)) {
-                    ergaSpeciesCounts[level][index]++;
-                    
-                    // Only collect annual data if this project wasn't already processed
-                    // This prevents double-counting for projects that appear in both EBP and ERGA
-                    if (!alreadyProcessed && assemblyDate && assemblyDate.value) {
-                      let dateValue = assemblyDate.value;
-                      if (Array.isArray(dateValue)) {
-                        dateValue = dateValue[0];
-                      }
-                      const year = String(dateValue).substring(0, 4);
-                      if (year && !isNaN(parseInt(year))) {
-                        if (!projectAnnualData[projectName][year]) {
-                          projectAnnualData[projectName][year] = {
-                            'chromosome': 0,
-                            'complete genome': 0,
-                            'contig': 0,
-                            'scaffold': 0
-                          };
-                        }
-                        projectAnnualData[projectName][year][level]++;
-                      }
-                    }
-                  }
-                }
-              });
-            }
-          });
-
-          // Create ERGA chart data structure
-          const ergaChartData = {
-            data: { report: { report: { yLabel: "Count of Species", histogram: { histograms: { byCat: ergaSpeciesCounts, buckets: [] } } } } },
-            title: 'Count of Species',
-            containerId: 'chartContainer2'
-          };
-
-          // Initialize ERGA chart
-          const { series: ergaSeries } = getDefaultStackedBarData(ergaChartData.data);
-          chartInstance2 = initEchart({series: ergaSeries, categories: ergaValidCategories}, ergaChartData.containerId, ergaChartData.title, 'ERGA Umbrella');
-          
-          // Show click hint and download buttons for ERGA chart
+          // ===== Chart 2: ERGA Umbrella =====
+          const { series: ergaSeries } = getDefaultStackedBarData({ report: { report: { yLabel: "Count of Species", histogram: { histograms: { byCat: ergaSpeciesCounts, buckets: [] } } } } });
+          chartInstance2 = initEchart({series: ergaSeries, categories: ergaValidCategories}, 'chartContainer2', 'Count of Species', 'ERGA Umbrella');
           document.getElementById('clickHint2').style.display = 'block';
           document.getElementById('downloadButtons2').style.display = 'flex';
-          
-          padAllProjectsYearGaps(projectAnnualData);
-          padAllProjectsYearGaps(projectAnnualDataEbpStandard);
 
-          console.log('Project annual data collected:', Object.keys(projectAnnualData).length, 'projects');
+          // Per-project annual (year × assembly-level) breakdowns are only needed for
+          // the drill-down panel and the CSV export — both fetch the underlying
+          // per-species records lazily, on demand, via ensureAnnualDataForProject().
 
         } catch (error) {
           console.error('Error loading data:', error);
@@ -894,7 +465,71 @@
         }
       };
 
-      function initEchart(data, containerId, yLabel, xAxisLabel, annualDataSource) {
+      // Fetch and cache the per-year, per-assembly-level breakdown for a single
+      // project, used by the drill-down panel and CSV export. Uses a single
+      // GoaT histogram request that buckets by assembly_date (calendar year)
+      // and stacks by assembly_level, server-side — same aggregate-count
+      // pattern as the overview charts, instead of downloading every species
+      // record just to tally them client-side. Cached in projectAnnualData /
+      // projectAnnualDataEbpStandard so repeat clicks/exports don't re-fetch.
+      async function ensureAnnualDataForProject(projectName, isStandard) {
+        const store = isStandard ? projectAnnualDataEbpStandard : projectAnnualData;
+        if (store[projectName]) return store[projectName];
+
+        const projectId = projectsList[projectName] || ergaList[projectName];
+        if (!projectId) {
+          store[projectName] = {};
+          return store[projectName];
+        }
+
+        const extraQuery = isStandard ? '%20AND%20ebp_standard_criteria' : '';
+        let excludeMissing = 'excludeMissing%5B0%5D=bioproject';
+        if (isStandard) {
+          excludeMissing += '&excludeMissing%5B1%5D=ebp_standard_criteria';
+        }
+        const url = `https://goat.genomehubs.org/api/v2/report?report=histogram&x=assembly_date%20AND%20bioproject%3D${projectId}%20AND%20tax_tree%282759%29${extraQuery}&rank=species&result=taxon&cat=assembly_level%3Dcontig%2Cscaffold%2Cchromosome%2Ccomplete%20genome&excludeAncestral%5B0%5D=bioproject&${excludeMissing}&taxonomy=ncbi&includeEstimates=true`;
+
+        const res = await fetchDataWithCache(url);
+        const h = res?.report?.report?.histogram?.histograms;
+        const buckets = h?.buckets || [];
+        const byCat = h?.byCat || {};
+        const levels = ['contig', 'scaffold', 'chromosome', 'complete genome'];
+
+        const annual = {};
+        buckets.forEach((ts, i) => {
+          if (ts === null || ts === undefined) return;
+          const year = String(new Date(ts).getUTCFullYear());
+          const yearCounts = { contig: 0, scaffold: 0, chromosome: 0, 'complete genome': 0 };
+          let yearTotal = 0;
+          levels.forEach(level => {
+            const count = (byCat[level] || [])[i] || 0;
+            yearCounts[level] = count;
+            yearTotal += count;
+          });
+          if (yearTotal > 0) annual[year] = yearCounts;
+        });
+
+        store[projectName] = annual;
+        return annual;
+      }
+
+      // Picks a "nice" tick step (1/2/5 x a power of 10) that yields roughly
+      // `targetTicks` intervals across the given range, so the y-axis always shows
+      // a handful of evenly spaced gridlines instead of just the min/max ends.
+      // Shared by the live dataZoom rescale and the full-chart image export below.
+      function niceInterval(range, targetTicks = 5) {
+        const rawStep = range / targetTicks;
+        const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        const normalized = rawStep / magnitude;
+        let niceNormalized;
+        if (normalized <= 1) niceNormalized = 1;
+        else if (normalized <= 2) niceNormalized = 2;
+        else if (normalized <= 5) niceNormalized = 5;
+        else niceNormalized = 10;
+        return niceNormalized * magnitude;
+      }
+
+      function initEchart(data, containerId, yLabel, xAxisLabel, isStandard) {
         const chartDom = document.getElementById(containerId);
         const myChart = echarts.init(chartDom);
         const arr = []
@@ -991,12 +626,12 @@
             subtext: `Species count by assembly level | EBP affiliates`,
             left: 'center',
             textStyle: {
-              fontSize: 16,
+              fontSize: 24,
               fontWeight: 'bold',
               color: '#000'
             },
             subtextStyle: {
-              fontSize: 16,
+              fontSize: 24,
               fontWeight: 'bold',
               color: '#000'  // Match y-axis title color
             }
@@ -1005,12 +640,12 @@
             subtext: `Species count meeting EBP standard by assembly level | EBP affiliates`,
             left: 'center',
             textStyle: {
-              fontSize: 16,
+              fontSize: 24,
               fontWeight: 'bold',
               color: '#000'
             },
             subtextStyle: {
-              fontSize: 16,
+              fontSize: 24,
               fontWeight: 'bold',
               color: '#000'  // Match y-axis title color
             }
@@ -1019,12 +654,12 @@
             subtext: `Species count by assembly level - ERGA umbrella`,
             left: 'center',
             textStyle: {
-              fontSize: 16,
+              fontSize: 24,
               fontWeight: 'bold',
               color: '#000'
             },
             subtextStyle: {
-              fontSize: 16,
+              fontSize: 24,
               fontWeight: 'bold',
               color: '#000'  // Match y-axis title color
             }
@@ -1034,9 +669,11 @@
             selectedMode: false,
             data: ['contig', 'scaffold', 'chromosome', 'complete genome'], // Reorder legend items
             top: containerId === 'chartContainer1' || containerId === 'chartContainer1b' || containerId === 'chartContainer2' ? '10%' : 'top',
+            itemWidth: 20,
+            itemHeight: 14,
             textStyle: {
               color: '#000',
-              fontSize: 12,
+              fontSize: 16,
               fontWeight: 'bold',
             }
           },
@@ -1059,7 +696,7 @@
             nameGap: 45,  // Adjust gap to bring label closer
             nameTextStyle: {
               fontWeight: 'bold',
-              fontSize: 14,
+              fontSize: 16,
             },
             axisLine: {
               show: true,
@@ -1219,21 +856,6 @@
             return total;
           });
 
-          // Picks a "nice" tick step (1/2/5 x a power of 10) that yields roughly
-          // `targetTicks` intervals across the given range, so the axis always shows
-          // a handful of evenly spaced gridlines instead of just the min/max ends.
-          const niceInterval = (range, targetTicks = 5) => {
-            const rawStep = range / targetTicks;
-            const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
-            const normalized = rawStep / magnitude;
-            let niceNormalized;
-            if (normalized <= 1) niceNormalized = 1;
-            else if (normalized <= 2) niceNormalized = 2;
-            else if (normalized <= 5) niceNormalized = 5;
-            else niceNormalized = 10;
-            return niceNormalized * magnitude;
-          };
-
           const rescaleYAxis = () => {
             const zoomState = myChart.getOption().dataZoom[0];
             const startIdx = Math.max(0, Math.round(zoomState.startValue));
@@ -1255,14 +877,14 @@
         }
 
         // Add click event for drill-down
-        // `annualDataSource` is captured in the closure so each chart uses
-        // its own correct data store (chart 1 / ERGA → projectAnnualData,
-        // chart 1b → projectAnnualDataEbpStandard). All three charts share the
-        // same right-side drawer, since only one project is inspected at a time.
-        const _src = annualDataSource || projectAnnualData;
+        // `isStandard` is captured in the closure so each chart drills into its own
+        // correct data store (chart 1 / ERGA → projectAnnualData, chart 1b →
+        // projectAnnualDataEbpStandard). All three charts share the same right-side
+        // drawer, since only one project is inspected at a time.
+        const _isStandard = !!isStandard;
         myChart.on('click', function(params) {
           if (params.name) {
-            showDrilldown(params.name, _src);
+            showDrilldown(params.name, _isStandard);
           }
         });
 
@@ -1334,24 +956,20 @@
         return { years, data: paddedData };
       }
 
-      /** Pads year gaps in place for every project in an annual-data map. */
-      function padAllProjectsYearGaps(dataMap) {
-        Object.keys(dataMap).forEach(projectName => {
-          const { years, data } = padAnnualYearGaps(dataMap[projectName]);
-          if (years.length) {
-            dataMap[projectName] = data;
-          }
-        });
-      }
-
       // Show the shared right-side drawer with the annual breakdown for the
-      // clicked project. `dataSource` is the per-chart annual-data map
-      // (projectAnnualData or projectAnnualDataEbpStandard); defaults to
-      // projectAnnualData when omitted. Only one project is inspected at a
-      // time, so all three overview charts open the same drawer.
-      function showDrilldown(projectName, dataSource) {
-        const src = dataSource || projectAnnualData;
-        const annualData = src[projectName];
+      // clicked project. `isStandard` selects which per-chart annual-data store
+      // to read/populate (projectAnnualData or projectAnnualDataEbpStandard).
+      // Only one project is inspected at a time, so all three overview charts
+      // open the same drawer. The underlying per-species data is fetched lazily
+      // here (cached after the first click) instead of upfront for every project.
+      async function showDrilldown(projectName, isStandard) {
+        // Open the drawer immediately so the slide-in transition isn't blocked
+        // on the network fetch below.
+        const panelWasOpen = document.getElementById('detailsPanel').classList.contains('active');
+        document.getElementById('detailsPanelTitle').textContent = `Annual Species Count - ${projectName}`;
+        document.getElementById('detailsPanel').classList.add('active');
+
+        const annualData = await ensureAnnualDataForProject(projectName, isStandard);
 
         if (!annualData || Object.keys(annualData).length === 0) {
           alert(`No annual data available for ${projectName}`);
@@ -1363,11 +981,6 @@
           alert(`No annual data available for ${projectName}`);
           return;
         }
-
-        // Update drawer title and slide it in (CSS transition animates transform).
-        const panelWasOpen = document.getElementById('detailsPanel').classList.contains('active');
-        document.getElementById('detailsPanelTitle').textContent = `Annual Species Count - ${projectName}`;
-        document.getElementById('detailsPanel').classList.add('active');
 
         // Prepare series data from the gap-free paddedData copy.
         const seriesData = {
@@ -1581,6 +1194,12 @@
       });
 
       // Download chart as PNG image
+      // Exports the chart as a white-background PNG showing every project, not
+      // just whatever's currently scrolled into view via the dataZoom slider.
+      // The slider/inside zoom are temporarily expanded to the full category
+      // range and the slider is hidden, the y-axis is rescaled to fit the full
+      // (unzoomed) dataset, the image is captured, then the live chart's zoom
+      // and y-axis are restored so the on-screen view is left untouched.
       function downloadChartImage(chartNum) {
         const chart = chartNum === 1 ? chartInstance1 : chartNum === '1b' ? chartInstance1b : chartInstance2;
         const chartName = chartNum === 1 ? 'EBP_Affiliates_Species_Count' : chartNum === '1b' ? 'EBP_Standard_Species_Count' : 'ERGA_Umbrella_Species_Count';
@@ -1589,14 +1208,59 @@
           alert('Chart not available. Please wait for data to load.');
           return;
         }
-        
-        // Get chart as base64 image
+
+        const option = chart.getOption();
+        const categories = option.xAxis[0].data;
+        const seriesList = option.series;
+        const sliderDataZoom = option.dataZoom && option.dataZoom[0];
+        const insideDataZoom = option.dataZoom && option.dataZoom[1];
+
+        // Restore-state snapshot for the slider/y-axis we're about to override.
+        const prevSliderRange = sliderDataZoom ? { startValue: sliderDataZoom.startValue, endValue: sliderDataZoom.endValue } : null;
+        const prevInsideRange = insideDataZoom ? { startValue: insideDataZoom.startValue, endValue: insideDataZoom.endValue } : null;
+        const prevYAxisMax = option.yAxis[0].max;
+        const prevYAxisInterval = option.yAxis[0].interval;
+
+        if (sliderDataZoom) {
+          // y-axis max sized to the tallest stacked bar across ALL projects,
+          // not just the currently visible dataZoom window.
+          const stackedTotals = categories.map((_, i) => {
+            let total = 0;
+            seriesList.forEach(s => { total += s.data[i] || 0; });
+            return total;
+          });
+          const visibleMax = Math.max(0, ...stackedTotals);
+          const step = niceInterval(visibleMax * 1.1 || 1);
+          const niceMax = Math.max(step, Math.ceil((visibleMax * 1.1) / step) * step);
+
+          chart.setOption({
+            animation: false,
+            dataZoom: [
+              { startValue: 0, endValue: categories.length - 1, show: false },
+              { startValue: 0, endValue: categories.length - 1 }
+            ],
+            yAxis: { max: niceMax, interval: step }
+          });
+        }
+
         const url = chart.getDataURL({
           type: 'png',
           pixelRatio: 2,
-          backgroundColor: 'transparent'
+          backgroundColor: '#ffffff'
         });
-        
+
+        if (sliderDataZoom) {
+          chart.setOption({
+            animation: false,
+            dataZoom: [
+              { ...prevSliderRange, show: true },
+              prevInsideRange
+            ],
+            yAxis: { max: prevYAxisMax, interval: prevYAxisInterval }
+          });
+          chart.setOption({ animation: true });
+        }
+
         // Create download link
         const link = document.createElement('a');
         link.download = `${chartName}_${new Date().toISOString().split('T')[0]}.png`;
@@ -1606,17 +1270,44 @@
         document.body.removeChild(link);
       }
 
-      // Download data as CSV with annual totals
-      function downloadCSV(chartNum) {
+      // Download data as CSV with annual totals. The per-year breakdown is fetched
+      // lazily (see ensureAnnualDataForProject) — backfill any projects the user
+      // hasn't already drilled into before building the export.
+      async function downloadCSV(chartNum) {
         const chartData = chartNum === 1 ? chart1Data : chartNum === '1b' ? chart1bData : chart2Data;
         const chartName = chartNum === 1 ? 'EBP_Affiliates_Species_Data' : chartNum === '1b' ? 'EBP_Standard_Species_Data' : 'ERGA_Umbrella_Species_Data';
-        
+
         if (!chartData || !chartData.categories || chartData.categories.length === 0) {
           alert('Data not available. Please wait for data to load.');
           return;
         }
 
-        const annualDataSource = chartNum === '1b' ? projectAnnualDataEbpStandard : projectAnnualData;
+        const isStandard = chartNum === '1b';
+        const annualDataSource = isStandard ? projectAnnualDataEbpStandard : projectAnnualData;
+
+        const btnId = chartNum === 1 ? 'downloadCSV1Btn' : chartNum === '1b' ? 'downloadCSV1bBtn' : 'downloadCSV2Btn';
+        const btn = document.getElementById(btnId);
+        const originalLabel = btn ? btn.innerHTML : null;
+        if (btn) {
+          btn.disabled = true;
+          btn.style.opacity = '0.6';
+          btn.lastChild.textContent = ' Preparing…';
+        }
+
+        try {
+          const missingProjects = chartData.categories.filter(p => !annualDataSource[p]);
+          const batchSize = 6;
+          for (let i = 0; i < missingProjects.length; i += batchSize) {
+            const batch = missingProjects.slice(i, i + batchSize);
+            await Promise.all(batch.map(p => ensureAnnualDataForProject(p, isStandard)));
+          }
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '';
+            btn.innerHTML = originalLabel;
+          }
+        }
 
         // Collect all unique years from all projects
         const allYears = new Set();
