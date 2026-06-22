@@ -121,6 +121,36 @@
             color: var(--text-dim);
         }
 
+        .progress-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 0.6rem;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+
+        .legend-swatch {
+            width: 11px;
+            height: 11px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .legend-swatch-total {
+            background: linear-gradient(135deg, #5fae80 0%, #6fbb8d 100%);
+        }
+
+        .legend-swatch-quality {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-mid) 100%);
+        }
+
         /* ── Progress Charts ─────────────────────────────── */
         .progress-chart {
             display: flex;
@@ -163,39 +193,93 @@
             height: 44px;
             background: #d8e6de;
             border-radius: 8px;
-            overflow: hidden;
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
         }
 
         .progress-completed {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-mid) 100%);
+            background: linear-gradient(135deg, #5fae80 0%, #6fbb8d 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 1.05rem;
-            font-weight: 600;
             transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
             min-width: 0;
-            box-shadow: 2px 0 8px rgba(13, 122, 71, 0.3);
+            max-width: 100%;
             position: relative;
+            cursor: default;
+            border-radius: 8px 0 0 8px;
         }
 
-        .progress-completed::after {
-            content: '';
+        .progress-completed-gloss {
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 50%;
-            background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
-            border-radius: 8px 8px 0 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%);
+            border-radius: 8px 0 0 0;
+            pointer-events: none;
         }
 
-        .progress-completed-text {
+        .progress-quality {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-mid) 100%);
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 2px 0 8px rgba(13, 122, 71, 0.3);
+            cursor: default;
+        }
+
+        /* ── Bar segment tooltips ─────────────────────────── */
+        .progress-completed[data-tooltip]::before,
+        .progress-quality[data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            color: var(--text);
+            font-size: 0.78rem;
+            font-weight: 600;
             white-space: nowrap;
-            padding: 0 15px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.15);
-            position: relative;
-            z-index: 1;
+            padding: 4px 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+            z-index: 5;
+        }
+
+        .progress-completed[data-tooltip]::after,
+        .progress-quality[data-tooltip]::after {
+            content: '';
+            position: absolute;
+            bottom: calc(100% + 4px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: #fff;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+            z-index: 5;
+        }
+
+        .progress-completed[data-tooltip]:hover::before,
+        .progress-completed[data-tooltip]:hover::after {
+            opacity: 1;
+        }
+
+        .progress-completed:has(.progress-quality:hover)::before,
+        .progress-completed:has(.progress-quality:hover)::after {
+            opacity: 0;
+        }
+
+        .progress-quality[data-tooltip]:hover::before,
+        .progress-quality[data-tooltip]:hover::after {
+            opacity: 1;
         }
 
         .progress-incomplete { background: transparent; flex: 1; }
@@ -388,6 +472,10 @@
         <div class="progress-inner">
             <div class="progress-header">
                 <h1 class="progress-headline">EBP Phase I Progress</h1>
+                <div class="progress-legend">
+                    <span class="legend-item"><span class="legend-swatch legend-swatch-quality"></span>Meets EBP standard</span>
+                    <span class="legend-item"><span class="legend-swatch legend-swatch-total"></span>Total EBP assemblies</span>
+                </div>
             </div>
 
             <div class="progress-chart">
@@ -398,8 +486,9 @@
                 <div class="progress-bar-container">
                     <div class="progress-bar-wrapper">
                         <div class="progress-bar">
-                            <div class="progress-completed" id="progress-completed" style="width: 0%;">
-                                <span class="progress-completed-text" id="progress-text">Loading...</span>
+                            <div class="progress-completed" id="progress-completed" style="width: 0%;" data-tooltip="Loading…">
+                                <div class="progress-completed-gloss"></div>
+                                <div class="progress-quality" id="progress-quality" style="width: 0%;" data-tooltip=""></div>
                             </div>
                             <div class="progress-incomplete"></div>
                         </div>
@@ -418,8 +507,9 @@
                 <div class="progress-bar-container">
                     <div class="progress-bar-wrapper">
                         <div class="progress-bar">
-                            <div class="progress-completed" id="progress-family-completed" style="width: 0%;">
-                                <span class="progress-completed-text" id="progress-family-text">Loading...</span>
+                            <div class="progress-completed" id="progress-family-completed" style="width: 0%;" data-tooltip="Loading…">
+                                <div class="progress-completed-gloss"></div>
+                                <div class="progress-quality" id="progress-family-quality" style="width: 0%;" data-tooltip=""></div>
                             </div>
                             <div class="progress-incomplete"></div>
                         </div>
@@ -630,6 +720,8 @@
         const SPECIES_API_URL = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=1";
         const EBP_ARC_URL = "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=EBP%20taxa&taxonomy=ncbi&result=taxon&queryId=8EWp2aVcZB";
         const INSDC_ARC_URL = "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=assembly_span&excludeMissing%5B0%5D=assembly_span&caption=INSDC%20taxa&taxonomy=ncbi&result=taxon&queryId=R8LGXM94GW";
+        const SPECIES_QUALITY_API_URL = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20bioproject%3DPRJNA533106%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&size=1";
+        const FAMILY_QUALITY_API_URL = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28family%29%20AND%20bioproject%3DPRJNA533106%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&size=1";
 
         function createAxisTicks(axisContainerId, max, tickValues) {
             const axisContainer = document.getElementById(axisContainerId);
@@ -667,14 +759,12 @@
                         if (speciesCount > 0) {
                             updateProgressBar(speciesCount);
                         } else {
-                            document.getElementById('progress-text').textContent = 'Data unavailable';
+                            document.getElementById('progress-completed').setAttribute('data-tooltip', 'Data unavailable');
                             createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
                         }
                     } catch (retryError) {
                         console.error('Retry failed:', retryError);
-                        const textEl = document.getElementById('progress-text');
-                        textEl.textContent = 'Data unavailable';
-                        textEl.style.cssText = 'color:#666;padding-left:8px;white-space:nowrap;position:absolute;left:0;';
+                        document.getElementById('progress-completed').setAttribute('data-tooltip', 'Data unavailable');
                         createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
                     }
                 }, 3000);
@@ -683,9 +773,26 @@
 
         function updateProgressBar(count) {
             const percentage = Math.min((count / PHASE_I_GOAL) * 100, 100);
-            document.getElementById('progress-completed').style.width = `${percentage}%`;
-            document.getElementById('progress-text').textContent = `${count.toLocaleString()} (${percentage.toFixed(1)}%)`;
+            const completedEl = document.getElementById('progress-completed');
+            completedEl.style.width = `${percentage}%`;
+            completedEl.setAttribute('data-tooltip', count.toLocaleString());
             createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
+            fetchSpeciesQualityCount(count);
+        }
+
+        async function fetchSpeciesQualityCount(ebpCount) {
+            try {
+                const response = await fetch(SPECIES_QUALITY_API_URL);
+                if (!response.ok) throw new Error('HTTP error: ' + response.status);
+                const data = await response.json();
+                const qualityCount = (data.status && data.status.hits) ? data.status.hits : 0;
+                const qualityPercentage = ebpCount > 0 ? Math.min((qualityCount / ebpCount) * 100, 100) : 0;
+                const qualityEl = document.getElementById('progress-quality');
+                qualityEl.style.width = `${qualityPercentage}%`;
+                qualityEl.setAttribute('data-tooltip', qualityCount.toLocaleString());
+            } catch (error) {
+                console.error('Error fetching species quality count:', error);
+            }
         }
 
         async function fetchFamilyCounts() {
@@ -697,22 +804,39 @@
                 const ebpFamily   = ebpRes?.report?.report?.arc?.find(item => item.rank === 'family');
                 const insdcFamily = insdcRes?.report?.report?.arc?.find(item => item.rank === 'family');
                 const ebpCount    = Math.max(0, Number(ebpFamily?.x) || 0);
-                const totalCount  = Math.max(1, Number(insdcFamily?.y) || 10359);
+                const insdcTotal  = Math.max(0, Number(insdcFamily?.y) || 10359);
+                const totalCount  = Math.max(1, Math.round(insdcTotal / 2));
                 updateFamilyProgressBar(ebpCount, totalCount);
+                fetchFamilyQualityCount(ebpCount, totalCount);
             } catch (error) {
                 console.error('Error fetching family counts:', error);
-                document.getElementById('progress-family-text').textContent = 'Data unavailable';
+                document.getElementById('progress-family-completed').setAttribute('data-tooltip', 'Data unavailable');
             }
         }
 
         function updateFamilyProgressBar(ebpCount, totalCount) {
             const total = Math.max(totalCount, 1);
             const percentage = Math.min((ebpCount / total) * 100, 100);
-            document.getElementById('progress-family-completed').style.width = `${percentage}%`;
-            document.getElementById('progress-family-text').textContent = `${ebpCount.toLocaleString()} (${percentage.toFixed(1)}%)`;
-            const tickValues = [0, 2000, 4000, 6000, 8000];
-            if (total > 0 && tickValues[tickValues.length - 1] !== total) tickValues.push(total);
+            const completedEl = document.getElementById('progress-family-completed');
+            completedEl.style.width = `${percentage}%`;
+            completedEl.setAttribute('data-tooltip', ebpCount.toLocaleString());
+            const tickValues = [0, 1000, 2000, 3000, 4000, 5000];
             createAxisTicks('progress-family-axis', total, tickValues);
+        }
+
+        async function fetchFamilyQualityCount(ebpCount, totalCount) {
+            try {
+                const response = await fetch(FAMILY_QUALITY_API_URL);
+                if (!response.ok) throw new Error('HTTP error: ' + response.status);
+                const data = await response.json();
+                const qualityCount = (data.status && data.status.hits) ? data.status.hits : 0;
+                const qualityPercentage = ebpCount > 0 ? Math.min((qualityCount / ebpCount) * 100, 100) : 0;
+                const qualityEl = document.getElementById('progress-family-quality');
+                qualityEl.style.width = `${qualityPercentage}%`;
+                qualityEl.setAttribute('data-tooltip', qualityCount.toLocaleString());
+            } catch (error) {
+                console.error('Error fetching family quality count:', error);
+            }
         }
 
         fetchSpeciesCount();
