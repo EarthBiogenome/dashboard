@@ -231,7 +231,8 @@
 
         /* ── Bar segment tooltips ─────────────────────────── */
         .progress-completed[data-tooltip]::before,
-        .progress-quality[data-tooltip]::before {
+        .progress-quality[data-tooltip]::before,
+        .progress-incomplete[data-tooltip]::before {
             content: attr(data-tooltip);
             position: absolute;
             bottom: calc(100% + 8px);
@@ -253,7 +254,8 @@
         }
 
         .progress-completed[data-tooltip]::after,
-        .progress-quality[data-tooltip]::after {
+        .progress-quality[data-tooltip]::after,
+        .progress-incomplete[data-tooltip]::after {
             content: '';
             position: absolute;
             bottom: calc(100% + 4px);
@@ -282,7 +284,12 @@
             opacity: 1;
         }
 
-        .progress-incomplete { background: transparent; flex: 1; }
+        .progress-incomplete[data-tooltip]:hover::before,
+        .progress-incomplete[data-tooltip]:hover::after {
+            opacity: 1;
+        }
+
+        .progress-incomplete { background: transparent; flex: 1; position: relative; cursor: default; }
 
         .progress-axis {
             position: relative;
@@ -473,7 +480,7 @@
             <div class="progress-header">
                 <h1 class="progress-headline">EBP Phase I Progress</h1>
                 <div class="progress-legend">
-                    <span class="legend-item"><span class="legend-swatch legend-swatch-quality"></span>Meets EBP standard</span>
+                    <span class="legend-item"><span class="legend-swatch legend-swatch-quality"></span>Meeting EBP standard</span>
                     <span class="legend-item"><span class="legend-swatch legend-swatch-total"></span>Total EBP assemblies</span>
                 </div>
             </div>
@@ -490,7 +497,7 @@
                                 <div class="progress-completed-gloss"></div>
                                 <div class="progress-quality" id="progress-quality" style="width: 0%;" data-tooltip=""></div>
                             </div>
-                            <div class="progress-incomplete"></div>
+                            <div class="progress-incomplete" id="progress-incomplete" data-tooltip=""></div>
                         </div>
                     </div>
                     <div class="progress-axis" id="progress-axis">
@@ -511,7 +518,7 @@
                                 <div class="progress-completed-gloss"></div>
                                 <div class="progress-quality" id="progress-family-quality" style="width: 0%;" data-tooltip=""></div>
                             </div>
-                            <div class="progress-incomplete"></div>
+                            <div class="progress-incomplete" id="progress-family-incomplete" data-tooltip=""></div>
                         </div>
                     </div>
                     <div class="progress-axis" id="progress-family-axis">
@@ -776,6 +783,7 @@
             const completedEl = document.getElementById('progress-completed');
             completedEl.style.width = `${percentage}%`;
             completedEl.setAttribute('data-tooltip', count.toLocaleString());
+            document.getElementById('progress-incomplete').setAttribute('data-tooltip', `Target: ${PHASE_I_GOAL.toLocaleString()}`);
             createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
             fetchSpeciesQualityCount(count);
         }
@@ -820,6 +828,7 @@
             const completedEl = document.getElementById('progress-family-completed');
             completedEl.style.width = `${percentage}%`;
             completedEl.setAttribute('data-tooltip', ebpCount.toLocaleString());
+            document.getElementById('progress-family-incomplete').setAttribute('data-tooltip', `Target: ${total.toLocaleString()}`);
             const tickValues = [0, 1000, 2000, 3000, 4000, 5000];
             createAxisTicks('progress-family-axis', total, tickValues);
         }
