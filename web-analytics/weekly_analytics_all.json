@@ -1,14 +1,14 @@
 {
   "metadata": {
     "description": "Consolidated weekly web analytics data for EBP Dashboard",
-    "total_weeks": 47,
+    "total_weeks": 48,
     "date_range": {
       "first_week": "2025-W01",
-      "last_week": "2026-W25",
+      "last_week": "2026-W26",
       "first_collection": "2025-12-29",
-      "last_collection": "2026-06-15"
+      "last_collection": "2026-06-22"
     },
-    "last_updated": "2026-06-22T07:31:36.136726+00:00"
+    "last_updated": "2026-06-29T06:56:20.207027+00:00"
   },
   "weeks": [
     {
@@ -4934,6 +4934,36 @@
       },
       "summary": {
         "period": "2026-06-15 to 2026-06-15",
+        "days_of_data": 7,
+        "engagement_quality": "High"
+      }
+    },
+    {
+      "collection_info": {
+        "week": "2026-W26",
+        "collection_date": "2026-06-22",
+        "week_start": "2026-06-22",
+        "collected_at": "2026-06-29T06:56:20.205879+00:00",
+        "property_id": "498012997",
+        "website_url": "https://earthbiogenome.github.io/dashboard"
+      },
+      "weekly_metrics": {
+        "sessions": 44,
+        "total_users": 34,
+        "new_users": 24,
+        "screen_page_views": 144,
+        "avg_bounce_rate": 0.1449134199134199,
+        "avg_session_duration": 573.1571052846319,
+        "avg_engagement_rate": 0.85508658008658,
+        "countries_reached": 17,
+        "days_collected": 7
+      },
+      "raw_data": {
+        "overview_data": [],
+        "geographic_data": []
+      },
+      "summary": {
+        "period": "2026-06-22 to 2026-06-22",
         "days_of_data": 7,
         "engagement_quality": "High"
       }
