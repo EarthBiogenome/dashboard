@@ -221,7 +221,7 @@
             <span>Project central operation</span>
         </div>
         <div class="legend-item">
-            <span class="lc" style="width:8px;height:8px;background:#0F5A66;"></span>
+            <span class="lc" style="width:8px;height:8px;background:#7B4FB5;"></span>
             <span>Coordination / collection site</span>
         </div>
         <div class="legend-item">
@@ -232,7 +232,7 @@
         <div class="sidebar-caption">
             <p>Geographic distribution of the EBP network of networks.</p>
             <p><strong>Orange circles</strong> mark <span id="countYellow">—</span> project coordination centers and regional nodes.</p>
-            <p><strong>Teal circles</strong> indicate <span id="countTeal">—</span> associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.</p>
+            <p><strong>Purple circles</strong> indicate <span id="countTeal">—</span> associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.</p>
             <p><strong>Teal-shaded countries</strong> (<span id="countCountries">—</span>) host at least one EBP-affiliated project or site.</p>
         </div>
     </div>
@@ -285,7 +285,7 @@
 
             const colorMap =  [
                 "#EA580C", // color code for project headquarters
-                "#0F5A66", // color code for areas samples collected
+                "#7B4FB5", // color code for areas samples collected
                 "#F28C28",
                 "#B0B3B8", // Smoke gray
                 "#D4808B", // Golden
@@ -404,7 +404,13 @@
                             },
                             symbol: item.symbol,
                             symbolSize: item.size,
-                            itemStyle: item.color ? { color: item.color } : undefined
+                            // 1px white outline separates overlapping markers from each
+                            // other and lifts them off the shaded country polygons.
+                            itemStyle: {
+                                color: item.color,
+                                borderColor: '#ffffff',
+                                borderWidth: 0.5
+                            }
                         })),
                         // symbol: 'image://./geoMap/logo.png',
                         // symbolSize: 25, // Adjust symbol size based on count
@@ -715,7 +721,7 @@
             const captionParts = [
                 [null,                   'Geographic distribution of EBP network of networks.'],
                 ['Orange circles',       ` mark ${yellowN} project coordination centers and regional nodes.`],
-                ['Teal circles',         ` indicate ${tealN} associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.`],
+                ['Purple circles',       ` indicate ${tealN} associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.`],
                 ['Teal-shaded countries',` (${countryN}) host at least one EBP-affiliated project or site.`],
             ];
 
@@ -730,10 +736,10 @@
             return `
                 <rect x="0" y="0" width="${W}" height="${svgHeight}" fill="white"/>
                 <line x1="${W}" y1="0" x2="${W}" y2="${svgHeight}" stroke="#ccc" stroke-width="1"/>
-                <text x="${PAD}" y="44" font-family="sans-serif" font-size="15" font-weight="bold" fill="#000">Geographic distribution of EBP network of networks.</text>
+                <text x="${PAD}" y="44" font-family="sans-serif" font-size="15" font-weight="bold" fill="#000">EBP Global Network</text>
                 <circle cx="28" cy="82" r="4" fill="#EA580C"/>
                 <text x="46" y="87" font-family="sans-serif" font-size="12.5" fill="#000">Project central operation</text>
-                <circle cx="28" cy="110" r="4" fill="#0F5A66"/>
+                <circle cx="28" cy="110" r="4" fill="#7B4FB5"/>
                 <text x="46" y="115" font-family="sans-serif" font-size="12.5" fill="#000">Coordination / collection site</text>
                 <rect x="20" y="128" width="16" height="11" rx="3" fill="#0F5A66"/>
                 <text x="46" y="137" font-family="sans-serif" font-size="12.5" fill="#000">Country with EBP presence</text>

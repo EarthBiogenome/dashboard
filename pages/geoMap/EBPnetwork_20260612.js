@@ -59,7 +59,7 @@ const projectsData = [
     projectName: "African BioGenome Project (AfricaBP)",
     institution: "Jomo Kenyatta University of Agriculture and Technology",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Jomo Kenyatta University of Agriculture and Technology, Kenya",
     latitude: -1.0913809,
     longitude: 37.0116893
@@ -1076,7 +1076,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Sanger Institute (DToL, Sanger 25G)",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Wellcome Genome Campus, Hinxton, Cambridgeshire, CB10 1SA, UK",
     latitude: 52.0802014,
     longitude: 0.1871654
@@ -1085,7 +1085,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Max Planck Dresden",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Max Planck Institute of Molecular Cell Biology and Genetics, Pfotenhauerstr. 108, 01307 Dresden, Germany",
     latitude: 51.058636,
     longitude: 13.7845069
@@ -1094,7 +1094,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "NHGRI",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Center for Genomics and Data Science Research, BG 49 RM 4A22, 49 Covent DR, Bethesda MD 20892",
     latitude: 38.9998705,
     longitude: -77.10599669999999
@@ -1103,7 +1103,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Amazoomics (Genomics of Brazilian Biodiversity)",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "R. Boaventura da Silva, 955 - Nazaré, Belém - PA, 66055-090, Brazil",
     latitude: -1.4469139,
     longitude: -48.4821946
@@ -1148,7 +1148,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Human Pangenome Reference Consortium",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1230 York Avenue, New York, NY, 10065",
     latitude: 40.7631824,
     longitude: -73.9563226
@@ -1157,7 +1157,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "European Reference Genome Atlas (ERGA)",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Quartier Centre, 1015 Lausanne, Switzerland",
     latitude: 46.5195985,
     longitude: 6.5684919
@@ -1166,7 +1166,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Bird10K (Bird 10,0000) Genome Project",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "548 Binwen Rd, Binjiang District, Hangzhou, Zhejiang, China, 310053",
     latitude: 30.17284,
     longitude: 120.15039
@@ -1265,7 +1265,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "California Conservation Genome Project (CCGP)",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "405 Hilgard Avenue, Los Angeles, California 90095",
     latitude: 34.0738178,
     longitude: -118.4376708
@@ -1274,7 +1274,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "AfricaBP",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Wellcome Genome Campus, Hinxton, Cambridgeshire, CB10 1SD, UK",
     latitude: 52.0802014,
     longitude: 0.1871654
@@ -1283,7 +1283,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Cetacean Genomes Project",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1315 East-West Highway Silver Spring, MD 20910",
     latitude: 38.9923514,
     longitude: -77.03047959999999
@@ -1301,7 +1301,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Bat1K",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Wellcome Trust Genome Campus, Hinxton, Saffron Walden CB10 1RQ, UK",
     latitude: 52.0810484,
     longitude: 0.1838827
@@ -1310,7 +1310,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Senckenberg Translational Biodiversity Genomics (SGN - TBG)",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Senckenberganlage 25 D-60325 Frankfurt/Main",
     latitude: 50.1169934,
     longitude: 8.6515384
@@ -1319,7 +1319,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Primate T2T project",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1410 NE Campus Pkwy, Seattle, WA 98195",
     latitude: 47.6565767,
     longitude: -122.3127173
@@ -1328,7 +1328,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Ruminant T2T project",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "111 W Fairfield St, Clay Center, NE 68933",
     latitude: 40.5212359,
     longitude: -98.0551102
@@ -1337,7 +1337,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Katara Biodiversity Genomes Program",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Doha, Qatar",
     latitude: 25.2854473,
     longitude: 51.53103979999999
@@ -1355,7 +1355,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Paratus Biosciences Bat Genomes",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "430 East 29th Street, Suite 600, New York, NY 10016, USA",
     latitude: 40.7400348,
     longitude: -73.9747667
@@ -1400,7 +1400,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Yggdrasil Denmark Biodiversity Genomes",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Øster Voldgade 7, 1350 København, Denmark",
     latitude: 55.6874319,
     longitude: 12.5775307
@@ -1418,7 +1418,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Threatened Species Initiative",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "The University of Sydney, NSW 2006, Australia",
     latitude: -33.8877902,
     longitude: 151.1888159
@@ -1427,7 +1427,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "University of Connecticut",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "352 Mansfield Rd, Storrs, CT 06269",
     latitude: 41.8088667,
     longitude: -72.2499066
@@ -1490,7 +1490,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Songbird GRC chromosomes",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "753 10 Uppsala, Sweden",
     latitude: 59.8565906,
     longitude: 17.6306386
@@ -1598,7 +1598,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Zhejiang University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "No. 866 Yuhangtang Road, Hangzhou City, Zhejiang Province, PR China, 310058",
     latitude: 30.296644,
     longitude: 120.084699
@@ -1607,7 +1607,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "Sea Turtle Genomes Project",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "300 Massachusetts Ave, Amherst, MA 01003",
     latitude: 42.3851536,
     longitude: -72.5253031
@@ -1760,7 +1760,7 @@ const projectsData = [
     projectName: "Vertebrate Genomes Project (VGP)",
     institution: "University of Kentucky",
     type: "Site",
-    activities: "Collecting, Affiliate",
+    activities: "Collecting",
     address: "Lexington, KY 40506",
     latitude: 38.034157,
     longitude: -84.5050567
@@ -1778,7 +1778,7 @@ const projectsData = [
     projectName: "Ungulates Genome Project (UGP)",
     institution: "University of Copenhagen",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Nørregade 10, 1172 København, Denmark",
     latitude: 55.6800704,
     longitude: 12.5715244
@@ -1787,7 +1787,7 @@ const projectsData = [
     projectName: "Ungulates Genome Project (UGP)",
     institution: "Northwest A&F University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "3 Taicheng Rd, Yangling District, Xianyang, Shaanxi, China, 712100",
     latitude: 34.26166,
     longitude: 108.07534
@@ -1796,7 +1796,7 @@ const projectsData = [
     projectName: "Ungulates Genome Project (UGP)",
     institution: "Guangzhou Zoo",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "120 Xianlie Middle Rd, Yuexiu District, Guangzhou, Guangdong, China, 510070",
     latitude: 23.14379,
     longitude: 113.30335
@@ -1805,7 +1805,7 @@ const projectsData = [
     projectName: "Ungulates Genome Project (UGP)",
     institution: "Kunming Institute of Zoology, the Chinese Academy of Sciences",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "No.17 Longxin Road, Kunming, Yunnan, 650201, P.R.China",
     latitude: 24.90353,
     longitude: 102.79028
@@ -1814,7 +1814,7 @@ const projectsData = [
     projectName: "Threatened Species Initiative (TSI)",
     institution: "WA Department of Biodiversity, Conservation & Attractions",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "7 Dick Perry Avenue KENSINGTON WA, Australia",
     latitude: -31.9947377,
     longitude: 115.8835698
@@ -1823,7 +1823,7 @@ const projectsData = [
     projectName: "Threatened Species Initiative (TSI)",
     institution: "Royal Botanical Gardens Sydney",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Mrs Macquaries Rd, Sydney NSW 2000",
     latitude: -33.8638561,
     longitude: 151.2205787
@@ -1832,7 +1832,7 @@ const projectsData = [
     projectName: "Threatened Species Initiative (TSI)",
     institution: "Zoo and Aquarium Association",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Bradley's Head Road, Mosman, NSW 2088",
     latitude: -33.8530418,
     longitude: 151.2464275
@@ -1841,7 +1841,7 @@ const projectsData = [
     projectName: "Threatened Species Initiative (TSI)",
     institution: "Australian Government Department of Climate Change, Energy, the Environment & Water",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "John Gorton Building King Edward Terrace Parkes ACT 2600",
     latitude: -35.3020121,
     longitude: 149.1342236
@@ -1850,7 +1850,7 @@ const projectsData = [
     projectName: "Threatened Species Initiative (TSI)",
     institution: "Bioplatforms Australia",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "4WW, 12 Research Park Dr, Macquarie Park NSW 2113, Australia",
     latitude: -33.7740734,
     longitude: 151.1166088
@@ -1859,7 +1859,7 @@ const projectsData = [
     projectName: "Soil Invertebrate Genome Initiative (METAINVERT)",
     institution: "Senckenberg Museum für Naturkunde Görlitz",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Am Museum 1 02826 Görlitz Germany",
     latitude: 51.1534602,
     longitude: 14.9865865
@@ -1868,7 +1868,7 @@ const projectsData = [
     projectName: "Soil Invertebrate Genome Initiative (METAINVERT)",
     institution: "Muséum national d'Histoire naturelle",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "57 rue Cuvier, 75005 Paris, France",
     latitude: 48.8438705,
     longitude: 2.3567311
@@ -1877,7 +1877,7 @@ const projectsData = [
     projectName: "Soil Invertebrate Genome Initiative (METAINVERT)",
     institution: "Leibniz Institute for the Analysis of Biodiversity Change (LIB)",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Adenauerallee 127, 53113 Bonn, Germany",
     latitude: 50.7233807,
     longitude: 7.113946599999999
@@ -1886,7 +1886,7 @@ const projectsData = [
     projectName: "Soil Invertebrate Genome Initiative (METAINVERT)",
     institution: "Naturhistorisches Museum Wien",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Burgring 7, 1010 Wien, Austria",
     latitude: 48.205213,
     longitude: 16.3598442
@@ -1895,7 +1895,7 @@ const projectsData = [
     projectName: "Soil Invertebrate Genome Initiative (METAINVERT)",
     institution: "Wellcome Genome Campus",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Hinxton, Cambridgeshire, CB10 1SA, UK",
     latitude: 52.07976379999999,
     longitude: 0.1853909
@@ -1904,7 +1904,7 @@ const projectsData = [
     projectName: "Soil Invertebrate Genome Initiative (METAINVERT)",
     institution: "Universität zu Köln",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Zülpicher Straße 47b, 50674 Köln, Germany",
     latitude: 50.9270746,
     longitude: 6.9357615
@@ -1913,7 +1913,7 @@ const projectsData = [
     projectName: "Soil Invertebrate Genome Initiative (METAINVERT)",
     institution: "Strasbourg University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1 Rue Eugène Boeckel, 67000 Strasbourg, France",
     latitude: 48.575845,
     longitude: 7.739033999999999
@@ -1922,7 +1922,7 @@ const projectsData = [
     projectName: "Soil Invertebrate Genome Initiative (METAINVERT)",
     institution: "University of Goettingen",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Untere Karspüle 2, 37073 Goettingen, Germany",
     latitude: 51.5373968,
     longitude: 9.936200999999999
@@ -1931,7 +1931,7 @@ const projectsData = [
     projectName: "Soil Invertebrate Genome Initiative (METAINVERT)",
     institution: "Goethe Universität Frankfurt",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Max-von-Laue-Straße 13, D-60438 Frankfurt am Main, Germany",
     latitude: 50.17053199999999,
     longitude: 8.6284978
@@ -1940,7 +1940,7 @@ const projectsData = [
     projectName: "Project Psyche (Psyche)",
     institution: "Biology Centre of the Czech Academy of Sciences, Czechia",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Branišovská 1160/31, 370 05 České Budějovice 2, Czechia",
     latitude: 48.97816419999999,
     longitude: 14.4458432
@@ -1949,7 +1949,7 @@ const projectsData = [
     projectName: "Project Psyche (Psyche)",
     institution: "University of Neuchâtel, Switzerland",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Av. du Premier-Mars 26, 2000 Neuchâtel, Switzerland",
     latitude: 46.9939188,
     longitude: 6.938681099999999
@@ -1958,7 +1958,7 @@ const projectsData = [
     projectName: "Project Psyche (Psyche)",
     institution: "Institute of Evolutionary Biology, Spain",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Dr. Aiguader, 88, 08003 Barcelona, Spain",
     latitude: 41.38476350000001,
     longitude: 2.1927796
@@ -1967,7 +1967,7 @@ const projectsData = [
     projectName: "Project Psyche (Psyche)",
     institution: "Lund University, Sweden",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Box 117, SE-221 00, Lund, Sweden",
     latitude: 55.7046601,
     longitude: 13.1910073
@@ -1976,7 +1976,7 @@ const projectsData = [
     projectName: "Project Psyche (Psyche)",
     institution: "University of Florence, Italy",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "P.za di San Marco, 4, 50121 Firenze FI, Italy",
     latitude: 43.7783707,
     longitude: 11.2598628
@@ -1985,7 +1985,7 @@ const projectsData = [
     projectName: "Project Psyche (Psyche)",
     institution: "University of Oulu, Finland",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Pentti Kaiteran katu 1, 90570 Oulu, Finland",
     latitude: 65.0598802,
     longitude: 25.4658413
@@ -1994,7 +1994,7 @@ const projectsData = [
     projectName: "Project Psyche (Psyche)",
     institution: "The Grigore Antipa National Museum of Natural History, Romania",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Şoseaua Pavel D. Kiseleff 1, București 011341, Romania",
     latitude: 44.460199,
     longitude: 26.0816158
@@ -2003,7 +2003,7 @@ const projectsData = [
     projectName: "Amphibian Genomics Consortium (AGC)",
     institution: "Universidad de los Andes",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Calle 19 No. 1-60, Bogotá, 111711, Colombia",
     latitude: 4.6032326,
     longitude: -74.069659
@@ -2012,7 +2012,7 @@ const projectsData = [
     projectName: "Amphibian Genomics Consortium (AGC)",
     institution: "Kunming Institute of Zoology, CAS",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "3P83+XWM, Jiaochang E Rd, Wuhua District, Kunming, Yunnan, China, 650023",
     latitude: 25.0697699,
     longitude: 102.70685
@@ -2021,7 +2021,7 @@ const projectsData = [
     projectName: "Amphibian Genomics Consortium (AGC)",
     institution: "Queen's University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "University Rd, Belfast BT7 1NN, UK",
     latitude: 54.5845391,
     longitude: -5.9364529
@@ -2030,7 +2030,7 @@ const projectsData = [
     projectName: "Amphibian Genomics Consortium (AGC)",
     institution: "Central University of Kerala",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Central University of Kerala, Kerala, India",
     latitude: 12.3928975,
     longitude: 75.09166669999999
@@ -2039,7 +2039,7 @@ const projectsData = [
     projectName: "Amphibian Genomics Consortium (AGC)",
     institution: "Doñana Biological Station",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "CSIC, Cartuja TA-10, Edificio I, Calle Américo Vespucio, s/n, 41092 Sevilla, Spain",
     latitude: 37.411316,
     longitude: -6.007078099999999
@@ -2048,7 +2048,7 @@ const projectsData = [
     projectName: "Amphibian Genomics Consortium (AGC)",
     institution: "South African National Biodiversity Institute",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "2 Cussonia Ave, Brummeria, Pretoria, South Africa",
     latitude: -25.7390672,
     longitude: 28.2730722
@@ -2057,7 +2057,7 @@ const projectsData = [
     projectName: "Amphibian Genomics Consortium (AGC)",
     institution: "Newcastle University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Newcastle upon Tyne, NE1 7RU, UK",
     latitude: 54.9803268,
     longitude: -1.6157272
@@ -2066,7 +2066,7 @@ const projectsData = [
     projectName: "Amphibian Genomics Consortium (AGC)",
     institution: "Pacific Biosciences of California, Inc.",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1305 O’Brien Drive, Menlo Park, CA 94025, USA",
     latitude: 37.4775481,
     longitude: -122.1452967
@@ -2075,7 +2075,7 @@ const projectsData = [
     projectName: "Genome Sequencing and Assembly of Chondrichthyans (SQUALOMIX)",
     institution: "Atomosphere and Ocean Research Institute, University of Tokyo, Japan",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "5-1-5, Kashiwanoha, Kashiwa-shi, Chiba, 277-8564, Japan",
     latitude: 35.8998667,
     longitude: 139.9331125
@@ -2084,7 +2084,7 @@ const projectsData = [
     projectName: "Genome Sequencing and Assembly of Chondrichthyans (SQUALOMIX)",
     institution: "Okinawa Churamu Aquarium",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "888 Aza Ishikawa, Motobu-cho, Kunigami-gun, Okinawa, 905-0206, Japan",
     latitude: 26.6911544,
     longitude: 127.881734
@@ -2093,7 +2093,7 @@ const projectsData = [
     projectName: "Genome Sequencing and Assembly of Chondrichthyans (SQUALOMIX)",
     institution: "Osaka Aquarium Kaiyukan",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1-1-10 Kaigandori, Minato-ku, Osaka, 552-0022, Japan",
     latitude: 34.6563732,
     longitude: 135.4302962
@@ -2111,7 +2111,7 @@ const projectsData = [
     projectName: "Polar Genomes Project (PGP)",
     institution: "Korea Polar Research Institute",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "26 Songdomirae-ro, Yeonsu-gu, Incheon, 21990, South Korea",
     latitude: 37.365619,
     longitude: 126.64735
@@ -2201,7 +2201,7 @@ const projectsData = [
     projectName: "PHYLOALPS",
     institution: "Station Alpine Joseph Fourier (UMS 832)",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "2233 Rue de la Piscine, Université Grenoble Alpes, CS 40700 38058 Grenoble cedex 9, France",
     latitude: 45.188529,
     longitude: 5.724524
@@ -2210,7 +2210,7 @@ const projectsData = [
     projectName: "PHYLOALPS",
     institution: "Wald, Schnee und Landschaft (WSL)",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Zürcherstrasse 111, 8903 Birmensdorf, Switzerland",
     latitude: 47.360462,
     longitude: 8.4553637
@@ -2219,7 +2219,7 @@ const projectsData = [
     projectName: "PHYLOALPS",
     institution: "Genoscope - Centre National de Séquençage",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "2, rue Gaston Crémieux, CEA Paris-Saclay, GENOSCOPE, 91000 ÉVRY, France",
     latitude: 48.6236152,
     longitude: 2.4393278
@@ -2228,7 +2228,7 @@ const projectsData = [
     projectName: "Lilioid Monocots Core Group Genome Project (LMGP)",
     institution: "USDA-ARS, Department of Horticulture, University of Wisconsin",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "1575 Linden Drive, Madison, WI 53706, USA",
     latitude: 43.07483819999999,
     longitude: -89.4121206
@@ -2237,7 +2237,7 @@ const projectsData = [
     projectName: "Lilioid Monocots Core Group Genome Project (LMGP)",
     institution: "Biochemistry Department, University of Otago",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "Dunedin 9054, New Zealand",
     latitude: -45.8779099,
     longitude: 170.5021599
@@ -2246,7 +2246,7 @@ const projectsData = [
     projectName: "Lilioid Monocots Core Group Genome Project (LMGP)",
     institution: "New Cultivar Innovation,The New Zealand Institute for Plant & Food Research Limited",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "Christchurch 8140, New Zealand",
     latitude: -43.5328181,
     longitude: 172.6319915
@@ -2255,7 +2255,7 @@ const projectsData = [
     projectName: "Lilioid Monocots Core Group Genome Project (LMGP)",
     institution: "Institute of Chinese Medical Science (ICMS), University of Macau",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Avenida da Universidade, Taipa, Macau, China",
     latitude: 22.12489,
     longitude: 113.55159
@@ -2291,7 +2291,7 @@ const projectsData = [
     projectName: "Ocean Genomes (OG)",
     institution: "University of Western Australia",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "Minderoo OceanOmics Centre at UWA, The University of Western Australia, Bayliss Building, Room 2.40A, Crawley, Perth, WA Australia, 6003",
     latitude: -31.9789061,
     longitude: 115.8180721
@@ -2300,7 +2300,7 @@ const projectsData = [
     projectName: "Open Green Genomes (OGG)",
     institution: "Joint Genome Institute ",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "DOE Joint Genome Institute, Lawrence Berkeley National Laboratory, 1 Cyclotron Road, Berkeley, CA 94720",
     latitude: 37.8791052,
     longitude: -122.2542383
@@ -2309,7 +2309,7 @@ const projectsData = [
     projectName: "Open Green Genomes (OGG)",
     institution: "HudsonAlpha Institute for Biotechnology",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "HudsonAlpha Institute of Biothechnology, 601 Genome Way, Huntsville, AL, 35806",
     latitude: 34.7255274,
     longitude: -86.69075629999999
@@ -2318,7 +2318,7 @@ const projectsData = [
     projectName: "Hong Kong EBP (HKEBP)",
     institution: "Hong Kong University of Science and Technology (HKUST)",
     type: "Site",
-    activities: "Affiliate, Processing, Bioinformatics (annotation), Bioinformatics (assembly), Bioinformatics (databases and informatics support), Bioinformatics (genome analysis)",
+    activities: "Processing, Bioinformatics (annotation), Bioinformatics (assembly), Bioinformatics (databases and informatics support), Bioinformatics (genome analysis)",
     address: "Clear Water Bay, Hong Kong",
     latitude: 22.2851406,
     longitude: 114.2940282
@@ -2363,7 +2363,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Earlham Institute",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Norwich Research Park, Colney Ln, Norwich NR4 7UZ, UK",
     latitude: 52.622805,
     longitude: 1.2197416
@@ -2372,7 +2372,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "EBI",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Wellcome Genome, Hinxton CB10 1SD, UK",
     latitude: 52.0802014,
     longitude: 0.1871654
@@ -2381,7 +2381,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Osaka University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "3-4-1 KOWAKAE, HIGASHIOSAKA CITY,. OSAKA 577-8502, JAPAN",
     latitude: 34.6508886,
     longitude: 135.5880669
@@ -2390,7 +2390,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Shenzhen Key Laboratory of Marine Bioresource and Eco-environmental Science,",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: " Shenzhen Engineering Laboratory for Marine Algal Biotechnology, Guangdong Provincial Key Laboratory for Plant Epigenetics, College of Life Sciences and Oceanography, Shenzhen University, Shenzhen, 518060, China",
     latitude: 22.53306,
     longitude: 113.932813
@@ -2399,7 +2399,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Institute of Parasitology",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Czech Academy of Sciences, and Faculty of Sciences, University of South Bohemia, 37005, České Budějovice, Czech Republic",
     latitude: 48.9775024,
     longitude: 14.4451175
@@ -2408,7 +2408,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Institute of Evolutionary Biology,",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Żwirki i Wigury 101, 02-089 Warsaw, Poland",
     latitude: 52.2134406,
     longitude: 20.9871843
@@ -2417,7 +2417,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Trent University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Trent University, Peterborough, ON, Canada",
     latitude: 44.35689259999999,
     longitude: -78.29021139999999
@@ -2426,7 +2426,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Sherbrooke University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Université de Sherbrooke, Sherbrooke, QC, Canada",
     latitude: 45.37794239999999,
     longitude: -71.92939419999999
@@ -2435,7 +2435,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Department of Chemistry and Manchester Institute of Biotechnology,",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "University of Manchester, Manchester M1 7DN, UK",
     latitude: 53.4656853,
     longitude: -2.232706
@@ -2444,7 +2444,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Department of Biology",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Central Michigan University, Mt. Pleasant, MI 48859, USA",
     latitude: 43.5907792,
     longitude: -84.7788786
@@ -2453,7 +2453,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Euglena Co., Ltd",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "2F Yokohama Bio Industry Center (YBIC), 1-6 Suehiro, Tsurumi, Yokohama Kanagawa  230-0045 Japan",
     latitude: 35.4789423,
     longitude: 139.6894068
@@ -2462,7 +2462,7 @@ const projectsData = [
     projectName: "Euglena International Network (EIN)",
     institution: "Kemin Industries",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Research and Development, Plymouth, MI 48170, USA",
     latitude: 42.3714253,
     longitude: -83.4702132
@@ -2471,7 +2471,7 @@ const projectsData = [
     projectName: "Global Genome Biodiversity Network (GGBN)",
     institution: "Berlin Botanic Garden and Botanical Museum",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "Königin-Luise-Straße 6-8, 14195 Berlin, Germany",
     latitude: 52.4585322,
     longitude: 13.3046593
@@ -2480,7 +2480,7 @@ const projectsData = [
     projectName: "Dresden HQ Genomes Project (DresdenHQ)",
     institution: "MPI-CBG, Sequencing and Genotyping Facility ",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Pfotenhauerstr. 108, 01307 Dresden, Germany",
     latitude: 51.0573329,
     longitude: 13.7844945
@@ -2570,7 +2570,7 @@ const projectsData = [
     projectName: "Cetaceans Genomes Project (CGP)",
     institution: "Vertebrate Genomes Project, The Rockefeller University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1230 York Avenue, Box 366, New York, NY 10065, USA",
     latitude: 40.7631824,
     longitude: -73.9563226
@@ -2579,7 +2579,7 @@ const projectsData = [
     projectName: "Cetaceans Genomes Project (CGP)",
     institution: "Darwin Tree of Life UK, Wellcome Sanger Institute",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Wellcome Genome Campus, Hinxton, Cambridgeshire CB10 1SA, UK",
     latitude: 52.0802014,
     longitude: 0.1871654
@@ -2588,7 +2588,7 @@ const projectsData = [
     projectName: "Cetaceans Genomes Project (CGP)",
     institution: "LOEWE Centre for Translational Biodiversity Genomics, Senckenberg Research Institute",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Senckenberganlage 25, D-60325 Frankfurt am Main, Germany",
     latitude: 50.1169934,
     longitude: 8.6515384
@@ -2597,7 +2597,7 @@ const projectsData = [
     projectName: "Cetaceans Genomes Project (CGP)",
     institution: "Conservation Science Wildlife Health, San Diego Zoo Wildlife Alliance",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "15600 San Pasqual Valley Rd, Escondido, CA 92027",
     latitude: 33.0935576,
     longitude: -116.9998637
@@ -2606,7 +2606,7 @@ const projectsData = [
     projectName: "Cetaceans Genomes Project (CGP)",
     institution: "Regenerative Biology, Morgridge Institute for Research",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "330 N Orchard Street, Madison, WI 53715, USA",
     latitude: 43.0729696,
     longitude: -89.40807129999999
@@ -2615,7 +2615,7 @@ const projectsData = [
     projectName: "Cetaceans Genomes Project (CGP)",
     institution: "Canadian BioGenome Project",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "675 W 10th Ave, Vancouver, BC V5Z 0B4, Canada",
     latitude: 49.2625736,
     longitude: -123.1195361
@@ -2624,7 +2624,7 @@ const projectsData = [
     projectName: "Darwin Tree of Life (DToL)",
     institution: "Natural History Museum",
     type: "Site",
-    activities: "Headquarters, Processing, Biobanking, Bioinformatics (databases and informatics support)",
+    activities: "Processing, Biobanking, Bioinformatics (databases and informatics support)",
     address: "Cromwell Rd, South Kensington, London SW7 5BD",
     latitude: 51.4955446,
     longitude: -0.17614
@@ -2732,7 +2732,7 @@ const projectsData = [
     projectName: "1,000 Bat Genomes (Bat1K)",
     institution: "Max-Planck-Institut für molekulare Zellbiologie und Genetik",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "Pfotenhauerstraße 108, 01307 Dresden",
     latitude: 51.0573329,
     longitude: 13.7844945
@@ -2741,7 +2741,7 @@ const projectsData = [
     projectName: "1,000 Bat Genomes (Bat1K)",
     institution: "Senckenberg Forschungsinstitut und Naturmuseum",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Senckenberganlage 25, 60325 Frankfurt am Main",
     latitude: 50.1169934,
     longitude: 8.6515384
@@ -2750,7 +2750,7 @@ const projectsData = [
     projectName: "1,000 Bat Genomes (Bat1K)",
     institution: "Paratus Sciences ",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "430 E 29th St, New York, NY 10016, USA",
     latitude: 40.7400348,
     longitude: -73.9747667
@@ -2759,7 +2759,7 @@ const projectsData = [
     projectName: "1,000 Bat Genomes (Bat1K)",
     institution: "Vertebrate Genome Lab ",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1230 York Avenue, New York, NY 10065",
     latitude: 40.7631824,
     longitude: -73.9563226
@@ -2768,7 +2768,7 @@ const projectsData = [
     projectName: "1,000 Bat Genomes (Bat1K)",
     institution: "Wellcome Sanger Institute",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Wellcome Trust Genome Campus, Hinxton, Saffron Walden CB10 1RQ, UK",
     latitude: 52.0810484,
     longitude: 0.1838827
@@ -2777,7 +2777,7 @@ const projectsData = [
     projectName: "1,000 Bat Genomes (Bat1K)",
     institution: "University College Dublin",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "University College Dublin, Belfield, Dublin 4, Ireland",
     latitude: 53.3097268,
     longitude: -6.2215897
@@ -2786,7 +2786,7 @@ const projectsData = [
     projectName: "1,000 Bat Genomes (Bat1K)",
     institution: "Texas Tech University ",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "2500 Broadway W, Lubbock, TX 79409",
     latitude: 33.5846516,
     longitude: -101.8724995
@@ -2795,7 +2795,7 @@ const projectsData = [
     projectName: "1,000 Bat Genomes (Bat1K)",
     institution: "Stony Brook University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "100 Nicolls Rd, Stony Brook, NY 11794",
     latitude: 40.9148979,
     longitude: -73.12000700000002
@@ -2804,7 +2804,7 @@ const projectsData = [
     projectName: "An Atlas of Eukaryotic Marine Genomes (ATLASea)",
     institution: "Station Biologique de Roscoff",
     type: "Site",
-    activities: "Affiliate, Bioinformatics (genome analysis), Bioinformatics (annotation), Bioinformatics (databases and informatics support), Biobanking, Collecting",
+    activities: "Bioinformatics (genome analysis), Bioinformatics (annotation), Bioinformatics (databases and informatics support), Biobanking, Collecting",
     address: "",
     latitude: null,
     longitude: null
@@ -2813,7 +2813,7 @@ const projectsData = [
     projectName: "An Atlas of Eukaryotic Marine Genomes (ATLASea)",
     institution: "Museum national d'Histoire naturelle (MNHN)",
     type: "Site",
-    activities: "Affiliate, Biobanking, Processing",
+    activities: "Biobanking, Processing",
     address: "57 rue Cuvier, 75005 Paris, France",
     latitude: 48.8438705,
     longitude: 2.3567311
@@ -2831,7 +2831,7 @@ const projectsData = [
     projectName: "An Atlas of Eukaryotic Marine Genomes (ATLASea)",
     institution: "Sorbonne Université",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "21, rue de l'École de Médecine, 75006 Paris, France",
     latitude: 48.8509046,
     longitude: 2.3414076
@@ -2840,7 +2840,7 @@ const projectsData = [
     projectName: "An Atlas of Eukaryotic Marine Genomes (ATLASea)",
     institution: "Paris Sciences Lettres Université",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "60 rue Mazarine, 75006 Paris, France",
     latitude: 48.8546525,
     longitude: 2.3378555
@@ -2849,7 +2849,7 @@ const projectsData = [
     projectName: "An Atlas of Eukaryotic Marine Genomes (ATLASea)",
     institution: "Aix-Marseille Université",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "58 bd Charles Livon, 13284 Marseille, France",
     latitude: 43.2921966,
     longitude: 5.3591384
@@ -2858,7 +2858,7 @@ const projectsData = [
     projectName: "An Atlas of Eukaryotic Marine Genomes (ATLASea)",
     institution: "Ifremer",
     type: "Site",
-    activities: "Affiliate, Bioinformatics (databases and informatics support)",
+    activities: "Bioinformatics (databases and informatics support)",
     address: "1625 route de Sainte-Anne, 29280 Plouzané, France",
     latitude: 48.359113,
     longitude: -4.558800499999999
@@ -2885,7 +2885,7 @@ const projectsData = [
     projectName: "Beenome100 Project (BEENOME100)",
     institution: "USDA-ARS Pollinating Insect-Biology, Management, Systematics Research",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "Utah State University, Dept. Biology, UMC5310 Logan, UT 84322",
     latitude: 41.745161,
     longitude: -111.8097425
@@ -2894,7 +2894,7 @@ const projectsData = [
     projectName: "Beenome100 Project (BEENOME100)",
     institution: "USDA-ARS Tropical Pest Genetics and Molecular Biology Research Unit",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "64 Nowelo Street Hilo, HI 96720",
     latitude: 19.6983299,
     longitude: -155.0927928
@@ -2903,7 +2903,7 @@ const projectsData = [
     projectName: "Beenome100 Project (BEENOME100)",
     institution: "USDA-ARS Pollinator Health in Southern Crop Ecosystems Research",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "141 EXPERIMENT STATION RD Stoneville, MS 38776",
     latitude: 33.4326502,
     longitude: -90.9074447
@@ -2912,7 +2912,7 @@ const projectsData = [
     projectName: "Beenome100 Project (BEENOME100)",
     institution: "USDA-ARS Honey Bee Breeding, Genetics, and Physiology Research",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1157 Ben Hur Rd, Baton Rouge, LA 70820",
     latitude: 30.3794355,
     longitude: -91.1670974
@@ -2921,7 +2921,7 @@ const projectsData = [
     projectName: "Beenome100 Project (BEENOME100)",
     institution: "Princeton University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "106A Guyot Ln, Princeton, NJ 08544",
     latitude: 40.3458,
     longitude: -74.654476
@@ -2930,7 +2930,7 @@ const projectsData = [
     projectName: "Beenome100 Project (BEENOME100)",
     institution: "University of Alabama",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "300 Hackberry Lane Tuscaloosa, AL 35487-0344",
     latitude: 33.2142357,
     longitude: -87.5411776
@@ -2939,7 +2939,7 @@ const projectsData = [
     projectName: "Beenome100 Project (BEENOME100)",
     institution: "University of California",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "605 Hutchison Drive, Davis, CA 95616",
     latitude: 38.5395506,
     longitude: -121.7567687
@@ -2948,7 +2948,7 @@ const projectsData = [
     projectName: "Beenome100 Project (BEENOME100)",
     institution: "University of Illinois",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "505 S. Goodwin Ave. Urbana, IL 61801",
     latitude: 40.1087558,
     longitude: -88.2245062
@@ -2957,7 +2957,7 @@ const projectsData = [
     projectName: "Beenome100 Project (BEENOME100)",
     institution: "USDA-ARS National Center for Agricultural Utilization Research",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "1815 N. University Street Peoria, IL 61604",
     latitude: 40.7097335,
     longitude: -89.61447869999999
@@ -2966,7 +2966,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "GEOMAR Helmholtz Centre for Ocean Research Kiel",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Wischhofstraße 1-3, 24148 Kiel, Germany",
     latitude: 54.3285239,
     longitude: 10.1788471
@@ -2975,7 +2975,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "Nova Southeastern University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "3300 S University Dr, Fort Lauderdale, FL 33328, USA",
     latitude: 26.0819628,
     longitude: -80.2485864
@@ -2984,7 +2984,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "University of Derby",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Kedleston Rd, Derby DE22 1GB, UK",
     latitude: 52.9507205,
     longitude: -1.5073194
@@ -2993,7 +2993,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "Dalhousie University, Canada",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "6299 South St, Halifax, NS B3H 4R2, Canada",
     latitude: 44.6361842,
     longitude: -63.59313919999999
@@ -3002,7 +3002,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "University of British Columbia",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Vancouver, BC V6T 1Z4, Canada",
     latitude: 49.2587631,
     longitude: -123.2558317
@@ -3011,7 +3011,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "University of Vienna",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Universitätsring 1, 1010 Wien, Austria",
     latitude: 48.2129785,
     longitude: 16.3601365
@@ -3020,7 +3020,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "Queen Mary University of London",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "327 Mile End Rd, Bethnal Green, London E1 4NS, UK",
     latitude: 51.5245289,
     longitude: -0.0399857
@@ -3029,7 +3029,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "Sainsbury Laboratory, Cambridge University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Bateman St, Cambridge CB2 1LR, UK",
     latitude: 52.1953022,
     longitude: 0.1267608
@@ -3038,7 +3038,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "University of Rhode Island",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "45 Upper College Rd, Kingston, RI 02881, USA",
     latitude: 41.4837551,
     longitude: -71.5255193
@@ -3047,7 +3047,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "Senckenberg Research Institute",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Am Jakobskirchhof 4, 99423 Weimar, Germany",
     latitude: 50.9834332,
     longitude: 11.3274589
@@ -3056,7 +3056,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "Portland State University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1825 SW Broadway, Portland, OR 97201, USA",
     latitude: 45.5118744,
     longitude: -122.6844194
@@ -3065,7 +3065,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "University of Oregon",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "1585 E 13th Ave, Eugene, OR 97403, USA",
     latitude: 44.045953,
     longitude: -123.0705122
@@ -3074,7 +3074,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     institution: "University of California, Merced",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "5200 Lake Rd, Merced, CA 95343, USA",
     latitude: 37.3659036,
     longitude: -120.4215763
@@ -3083,7 +3083,7 @@ const projectsData = [
     projectName: "African BioGenome Project (AfricaBP)",
     institution: "Agricultural Research Council",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Agricultural Research Council, Pretoria, South Africa",
     latitude: -25.7485438,
     longitude: 28.236981
@@ -3092,7 +3092,7 @@ const projectsData = [
     projectName: "African BioGenome Project (AfricaBP)",
     institution: "International Institute of Tropical Agriculture",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "International Institute of Tropical Agriculture, Nigeria",
     latitude: 9.081999,
     longitude: 8.675277
@@ -3101,7 +3101,7 @@ const projectsData = [
     projectName: "African BioGenome Project (AfricaBP)",
     institution: "South African Medical Research Council",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "South African Medical Research Council, South Africa",
     latitude: -33.9155014,
     longitude: 18.6056356
@@ -3119,7 +3119,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "BGI Research Wuhan",
     type: "Site",
-    activities: "Headquarters",
+    activities: "Field collection",
     address: "BGI Research, Wuhan 430074, China",
     latitude: 30.5311927,
     longitude: 114.3400858
@@ -3128,7 +3128,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "China National GeneBank",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "China National GeneBank, Jinsha Road, Dapeng New District, Shenzhen, Guangdong Province, China",
     latitude: 22.7510612,
     longitude: 114.3966867
@@ -3137,7 +3137,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "University of Alberta",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Department of Biological Sciences and Department of Medicine, University of Alberta, Edmonton, Alberta, Canada",
     latitude: 53.5290289,
     longitude: -113.5255352
@@ -3146,7 +3146,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "Fairy Lake Botanical Garden",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Key Laboratory of Southern Subtropical Plant Diversity, Fairy Lake Botanical Garden, Shenzhen & Chinese Academy of Sciences, Shenzhen, China",
     latitude: 22.5775992,
     longitude: 114.1825737
@@ -3155,7 +3155,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "World Agroforestry Centre (ICRAF)",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "African Orphan Crops Consortium,World Agroforestry Centre (ICRAF), Nairobi 00100, Kenya",
     latitude: -1.236467,
     longitude: 36.819017
@@ -3164,7 +3164,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "Max Planck Institute for Plant Breeding Research",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Department of Plant Microbe Interactions, Max Planck Institute for Plant Breeding Research, Cologne 50829, Germany",
     latitude: 50.9593856,
     longitude: 6.8600948
@@ -3173,7 +3173,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "Southwest Forestry University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Key Laboratory for Forest Genetic and Tree Improvement and Propagation in Universities of Yunnan Province, Southwest Forestry University, Kunming 650224, China,",
     latitude: 25.1117899,
     longitude: 102.85012
@@ -3182,7 +3182,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "Chinese Academy of Sciences",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "CAS Center for Excellence in Molecular Plant Sciences, Chinese Academy of Sciences, Shanghai 20032, China",
     latitude: 31.230416,
     longitude: 121.473701
@@ -3191,7 +3191,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "University of British Columbia",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Biodiversity Research Centre, University of British Columbia, Vancouver, BC, Canada",
     latitude: 49.263321,
     longitude: -123.2496779
@@ -3200,7 +3200,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "University of Florida",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Department of Biology, University of Florida, Gainesville, FL, USA",
     latitude: 29.6438967,
     longitude: -82.3446252
@@ -3209,7 +3209,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "South China Botanical Garden",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Key Laboratory of Plant Resource Conservation and Sustainable Utilization, The Chinese Academy of Sciences, South China Botanical Garden, Guangzhou, Guangdong 510650, China",
     latitude: 23.141142,
     longitude: 113.2985037
@@ -3218,7 +3218,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "Wuhan Botanical Garden",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "CAS Key Laboratory of Plant Germplasm Enhancement and Specialty Agriculture, Wuhan Botanical Garden, Chinese Academy of Sciences, Wuhan, China",
     latitude: 30.54223,
     longitude: 114.420231
@@ -3227,7 +3227,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "South China Agricultural University",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "College of Science, South China Agricultural University, Guangzhou, 510642, China",
     latitude: 23.161083,
     longitude: 113.350706
@@ -3236,7 +3236,7 @@ const projectsData = [
     projectName: "10,000 Plant Genomes (10KP)",
     institution: "Forestry Bureau of Ruili",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Forestry Bureau of Ruili, Yunnan Dehong, Ruili, 678600, China",
     latitude: 24.0982499,
     longitude: 98.10001
@@ -3245,7 +3245,7 @@ const projectsData = [
     projectName: "1,000 Chilean Genomes (1000GCH)",
     institution: "Universidad Andres Bello",
     type: "Site",
-    activities: "Affiliate, Processing, DNA Sequencing (long reads), Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis)",
+    activities: "Processing, DNA Sequencing (long reads), Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis)",
     address: "Av República 330, Santiago, Chile",
     latitude: -33.4526948,
     longitude: -70.66698699999999
@@ -3254,7 +3254,7 @@ const projectsData = [
     projectName: "1,000 Chilean Genomes (1000GCH)",
     institution: "Universidad de O'Higgins",
     type: "Site",
-    activities: "Affiliate, Processing, DNA Sequencing (long reads), Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis), Bioinformatics (databases and informatics support)",
+    activities: "Processing, DNA Sequencing (long reads), Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis), Bioinformatics (databases and informatics support)",
     address: "Av. Libertador Gral. Bernardo O'Higgins 611, Rancagua, Chile",
     latitude: -34.1644082,
     longitude: -70.7416439
@@ -3263,7 +3263,7 @@ const projectsData = [
     projectName: "1,000 Chilean Genomes (1000GCH)",
     institution: "Universidad de Chile",
     type: "Site",
-    activities: "Affiliate, Processing, DNA Sequencing (long reads), DNA Sequencing (short reads), RNA Sequencing, Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis), Bioinformatics (databases and informatics support)",
+    activities: "Processing, DNA Sequencing (long reads), DNA Sequencing (short reads), RNA Sequencing, Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis), Bioinformatics (databases and informatics support)",
     address: "Olivos 1007, Santiago, Chile",
     latitude: -33.4231523,
     longitude: -70.6535368
@@ -3272,7 +3272,7 @@ const projectsData = [
     projectName: "1,000 Chilean Genomes (1000GCH)",
     institution: "Universidad de Antofagasta",
     type: "Site",
-    activities: "Affiliate, DNA Sequencing (long reads), Processing, Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis)",
+    activities: "DNA Sequencing (long reads), Processing, Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis)",
     address: "Avda. Universidad Antofagasta 02800, Antofagasta, Chile",
     latitude: -23.702506,
     longitude: -70.4210135
@@ -3281,7 +3281,7 @@ const projectsData = [
     projectName: "1,000 Chilean Genomes (1000GCH)",
     institution: "Australomics",
     type: "Site",
-    activities: "Affiliate, Processing, DNA Sequencing (long reads), DNA Sequencing (short reads), RNA Sequencing, Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis), Bioinformatics (databases and informatics support)",
+    activities: "Processing, DNA Sequencing (long reads), DNA Sequencing (short reads), RNA Sequencing, Bioinformatics (assembly), Bioinformatics (annotation), Bioinformatics (genome analysis), Bioinformatics (databases and informatics support)",
     address: "Facultad de Ciencias, Universidad Austral de Chile, Valdivia, Chile",
     latitude: -39.817419,
     longitude: -73.2426102
@@ -3290,7 +3290,7 @@ const projectsData = [
     projectName: "Cartilaginous Fish Genome Project (CFGP)",
     institution: "Institute of Oceanology",
     type: "Site",
-    activities: "Affiliate, Processing",
+    activities: "Processing",
     address: "CAS and Shandong Province Key Laboratory of Experimental Marine Biology, Center for Ocean Mega-Science, Institute of Oceanology, Chinese Academy of Sciences, Qingdao, China",
     latitude: 36.0662299,
     longitude: 120.38299
@@ -3299,7 +3299,7 @@ const projectsData = [
     projectName: "Cartilaginous Fish Genome Project (CFGP)",
     institution: "Institute of Deep-sea Science and Engineering",
     type: "Site",
-    activities: "Affiliate, Processing",
+    activities: "Processing",
     address: "Institute of Deep-sea Science and Engineering, Chinese Academy of Sciences, Sanya 572000, China",
     latitude: 18.2524799,
     longitude: 109.51209
@@ -3353,7 +3353,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Museu de Ciències Naturals de Barcelona",
     type: "Site",
-    activities: "Affiliate, Biobanking",
+    activities: "Biobanking",
     address: "P° Picasso s/n, Parc Ciutadella, 08003, Barcelona, Spain",
     latitude: 41.388123,
     longitude: 2.1860152
@@ -3362,7 +3362,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Institut Botànic de Barcelona (CSIC)",
     type: "Site",
-    activities: "Affiliate, Biobanking",
+    activities: "Biobanking",
     address: "Passeig del Migdia, s/n, Sants-Montjuïc, 08038 Barcelona (Spain)",
     latitude: 41.3615322,
     longitude: 2.1603489
@@ -3371,7 +3371,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Andorra Recerca+Innovació",
     type: "Site",
-    activities: "Affiliate, Processing",
+    activities: "Processing",
     address: "Prat de la Creu, 68-76, AD500 Andorra la Vella (Andorra)",
     latitude: 42.50631740000001,
     longitude: 1.5218355
@@ -3380,7 +3380,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Institut d'Estudis Catalans & Institució Catalana d'Història Natural",
     type: "Site",
-    activities: "Affiliate",
+    activities: "Field collection",
     address: "Carrer del Carme, 47 08001 Barcelona.",
     latitude: 41.3813121,
     longitude: 2.1692108
@@ -3389,7 +3389,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Centre Balear de Biodiversitat",
     type: "Site",
-    activities: "Affiliate, Processing, DNA Sequencing (short reads)",
+    activities: "Processing, DNA Sequencing (short reads)",
     address: "Carrer Blaise Pascal 6 – Parc Bit, 07121 Palma (Illes Balears, Spain)",
     latitude: 39.63628310000001,
     longitude: 2.6325747
@@ -3398,7 +3398,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Centre de Regulació Genòmica (CRG)",
     type: "Site",
-    activities: "Affiliate, Bioinformatics (assembly and annotation)",
+    activities: "Bioinformatics (assembly and annotation)",
     address: "C/ Dr. Aiguader, 88 PRBB Building 08003 Barcelona, Spain",
     latitude: 41.3854203,
     longitude: 2.1944581
@@ -3407,7 +3407,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Observatoire Océanologique de Banyuls s/mer",
     type: "Site",
-    activities: "Affiliate, Processing",
+    activities: "Processing",
     address: "66650 Banyuls-sur-mer, France",
     latitude: 42.4599115,
     longitude: 3.1077277
@@ -3416,7 +3416,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Universitat de València",
     type: "Site",
-    activities: "Affiliate, Processing",
+    activities: "Processing",
     address: "Carrer del Catedrátic José Beltrán Martinez, 2 46980 Paterna, Valencia, Spain",
     latitude: 39.5143213,
     longitude: -0.4253176
@@ -3425,7 +3425,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Herbari BCN",
     type: "Site",
-    activities: "Affiliate, Biobanking",
+    activities: "Biobanking",
     address: "Carrer de Baldiri Reixac, 2, Les Corts, 08028 Barcelona Spain",
     latitude: 41.3815508,
     longitude: 2.1156448
@@ -3434,7 +3434,7 @@ const projectsData = [
     projectName: "Catalan Initiative for the Earth BioGenome Project (CBP)",
     institution: "Universitat Politècnica de València",
     type: "Site",
-    activities: "Affiliate, Processing",
+    activities: "Processing",
     address: "Camino de Vera, s/n 46022 Valencia Spain",
     latitude: 39.4836936,
     longitude: -0.3404766
