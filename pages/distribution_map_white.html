@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Fang Chen" />
-    <title>EBP Global Distribution</title>
+    <title>EBP Global Network</title>
     <script src="./echarts.min.js"></script>
     <script src="./d3.v6.js"></script>
     <script src="./geoMap/world.zh.js"></script>
@@ -28,7 +28,7 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            background-color: white;
+            background-color: #E6F0F5;
         }
         #barContainer {
             width: 80vw;
@@ -44,8 +44,9 @@
             border-radius: 25px;
             overflow: hidden;
             height: 40px;
-            border: 1px solid #000;
+            border: 1px solid #CBD5E1;
             z-index: 99999999;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         }
         .btns button {
             display: inline-flex;
@@ -54,34 +55,64 @@
             align-items: center;
             border: none;
             cursor: pointer;
-            background-color: #fff;
+            background-color: #ffffff;
+            color: #1E293B;
+            font-size: 13px;
             outline: none;
+            transition: background-color 0.15s;
+        }
+        .btns button:hover {
+            background-color: #F1F5F9;
         }
         .btns .selected {
-            background-color: #aaa;
+            background-color: #E2E8F0;
+            font-weight: 600;
         }
         #downloadDropdown {
             position: absolute;
             left: 230px;
             bottom: 20px;
             z-index: 99999999;
-        }
-        #downloadDropdown .dropdown-toggle {
+            display: flex;
             height: 40px;
-            padding: 0 24px;
-            border: 1px solid #000;
             border-radius: 25px;
-            background-color: #fff;
+            border: 1px solid #CBD5E1;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        #downloadDropdown .dropdown-toggle,
+        #downloadDropdown .dropdown-toggle:focus,
+        #downloadDropdown .dropdown-toggle:active,
+        #downloadDropdown .dropdown-toggle.show,
+        #downloadDropdown .dropdown-toggle:not(:disabled):not(.disabled):active {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 24px;
+            border: none !important;
+            border-radius: 25px;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #ffffff;
+            color: #1E293B;
             cursor: pointer;
             font-size: 13px;
+            transition: background-color 0.15s;
+        }
+        #downloadDropdown .dropdown-toggle::after {
+            display: none;
         }
         #downloadDropdown .dropdown-toggle:hover {
-            background-color: #eee;
+            background-color: #F1F5F9;
         }
         #downloadDropdown .dropdown-menu {
             min-width: 120px;
             border-radius: 8px;
+            border: 1px solid #CBD5E1;
             font-size: 13px;
+            color: #1E293B;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         #relationshipGraph {
             width: 766px;
@@ -176,9 +207,9 @@
         <button>Map</button>
         <button>Statistic</button>
     </div>
-    <div id="downloadDropdown" class="dropdown">
-        <button class="dropdown-toggle" data-toggle="dropdown">&#8595; Download Map</button>
-        <div class="dropdown-menu dropdown-menu-right">
+    <div id="downloadDropdown" class="dropup">
+        <button class="dropdown-toggle" data-toggle="dropdown">Download Map</button>
+        <div class="dropdown-menu">
             <a class="dropdown-item" id="downloadSvgBtn" href="#">SVG (vector)</a>
             <a class="dropdown-item" id="downloadPngBtn" href="#">PNG (high-res)</a>
         </div>
@@ -186,21 +217,21 @@
     <div id="mapSidebar">
         <div class="sidebar-title">EBP Global Network</div>
         <div class="legend-item">
-            <span class="lc" style="width:12px;height:12px;background:#dbc649;"></span>
+            <span class="lc" style="width:8px;height:8px;background:#EA580C;"></span>
             <span>Project central operation</span>
         </div>
         <div class="legend-item">
-            <span class="lc" style="width:8px;height:8px;background:#759f98;"></span>
+            <span class="lc" style="width:8px;height:8px;background:#0F5A66;"></span>
             <span>Coordination / collection site</span>
         </div>
         <div class="legend-item">
-            <span class="ls" style="background:#759f98;"></span>
+            <span class="ls" style="background:#0F5A66;"></span>
             <span>Country with EBP presence</span>
         </div>
         <hr class="sidebar-divider">
         <div class="sidebar-caption">
-            <p>Global distribution of the EBP network of networks.</p>
-            <p><strong>Yellow circles</strong> mark <span id="countYellow">—</span> project coordination centers and regional nodes.</p>
+            <p>Geographic distribution of the EBP network of networks.</p>
+            <p><strong>Orange circles</strong> mark <span id="countYellow">—</span> project coordination centers and regional nodes.</p>
             <p><strong>Teal circles</strong> indicate <span id="countTeal">—</span> associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.</p>
             <p><strong>Teal-shaded countries</strong> (<span id="countCountries">—</span>) host at least one EBP-affiliated project or site.</p>
         </div>
@@ -253,8 +284,8 @@
                 });
 
             const colorMap =  [
-                "#dbc649", // color code for project headquarters
-                "#759f98", // color code for areas samples collected
+                "#EA580C", // color code for project headquarters
+                "#0F5A66", // color code for areas samples collected
                 "#F28C28",
                 "#B0B3B8", // Smoke gray
                 "#D4808B", // Golden
@@ -273,7 +304,7 @@
             }).map(item => Promise.resolve({
                 ...item,
                 symbol: 'circle',
-                size: item.isYellow ? 12 : 8,
+                size: item.isYellow ? 8 : 8,
                 color: item.isYellow ? colorMap[0] : colorMap[1]
             }));
 
@@ -286,6 +317,9 @@
                 // const projectMap = Object.fromEntries(projectsData.map(project => ([project.projectName, project])))
                 const countryNameMap = {
                     "united states": "United States of America",
+                    "usa": "United States of America",
+                    "united kingdom": "United Kingdom",
+                    "uk": "United Kingdom",
                     "democratic republic of the congo": "Democratic Republic of the Congo",
                     "türkiye": "Turkey",
                     "czech republic": "Czech Republic",
@@ -338,8 +372,8 @@
                         },
                         itemStyle: {
                             normal: {
-                                areaColor: '#f3f3f3',
-                                borderColor: '#555'
+                                areaColor: '#F8FAFC',
+                                borderColor: '#CBD5E1'
                             },
                             emphasis: {
                                 areaColor: '#ffff00'
@@ -349,7 +383,7 @@
                             {
                             name: countryName,  // Country name (e.g. "United States")
                             itemStyle: {
-                                areaColor: '#759f98' // color code for country presence
+                                areaColor: '#0F5A66' // color code for country presence
                             }
                         }))
                     },
@@ -622,11 +656,11 @@
         initMap(worldJson);
         initBar();
 
-        document.querySelectorAll('button').forEach(btn => {
+        document.querySelectorAll('.btns button').forEach(btn => {
             btn.onclick = e => {
                 const type = e.target.innerHTML;
                 if (type !== 'Map' && type !== 'Statistic') return;
-                document.querySelectorAll('button').forEach(b => { b.className = ''; });
+                document.querySelectorAll('.btns button').forEach(b => { b.className = ''; });
                 e.target.className = 'selected';
                 const map = document.getElementById('mapContainer');
                 const bar = document.getElementById('barContainer');
@@ -636,7 +670,7 @@
                     map.style.display = 'block';
                     bar.style.display = 'none';
                     sidebar.style.display = 'flex';
-                    downloadDropdown.style.display = 'block';
+                    downloadDropdown.style.display = 'flex';
                 } else {
                     map.style.display = 'none';
                     bar.style.display = 'block';
@@ -645,7 +679,7 @@
                 }
             };
         });
-        document.querySelector('button').click();
+        document.querySelector('.btns button').click();
 
         function getSidebarOverlaySVG(svgHeight) {
             const W = 220, PAD = 16, FONT = 13, LH = 21, MAX_CH = 25;
@@ -679,8 +713,8 @@
             }
 
             const captionParts = [
-                [null,                   'Global distribution of the EBP network of networks.'],
-                ['Yellow circles',       ` mark ${yellowN} project coordination centers and regional nodes.`],
+                [null,                   'Geographic distribution of EBP network of networks.'],
+                ['Orange circles',       ` mark ${yellowN} project coordination centers and regional nodes.`],
                 ['Teal circles',         ` indicate ${tealN} associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.`],
                 ['Teal-shaded countries',` (${countryN}) host at least one EBP-affiliated project or site.`],
             ];
@@ -696,12 +730,12 @@
             return `
                 <rect x="0" y="0" width="${W}" height="${svgHeight}" fill="white"/>
                 <line x1="${W}" y1="0" x2="${W}" y2="${svgHeight}" stroke="#ccc" stroke-width="1"/>
-                <text x="${PAD}" y="44" font-family="sans-serif" font-size="15" font-weight="bold" fill="#000">EBP Global Network</text>
-                <circle cx="28" cy="82" r="6" fill="#dbc649"/>
+                <text x="${PAD}" y="44" font-family="sans-serif" font-size="15" font-weight="bold" fill="#000">Geographic distribution of EBP network of networks.</text>
+                <circle cx="28" cy="82" r="4" fill="#EA580C"/>
                 <text x="46" y="87" font-family="sans-serif" font-size="12.5" fill="#000">Project central operation</text>
-                <circle cx="28" cy="110" r="4" fill="#759f98"/>
+                <circle cx="28" cy="110" r="4" fill="#0F5A66"/>
                 <text x="46" y="115" font-family="sans-serif" font-size="12.5" fill="#000">Coordination / collection site</text>
-                <rect x="20" y="128" width="16" height="11" rx="3" fill="#759f98"/>
+                <rect x="20" y="128" width="16" height="11" rx="3" fill="#0F5A66"/>
                 <text x="46" y="137" font-family="sans-serif" font-size="12.5" fill="#000">Country with EBP presence</text>
                 <line x1="${PAD}" y1="158" x2="${W - PAD}" y2="158" stroke="#ccc" stroke-width="1"/>
                 ${captionLines.join('\n                ')}
@@ -713,7 +747,7 @@
             const svgH = svgEl.clientHeight || window.innerHeight;
             return svgEl.outerHTML.replace(
                 /(<svg[^>]*>)/,
-                `$1<rect width="100%" height="100%" fill="white"/>${getSidebarOverlaySVG(svgH)}`
+                `$1<rect width="100%" height="100%" fill="#E6F0F5"/>${getSidebarOverlaySVG(svgH)}`
             );
         }
 

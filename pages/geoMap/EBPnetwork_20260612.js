@@ -5,7 +5,7 @@ const projectsData = [
     projectName: "EBP Secretariat",
     continent: "North America",
     type: "Center",
-    address: "777E. University Dr. Tempe, AZ 85287, United States",
+    address: "777E. University Dr. Tempe, AZ 85287, USA",
     website: "https://www.earthbiogenome.org/",
     latitude: 33.4214,
     longitude: -111.9281
@@ -86,7 +86,7 @@ const projectsData = [
     projectName: "Aquatic Symbiosis Genomics Project (ASG)",
     continent: "Europe",
     type: "Headquarters",
-    address: "Wellcome Trust Genome Campus, Hinxton, Saffron Walden",
+    address: "Wellcome Trust Genome Campus, Hinxton, Saffron Walden, UK",
     website: "https://www.sanger.ac.uk/collaboration/aquatic-symbiosis-genomics-project/",
     latitude: 52.082869,
     longitude: 0.18269
@@ -149,7 +149,7 @@ const projectsData = [
     projectName: "California Conservation Genomics Project (CCGP)",
     continent: "North America",
     type: "Headquarters",
-    address: "Department of Ecology and Evolutionary Biology, UCLA, 610 Charles E Young Drive South, Los Angeles, CA 90095 USA",
+    address: "Department of Ecology and Evolutionary Biology, UCLA, 610 Charles E Young Drive South, Los Angeles, CA 90095, USA",
     website: "https://www.ccgproject.org/",
     latitude: 34.0671903,
     longitude: -118.4403727
@@ -212,7 +212,7 @@ const projectsData = [
     projectName: "Darwin Tree of Life (DTOL)",
     continent: "Europe",
     type: "Headquarters",
-    address: "Wellcome Trust Genome Campus, Hinxton, Saffron Walden CB10 1RQ",
+    address: "Wellcome Trust Genome Campus, Hinxton, Saffron Walden CB10 1RQ, UK",
     website: "https://www.darwintreeoflife.org/",
     latitude: 52.0810484,
     longitude: 0.1838827
@@ -398,6 +398,15 @@ const projectsData = [
     longitude: 115.8410589
   },
   {
+    projectName: "Ocean Genome Legacy Center (OGLC)",
+    continent: "North America",
+    type: "Headquarters",
+    address: "MSC (Marine Science Center), Nahant, MA 01908",
+    website: "https://ogl.northeastern.edu/",
+    latitude: 42.380942,
+    longitude: -70.914944
+  },
+  {
     projectName: "Open Green Genomes (OGG)",
     continent: "North America",
     type: "Headquarters",
@@ -419,7 +428,7 @@ const projectsData = [
     projectName: "Plant and Fungi Trees of Life (PAFTOL)",
     continent: "Europe",
     type: "Headquarters",
-    address: "Kew, Richmond, London, TW9 3AE, United Kingdom",
+    address: "Kew, Richmond, London, TW9 3AE, UK",
     website: null,
     latitude: 51.4852728,
     longitude: -0.2911763
@@ -491,7 +500,7 @@ const projectsData = [
     projectName: "Taiwan BioGenome Project (TBP)",
     continent: "Unknown",
     type: "Headquarters",
-    address: "No. 128, Section 2, Academia Rd, Nangang District, Taipei City, Taiwan 115",
+    address: "No. 128, Section 2, Academia Rd, Nangang District, Taipei City, Taiwan",
     website: null,
     latitude: 25.0425871,
     longitude: 121.6120569
@@ -518,7 +527,7 @@ const projectsData = [
     projectName: "University of California Consortium (CAL-EBP)",
     continent: "North America",
     type: "Headquarters",
-    address: "1115 11th St, Sacramento, CA 95814, United States",
+    address: "1115 11th St, Sacramento, CA 95814, USA",
     website: null,
     latitude: 38.5783786,
     longitude: -121.4925496
@@ -1068,7 +1077,7 @@ const projectsData = [
     institution: "Sanger Institute (DToL, Sanger 25G)",
     type: "Site",
     activities: "Affiliate",
-    address: "Wellcome Genome Campus, Hinxton, Cambridgeshire, CB10 1SA. UK",
+    address: "Wellcome Genome Campus, Hinxton, Cambridgeshire, CB10 1SA, UK",
     latitude: 52.0802014,
     longitude: 0.1871654
   },
@@ -1887,7 +1896,7 @@ const projectsData = [
     institution: "Wellcome Genome Campus",
     type: "Site",
     activities: "Affiliate",
-    address: "Hinxton, Cambridgeshire,, CB10 1SA. UK",
+    address: "Hinxton, Cambridgeshire, CB10 1SA, UK",
     latitude: 52.07976379999999,
     longitude: 0.1853909
   },
@@ -2013,7 +2022,7 @@ const projectsData = [
     institution: "Queen's University",
     type: "Site",
     activities: "Affiliate",
-    address: "University Rd, Belfast BT7 1NN, United Kingdom",
+    address: "University Rd, Belfast BT7 1NN, UK",
     latitude: 54.5845391,
     longitude: -5.9364529
   },
@@ -2058,7 +2067,7 @@ const projectsData = [
     institution: "Pacific Biosciences of California, Inc.",
     type: "Site",
     activities: "Affiliate",
-    address: "1305 O’Brien Drive, Menlo Park, CA 94025 USA",
+    address: "1305 O’Brien Drive, Menlo Park, CA 94025, USA",
     latitude: 37.4775481,
     longitude: -122.1452967
   },
@@ -2364,7 +2373,7 @@ const projectsData = [
     institution: "EBI",
     type: "Site",
     activities: "Affiliate",
-    address: "Wellcome Genome, Hinxton CB10 1SD UK",
+    address: "Wellcome Genome, Hinxton CB10 1SD, UK",
     latitude: 52.0802014,
     longitude: 0.1871654
   },
@@ -2652,7 +2661,7 @@ const projectsData = [
     institution: "Royal Botanical Gardens Kew, London",
     type: "Site",
     activities: "Biobanking, Processing",
-    address: "Kew Foundation Royal Botanic Gardens, Kew Richmond TW9 3AE UK",
+    address: "Kew Foundation Royal Botanic Gardens, Kew Richmond TW9 3AE, UK",
     latitude: 51.4787438,
     longitude: -0.295573
   },
@@ -2967,7 +2976,7 @@ const projectsData = [
     institution: "Nova Southeastern University",
     type: "Site",
     activities: "Affiliate",
-    address: "3300 S University Dr, Fort Lauderdale, FL 33328, United States",
+    address: "3300 S University Dr, Fort Lauderdale, FL 33328, USA",
     latitude: 26.0819628,
     longitude: -80.2485864
   },
@@ -3030,7 +3039,7 @@ const projectsData = [
     institution: "University of Rhode Island",
     type: "Site",
     activities: "Affiliate",
-    address: "45 Upper College Rd, Kingston, RI 02881, United States",
+    address: "45 Upper College Rd, Kingston, RI 02881, USA",
     latitude: 41.4837551,
     longitude: -71.5255193
   },
@@ -3048,7 +3057,7 @@ const projectsData = [
     institution: "Portland State University",
     type: "Site",
     activities: "Affiliate",
-    address: "1825 SW Broadway, Portland, OR 97201, United States",
+    address: "1825 SW Broadway, Portland, OR 97201, USA",
     latitude: 45.5118744,
     longitude: -122.6844194
   },
@@ -3057,7 +3066,7 @@ const projectsData = [
     institution: "University of Oregon",
     type: "Site",
     activities: "Affiliate",
-    address: "1585 E 13th Ave, Eugene, OR 97403, United States",
+    address: "1585 E 13th Ave, Eugene, OR 97403, USA",
     latitude: 44.045953,
     longitude: -123.0705122
   },
@@ -3066,7 +3075,7 @@ const projectsData = [
     institution: "University of California, Merced",
     type: "Site",
     activities: "Affiliate",
-    address: "5200 Lake Rd, Merced, CA 95343, United States",
+    address: "5200 Lake Rd, Merced, CA 95343, USA",
     latitude: 37.3659036,
     longitude: -120.4215763
   },
