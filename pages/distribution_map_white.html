@@ -688,26 +688,55 @@
         document.querySelector('.btns button').click();
 
         function getSidebarOverlaySVG(svgHeight) {
-            const W = 220, PAD = 16, FONT = 13, LH = 21, MAX_CH = 25;
+            // Mirror the on-screen sidebar CSS: 220px wide, 16px padding, caption at
+            // 13px / line-height 1.6, 10px gap between paragraphs.
+            const W = 220, PAD = 16, FONT = 13;
+            const CONTENT_W = W - PAD * 2;              // wrap width = usable text column
+            const CAPTION_TOP = 173, BOTTOM_PAD = 16, PARA_GAP = 10;
             const yellowN  = document.getElementById('countYellow').textContent;
             const tealN    = document.getElementById('countTeal').textContent;
             const countryN = document.getElementById('countCountries').textContent;
             const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+            // Measure real text width in the same font the SVG renders, so wrapping
+            // matches what the browser does on the web (char-count wrapping looked
+            // ragged/"squeaky" because glyph widths vary).
+            const measureCtx = document.createElement('canvas').getContext('2d');
+            measureCtx.font = `${FONT}px sans-serif`;
+            const textW = s => measureCtx.measureText(s).width;
 
             function wrap(str) {
                 const words = str.split(' '), lines = [];
                 let line = '';
                 for (const w of words) {
                     const test = line ? line + ' ' + w : w;
-                    if (test.length > MAX_CH && line) { lines.push(line); line = w; }
+                    if (textW(test) > CONTENT_W && line) { lines.push(line); line = w; }
                     else line = test;
                 }
                 if (line) lines.push(line);
                 return lines;
             }
 
-            function para(boldPart, normalPart, x, y) {
-                const lines = wrap((boldPart || '') + (normalPart || ''));
+            const captionParts = [
+                [null,                   'Geographic distribution of the EBP network of networks.'],
+                ['Orange circles',       ` mark ${yellowN} project coordination centers and regional nodes.`],
+                ['Purple circles',       ` indicate ${tealN} associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.`],
+                ['Teal-shaded countries',` (${countryN}) host at least one EBP-affiliated project or site.`],
+            ];
+
+            // Pre-wrap every paragraph so we know the total line count, then pick a
+            // line height. Default to the web's 1.6 ratio (≈20.8px); only compress if
+            // the caption would otherwise spill below a short canvas.
+            const wrappedParas = captionParts.map(([bold, rest]) => ({
+                bold,
+                lines: wrap((bold || '') + (rest || '')),
+            }));
+            const totalLines = wrappedParas.reduce((n, p) => n + p.lines.length, 0);
+            const gaps = wrappedParas.length - 1;
+            const avail = svgHeight - CAPTION_TOP - BOTTOM_PAD - gaps * PARA_GAP;
+            const LH = Math.max(15, Math.min(FONT * 1.6, avail / totalLines));
+
+            function para(boldPart, lines, x, y) {
                 return lines.map((line, i) => {
                     const yPos = y + i * LH;
                     if (boldPart && i === 0 && line.startsWith(boldPart)) {
@@ -718,32 +747,24 @@
                 });
             }
 
-            const captionParts = [
-                [null,                   'Geographic distribution of EBP network of networks.'],
-                ['Orange circles',       ` mark ${yellowN} project coordination centers and regional nodes.`],
-                ['Purple circles',       ` indicate ${tealN} associated operational sites, including DNA sequencing facilities, biobanks, and field collection stations.`],
-                ['Teal-shaded countries',` (${countryN}) host at least one EBP-affiliated project or site.`],
-            ];
-
-            let y = 185;
+            let y = CAPTION_TOP;
             const captionLines = [];
-            for (const [bold, rest] of captionParts) {
-                const rendered = para(bold, rest, PAD, y);
-                captionLines.push(...rendered);
-                y += rendered.length * LH + 8;
+            for (const { bold, lines } of wrappedParas) {
+                captionLines.push(...para(bold, lines, PAD, y));
+                y += lines.length * LH + PARA_GAP;
             }
 
             return `
                 <rect x="0" y="0" width="${W}" height="${svgHeight}" fill="white"/>
                 <line x1="${W}" y1="0" x2="${W}" y2="${svgHeight}" stroke="#ccc" stroke-width="1"/>
                 <text x="${PAD}" y="44" font-family="sans-serif" font-size="15" font-weight="bold" fill="#000">EBP Global Network</text>
-                <circle cx="28" cy="82" r="4" fill="#EA580C"/>
-                <text x="46" y="87" font-family="sans-serif" font-size="12.5" fill="#000">Project central operation</text>
-                <circle cx="28" cy="110" r="4" fill="#7B4FB5"/>
-                <text x="46" y="115" font-family="sans-serif" font-size="12.5" fill="#000">Coordination / collection site</text>
-                <rect x="20" y="128" width="16" height="11" rx="3" fill="#0F5A66"/>
-                <text x="46" y="137" font-family="sans-serif" font-size="12.5" fill="#000">Country with EBP presence</text>
-                <line x1="${PAD}" y1="158" x2="${W - PAD}" y2="158" stroke="#ccc" stroke-width="1"/>
+                <circle cx="28" cy="70" r="4" fill="#EA580C"/>
+                <text x="46" y="74.5" font-family="sans-serif" font-size="12.5" fill="#000">Project central operation</text>
+                <circle cx="28" cy="96" r="4" fill="#7B4FB5"/>
+                <text x="46" y="100.5" font-family="sans-serif" font-size="12.5" fill="#000">Coordination / collection site</text>
+                <rect x="20" y="116.5" width="16" height="11" rx="3" fill="#0F5A66"/>
+                <text x="46" y="126.5" font-family="sans-serif" font-size="12.5" fill="#000">Country with EBP presence</text>
+                <line x1="${PAD}" y1="148" x2="${W - PAD}" y2="148" stroke="#ccc" stroke-width="1"/>
                 ${captionLines.join('\n                ')}
             `;
         }

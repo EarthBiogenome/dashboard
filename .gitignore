@@ -80,3 +80,6 @@ repo-analytics/*
 !repo-analytics/*.py
 !repo-analytics/*.md
 !repo-analytics/archive/
+
+# v3 API experiments — throwaway playground, not production (see _v3-experiments/)
+_v3-experiments/
