@@ -167,6 +167,17 @@
       <div id="copyright">© 2026 Earth BioGenome Project</div>
     </div>
     <script>
+      /**
+       * Returns the project's abbreviation (the text inside the LAST parentheses),
+       * e.g. "Protist 10,000 Genomes Project (P10K)" → "P10K". Falls back to the
+       * full name when no parenthesized abbreviation is present.
+       */
+      function projectAbbr(name) {
+        if (!name) return name;
+        const m = name.match(/\(([^)]+)\)\s*$/);
+        return m ? m[1].trim() : name;
+      }
+
       function initMap(worldJson) {
         const data = projectsData;
 
@@ -278,8 +289,50 @@
           ergaNode.visible = false;
         }
 
+        // Line style tiers by hierarchy level. Trans-oceanic "trunk" lines
+        // (Secretariat -> umbrella project/node) read heavier and more opaque;
+        // regional umbrella distribution (ERGA node -> affiliate) sits between;
+        // local HQ -> site links are the thinnest and faintest so they recede.
+        const LINE_TIERS = {
+          trunk:    { color: "#3f5f6e", width: 2,   opacity: 0.7 },  // Center -> HQ / Node
+          regional: { color: "#dbc649", width: 1.6, opacity: 0.65 }, // Node -> Site (ERGA)
+          local:    { color: "#5a7a8a", width: 1.3, opacity: 0.5 },  // HQ -> Site
+        };
+        const tierLineStyle = (tier, fromLon, toLon) => ({
+          normal: {
+            ...LINE_TIERS[tier],
+            curveness: toLon >= fromLon ? 0.4 : -0.4,
+          },
+        });
+        // Bright style for the wires belonging to the hovered project. Keeps the
+        // wire's OWN tier color (so color still encodes hierarchy — teal trunk,
+        // gold regional, slate local) but brightens to full opacity and widens
+        // it so the focused project pops out of the muted background.
+        const FOCUS_WIDTH = { trunk: 2.6, regional: 2.2, local: 2 };
+        const focusLineStyle = (tier, fromLon, toLon) => ({
+          normal: {
+            color: LINE_TIERS[tier].color,
+            width: FOCUS_WIDTH[tier],
+            opacity: 1,
+            curveness: toLon >= fromLon ? 0.4 : -0.4,
+          },
+        });
+        // Return a copy of a link with its line pushed to a faint "muted"
+        // opacity, used on hover so the rest of the network recedes while the
+        // focused project's wires stay at full strength.
+        const MUTED_OPACITY = 0.08;
+        const muteLink = (link) => ({
+          ...link,
+          lineStyle: {
+            normal: {
+              ...(link.lineStyle && link.lineStyle.normal),
+              opacity: MUTED_OPACITY,
+            },
+          },
+        });
+
         // Prepare ERGA logic - connect to all ERGA Site entries
-        const ergaAffiliatePoints = aggregatedData.filter(p => 
+        const ergaAffiliatePoints = aggregatedData.filter(p =>
           p.rawData.projectName === "European Reference Genome Atlas (ERGA)" && p.type === "Site"
         );
         // Precompute ERGA links
@@ -289,14 +342,7 @@
             fromName: ergaNode.name,
             toName: point.name,
             coords: [ [ergaNode.value[0], ergaNode.value[1]], point.value ],
-            lineStyle: {
-              normal: {
-                curveness: point.value[0] >= ergaNode.value[0] ? 0.4 : -0.4,
-                color: "#dbc649",
-                width: 1.0,
-                opacity: 0.5,
-              },
-            },
+            lineStyle: tierLineStyle("regional", ergaNode.value[0], point.value[0]),
             visible: false,
           }));
         }
@@ -308,14 +354,7 @@
             fromName: center.name,
             toName: point.name,
             coords: [center.value, point.value],
-            lineStyle: {
-              normal: {
-                curveness: point.value[0] >= center.value[0] ? 0.4 : -0.4,
-                color: "#5a7a8a",
-                width: 1,
-                opacity: 0.35,
-              },
-            },
+            lineStyle: tierLineStyle("trunk", center.value[0], point.value[0]),
             visible: false, // Set initial visibility to false
           }));
 
@@ -377,14 +416,7 @@
                 fromName: ergaNode.name,
                 toName: point.name,
                 coords: [ [ergaNode.value[0], ergaNode.value[1]], point.value ],
-                lineStyle: {
-                  normal: {
-                    curveness: point.value[0] >= ergaNode.value[0] ? 0.4 : -0.4,
-                    color: "#5a7a8a",
-                    width: 1.0,
-                    opacity: 0.35,
-                  },
-                },
+                lineStyle: tierLineStyle("regional", ergaNode.value[0], point.value[0]),
               }));
           }
 
@@ -414,14 +446,7 @@
                 fromName: headquarters.name,
                 toName: site.name,
                 coords: [headquarters.value, site.value],
-                lineStyle: {
-                  normal: {
-                    curveness: site.value[0] >= headquarters.value[0] ? 0.4 : -0.4,
-                    color: "#5a7a8a",
-                    width: 1,
-                    opacity: 0.35,
-                  },
-                },
+                lineStyle: tierLineStyle("local", headquarters.value[0], site.value[0]),
               }));
               visibleSiteLinks.push(...siteLinks);
             });
@@ -436,10 +461,29 @@
             tooltip: {
               trigger: "item",
               enterable: true,
+              confine: true,
+              // Compact box so it covers as little of the map as possible.
+              padding: [4, 6],
+              textStyle: { fontSize: 11, lineHeight: 14 },
+              extraCssText: "max-width:180px;box-shadow:0 1px 3px rgba(0,0,0,0.2);",
+              // Keep the tooltip near the cursor (so the eye doesn't travel to a
+              // corner) but offset it to the side/vertical half with more room,
+              // so it sits beside the marker rather than on top of its wires.
+              position: (pos, params, dom, rect, size) => {
+                const [chartW, chartH] = size.viewSize;
+                const [boxW, boxH] = size.contentSize;
+                const gap = 18;
+                // Prefer the side of the cursor that has room; flip if it would clip.
+                let x = pos[0] + gap;
+                if (x + boxW > chartW) x = pos[0] - boxW - gap;
+                let y = pos[1] + gap;
+                if (y + boxH > chartH) y = pos[1] - boxH - gap;
+                return [Math.max(4, x), Math.max(4, y)];
+              },
               formatter: (params) => {
                 if (params.seriesType === "scatter") {
                   const item = params.data;
-                  let tooltipContent = `<strong>${item.name}</strong><br/>`;
+                  let tooltipContent = `<strong>${projectAbbr(item.name)}</strong><br/>`;
 
                   if (item.rawData.institution) {
                     tooltipContent += `Institution: ${item.rawData.institution}<br/>`;
@@ -495,11 +539,13 @@
               {
                 type: "lines",
                 data: [...visibleLinks, ...visibleSiteLinks, ...visibleRegionalLinks],
+                // Per-link styles come from tierLineStyle(); this is only a
+                // fallback for any link missing an explicit style.
                 lineStyle: {
                   normal: {
-                    color: "#5a7a8a",
-                    width: 1,
-                    opacity: 0.35,
+                    color: LINE_TIERS.local.color,
+                    width: LINE_TIERS.local.width,
+                    opacity: LINE_TIERS.local.opacity,
                     curveness: 0.4,
                   },
                 },
@@ -578,30 +624,46 @@
           if (params.seriesType === "scatter") {
             const item = params.data;
 
-            // Headquarters hover shows related sites
-            if (item.type === "Headquarters") {
-              const relatedSite = aggregatedData.filter(
-                (node) =>
-                  node.rawData.projectName.toLowerCase() === item.rawData.projectName.toLowerCase() &&
-                  node.type === "Site"
+            // Hovering any project marker (its Headquarters hub OR one of its
+            // Sites) focuses that whole project: its parent hub, all its sites,
+            // and the wires between them light up while everything else mutes.
+            if (item.type === "Headquarters" || item.type === "Site") {
+              const projectKey = item.rawData.projectName.toLowerCase();
+
+              // The hub for this project (a Headquarters point). Sites hang off it.
+              const hub = filteredData.find(
+                p => p.type === "Headquarters" && p.rawData.projectName.toLowerCase() === projectKey
               );
-              const data = filteredData.find((node) => node.name === item.name);
-              data.itemStyle.borderColor = "#dbc649";
-              const links = relatedSite.map((point) => ({
-                fromName: item.name,
-                toName: point.name,
-                coords: [item.value, point.value],
-                lineStyle: {
-                  normal: {
-                    curveness: point.value[0] >= item.value[0] ? 0.4 : -0.4,
-                  },
-                },
-              }));
+              const relatedSites = aggregatedData.filter(
+                node => node.rawData.projectName.toLowerCase() === projectKey && node.type === "Site"
+              );
+
+              // Bright hub -> site wires for the focused project.
+              const focusLinks = hub
+                ? relatedSites.map((point) => ({
+                    fromName: hub.name,
+                    toName: point.name,
+                    coords: [hub.value, point.value],
+                    lineStyle: focusLineStyle("local", hub.value[0], point.value[0]),
+                  }))
+                : [];
+
+              if (hub) hub.itemStyle.borderColor = "#dbc649";
+
+              // Everything currently on screen, kept but muted, minus the
+              // focused project's own trunk link (which we don't re-draw here).
+              const mutedBackground = allLinks
+                .filter(link => {
+                  const toPoint = filteredData.find(p => p.name === link.toName);
+                  return toPoint && toPoint.visible && (!hub || link.toName !== hub.name);
+                })
+                .map(muteLink);
+
               myChart.setOption({
                 series: [
                   {
                     type: "scatter",
-                    data: [...filteredData.filter(p => p.visible), ...relatedSite],
+                    data: [...filteredData.filter(p => p.visible), ...relatedSites],
                                          symbolSize: function (val) {
                        return val.type === "Site"
                          ? 3
@@ -612,40 +674,30 @@
                   },
                   {
                     type: "lines",
-                    data: links,
-                    lineStyle: {
-                      normal: {
-                        color: "#5a7a8a",
-                        width: 1,
-                        opacity: 0.35,
-                        curveness: 0.4,
-                      },
-                    },
+                    data: [...mutedBackground, ...focusLinks],
                   },
                 ],
               });
             }
 
-            // Center point hover shows global flight lines
+            // Center point hover brightens all trunk wires (Secretariat -> HQ),
+            // keeping the teal trunk color but widening to the focus weight.
             if (item.type === "Center") {
-              const visibleLinks = allLinks.filter(link => {
-                const toPoint = filteredData.find(p => p.name === link.toName);
-                return toPoint && toPoint.visible;
-              });
+              const visibleLinks = allLinks
+                .filter(link => {
+                  const toPoint = filteredData.find(p => p.name === link.toName);
+                  return toPoint && toPoint.visible;
+                })
+                .map(link => ({
+                  ...link,
+                  lineStyle: focusLineStyle("trunk", link.coords[0][0], link.coords[1][0]),
+                }));
               myChart.setOption({
                 series: [
                   { type: "scatter", data: filteredData.filter(p => p.visible) },
                   {
                     type: "lines",
                     data: visibleLinks,
-                    lineStyle: {
-                      normal: {
-                        color: "#5a7a8a",
-                        width: 1,
-                        opacity: 0.35,
-                        curveness: 0.4,
-                      },
-                    },
                   },
                 ],
               });
@@ -656,9 +708,13 @@
         myChart.on("mouseout", function (params) {
           if (params.seriesType === "scatter") {
             const item = params.data;
-            if (item.type === "Headquarters") {
-              const data = filteredData.find((node) => node.name === item.name);
-              data.itemStyle.borderColor = "transparent";
+            if (item.type === "Headquarters" || item.type === "Site") {
+              // Reset the focused project's hub border, then rebuild the base view.
+              const projectKey = item.rawData.projectName.toLowerCase();
+              const hub = filteredData.find(
+                p => p.type === "Headquarters" && p.rawData.projectName.toLowerCase() === projectKey
+              );
+              if (hub) hub.itemStyle.borderColor = "transparent";
               updateVisualization();
             }
           }
