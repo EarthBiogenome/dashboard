@@ -11,6 +11,29 @@ import { isLeafNode } from "../nodes";
  * @param {String} nwk_str - A string representing a phylogenetic tree in Newick format.
  * @param {Object} bootstrap_values.
  * @returns {Object} An object with keys ``json`` and ``error``.
+ * @example
+ * // Parse a simple Newick tree with branch lengths
+ * const newick = "((A:0.1,B:0.2):0.05,C:0.3);";
+ * const result = newickParser(newick);
+ * if (result.error) {
+ *   console.error("Parse error:", result.error);
+ * } else {
+ *   console.log("Parsed tree:", result.json);
+ * }
+ * 
+ * @example
+ * // Parse tree with tagged branches
+ * const taggedNewick = "((A:0.1,B{Foreground}:0.2){Foreground}:0.05,C:0.3);";
+ * const result = newickParser(taggedNewick);
+ * // Tagged branches will have annotation properties
+ * 
+ * @example
+ * // Parse tree with custom delimiters
+ * const nhxNewick = "((A:0.1,B:0.2[&&NHX:S=species1:D=Y]):0.05,C:0.3);";
+ * const result = newickParser(nhxNewick, {
+ *   left_delimiter: '[',
+ *   right_delimiter: ']'
+ * });
  */
 
 function newickParser(nwk_str, options={}) {
@@ -228,6 +251,25 @@ function newickParser(nwk_str, options={}) {
  * what label is written (optional).
  * @param {Node} node - start at this node (default == root)
  * @returns {String} newick - Phylogenetic tree serialized as a Newick string.
+ * @example
+ * // Export tree to basic Newick format
+ * const tree = new Phylotree(newick);
+ * const exportedNewick = tree.getNewick();
+ * console.log(exportedNewick); // "((A:0.1,B:0.2):0.05,C:0.3);"
+ * 
+ * @example
+ * // Export with custom node annotations
+ * const annotatedNewick = tree.getNewick(function(node) {
+ *   if (node.data.selected) {
+ *     return "{SELECTED}";
+ *   }
+ *   return "";
+ * });
+ * 
+ * @example
+ * // Export a subtree starting from a specific node
+ * const nodeOfInterest = tree.getNodeByName("A");
+ * const subtreeNewick = tree.getNewick(null, nodeOfInterest);
  */
 
 
@@ -276,6 +318,54 @@ export function getNewick(annotator, root) {
   nodeDisplay(root || this.nodes);
 
   return element_array.join("")+";";
+}
+
+/**
+ * Generate Newick string with selection tags.
+ *
+ * @param {Object} options - Configuration options.
+ * @param {string} [options.tag='Foreground'] - Tag name for selected nodes (single selection mode).
+ * @param {boolean} [options.multiSet=false] - Use multi-set mode tags (uses set names as tags).
+ * @returns {string} Tagged Newick string.
+ * @example
+ * // Basic tagged output (uses selection state)
+ * const tagged = tree.getTaggedNewick();
+ * // Returns: "((A{Foreground}:0.1,B:0.2):0.05,C{Foreground}:0.3);"
+ *
+ * @example
+ * // Custom tag name
+ * const tagged = tree.getTaggedNewick({ tag: 'TEST' });
+ * // Returns: "((A{TEST}:0.1,B:0.2):0.05,C{TEST}:0.3);"
+ *
+ * @example
+ * // Multi-set mode (uses set names as tags)
+ * const tagged = tree.getTaggedNewick({ multiSet: true });
+ * // Returns: "((A{TEST}:0.1,B{REFERENCE}):0.2,C{TEST}:0.3);"
+ */
+export function getTaggedNewick(options = {}) {
+  const tag = options.tag || 'Foreground';
+  const multiSet = options.multiSet || false;
+
+  // Get selection attribute name from display if available
+  const selectionAttr = this.display
+    ? this.display.selection_attribute_name
+    : 'selected';
+
+  // Get selection sets from display if in multi-set mode
+  const selectionSets = this.display ? this.display._selectionSets : null;
+
+  const annotator = (node) => {
+    if (multiSet && node._selectionSet) {
+      // Multi-set mode: use set name as tag
+      return `{${node._selectionSet}}`;
+    } else if (node[selectionAttr]) {
+      // Single selection mode: use configured tag
+      return `{${tag}}`;
+    }
+    return '';
+  };
+
+  return this.getNewick(annotator);
 }
 
 export default newickParser;
