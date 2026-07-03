@@ -312,7 +312,7 @@ const projectsData = [
     continent: "South America",
     type: "Headquarters",
     address: "Praia de Botafogo, Rio de Janeiro/RJ, Brazil, CEP: 22250-145",
-    website: "https://urldefense.com/v3/__https://www.itv.org/en/genomics-of-the-brazilian-biodiversity-gbb/__;!!IKRxdwAv5BmarQ!awfBpNjxXStAg2W86oAE-9zIWZ_y3yq2WSpBC5DA20KCtwDsYxLAWcXZfkH_S3aLYhmr9supxH1Z-ySQGVPviWD_3DqfjzbF$",
+    website: "https://www.itv.org/projeto-genomica-da-biodiversidade-brasileira/en/homepage/",
     latitude: -22.9410323,
     longitude: -43.178463
   },

@@ -374,6 +374,17 @@
         let mapChartInstance = null;
 
         /**
+         * Returns the project's abbreviation (the text inside the LAST parentheses),
+         * e.g. "Darwin Tree of Life (DTOL)" → "DTOL". Falls back to the full project
+         * name when no parenthesized abbreviation is present.
+         */
+        function projectAbbr(name) {
+            if (!name) return name;
+            const m = name.match(/\(([^)]+)\)\s*$/);
+            return m ? m[1].trim() : name;
+        }
+
+        /**
          * Pre-resolved "City, State/Province, Country" labels for every displayed
          * center (Center/Headquarters/Node), derived from each entry's coordinates
          * and address. States/provinces use postal abbreviations and countries use
@@ -732,7 +743,7 @@
                             if (params.seriesIndex === 1) {
                                 const p = selectedMarker;
                                 if (!p) return '';
-                                let html = `<strong>${p.name}</strong>`;
+                                let html = `<strong>${projectAbbr(p.name)}</strong>`;
                                 if (p.institution) html += `<br/>Institution: ${p.institution}`;
                                 if (p.activities) html += `<br/>Activities: ${p.activities}`;
                                 if (p.website) html += `<br/><a href="${p.website}" target="_blank">${p.website}</a>`;
@@ -741,11 +752,11 @@
                             const c = params.data && params.data._cluster;
                             if (!c) return '';
                             if (c.count > 1) {
-                                const names = c.group.map(p => `• ${p.name}`).join('<br/>');
+                                const names = c.group.map(p => `• ${projectAbbr(p.name)}`).join('<br/>');
                                 return `<strong>${c.count} Project Centers in this region. Click to expand.</strong><br/>${names}`;
                             }
                             const p = c.group[0];
-                            let html = `<strong>${p.name}</strong>`;
+                            let html = `<strong>${projectAbbr(p.name)}</strong>`;
                             if (p.institution) html += `<br/>Institution: ${p.institution}`;
                             if (p.activities) html += `<br/>Activities: ${p.activities}`;
                             if (p.website) html += `<br/><a href="${p.website}" target="_blank">${p.website}</a>`;

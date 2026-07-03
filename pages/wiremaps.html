@@ -72,6 +72,28 @@
         flex-shrink: 0;
       }
 
+      /* Intro / help note at the top of the sidebar */
+      #sidebarIntro {
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #5a6363;
+      }
+
+      #sidebarIntro p {
+        font-size: 12.5px;
+        line-height: 1.5;
+        color: #d3d8d8;
+        margin-bottom: 8px;
+      }
+
+      #sidebarIntro p:last-child {
+        margin-bottom: 0;
+      }
+
+      #sidebarIntro strong {
+        color: #f3f3f3;
+      }
+
       .filter-group {
         margin-bottom: 15px;
       }
@@ -124,6 +146,9 @@
       <div id="mainLayout">
         <div id="mapContainer"></div>
         <div id="filterPanel">
+          <div id="sidebarIntro">
+            <p>To focus on specific projects, untick <strong>EBP Secretariat</strong> and tick individual projects — or simply hover a marker to highlight its affiliate sites.</p>
+          </div>
           <div class="filter-group">
             <div id="centerFilters"></div>
           </div>
@@ -536,6 +561,14 @@
             }
           });
         });
+
+        // Default landing view: show the full network (EBP Secretariat + wires to
+        // every affiliated project) so the map isn't blank on arrival. This mirrors
+        // the state produced by ticking the EBP Secretariat checkbox.
+        center.visible = true;
+        const centerBox = document.getElementById(`center-${center.name}`);
+        if (centerBox) centerBox.checked = true;
+        updateHeadquartersVisibility(true);
 
         // Initial visualization update
         updateVisualization();
