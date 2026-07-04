@@ -187,8 +187,6 @@
         const addressMap = {};
         const aggregatedData = data.map((item) => {
           const address = item.address;
-          item.name =
-            (item.type === "Headquarters" || item.type === "Node") ? item.projectName : item.institution;
           addressMap[address] = (addressMap[address] || 0) + 1;
 
           const offsetX =
@@ -197,7 +195,14 @@
             addressMap[address] > 1 ? ((Math.random() - 0.5) * 2) / 5 : 0;
 
           const point = {
+            // `name` is the identity key used for checkbox IDs and link
+            // from/to matching — always the projectName so a project's hub and
+            // its sites resolve to the same project.
             name: item.projectName,
+            // `displayName` is the tooltip title: the project abbreviation for
+            // every marker, so a site still shows which project it belongs to
+            // (its institution appears on the line below).
+            displayName: projectAbbr(item.projectName),
             value: [
               item.longitude + offsetX,
               item.latitude + offsetY,
@@ -398,7 +403,7 @@
             const visibleErgaSites = ergaAffiliatePoints.filter(point => point.visible).map(point => ({
               ...point,
               value: [point.value[0], point.value[1], 1],
-              symbolSize: 3,
+              symbolSize: 4,
               symbol: 'circle',
               itemStyle: {
                 color: "#2c4a52",
@@ -458,14 +463,19 @@
             lines: [...visibleLinks, ...visibleSiteLinks, ...visibleRegionalLinks]
           });
           myChart.setOption({
+            // Series are swapped on every hover; without this, ECharts animates
+            // re-rendered points (esp. ERGA sites) in each time, which reads as
+            // a flash. Disable animation so dots stay steady.
+            animation: false,
             tooltip: {
               trigger: "item",
               enterable: true,
               confine: true,
-              // Compact box so it covers as little of the map as possible.
+              // Compact box, but wrap long text onto multiple lines instead of
+              // truncating it (long institution names overflowed the old cap).
               padding: [4, 6],
               textStyle: { fontSize: 11, lineHeight: 14 },
-              extraCssText: "max-width:180px;box-shadow:0 1px 3px rgba(0,0,0,0.2);",
+              extraCssText: "max-width:210px;white-space:normal;word-break:break-word;box-shadow:0 1px 3px rgba(0,0,0,0.2);",
               // Keep the tooltip near the cursor (so the eye doesn't travel to a
               // corner) but offset it to the side/vertical half with more room,
               // so it sits beside the marker rather than on top of its wires.
@@ -483,10 +493,10 @@
               formatter: (params) => {
                 if (params.seriesType === "scatter") {
                   const item = params.data;
-                  let tooltipContent = `<strong>${projectAbbr(item.name)}</strong><br/>`;
+                  let tooltipContent = `<strong>${item.displayName}</strong><br/>`;
 
                   if (item.rawData.institution) {
-                    tooltipContent += `Institution: ${item.rawData.institution}<br/>`;
+                    tooltipContent += `${item.rawData.institution}<br/>`;
                   }
 
                   if (item.website) {
@@ -533,7 +543,7 @@
                   if (point && point.type === "Headquarters") return 5;
                   if (point && point.type === "Center") return 9;
                   if (point && point.type === "Node") return 8;
-                  return 3;
+                  return 4;
                 },
               },
               {
@@ -627,16 +637,26 @@
             // Hovering any project marker (its Headquarters hub OR one of its
             // Sites) focuses that whole project: its parent hub, all its sites,
             // and the wires between them light up while everything else mutes.
-            if (item.type === "Headquarters" || item.type === "Site") {
+            if (item.type === "Headquarters" || item.type === "Node" || item.type === "Site") {
               const projectKey = item.rawData.projectName.toLowerCase();
 
-              // The hub for this project (a Headquarters point). Sites hang off it.
+              // The hub for this project: a Headquarters for most projects, or a
+              // Node for regional umbrellas like ERGA. Sites hang off it. The
+              // wire tier depends on which: HQ -> Site is "local", Node -> Site
+              // is "regional" (gold).
               const hub = filteredData.find(
-                p => p.type === "Headquarters" && p.rawData.projectName.toLowerCase() === projectKey
+                p => (p.type === "Headquarters" || p.type === "Node") &&
+                     p.rawData.projectName.toLowerCase() === projectKey
               );
-              const relatedSites = aggregatedData.filter(
+              const hubTier = hub && hub.type === "Node" ? "regional" : "local";
+              let relatedSites = aggregatedData.filter(
                 node => node.rawData.projectName.toLowerCase() === projectKey && node.type === "Site"
               );
+              // Node (ERGA) sites carry independent visibility flags; only wire
+              // up the ones actually shown.
+              if (hub && hub.type === "Node") {
+                relatedSites = relatedSites.filter(site => site.visible);
+              }
 
               // Bright hub -> site wires for the focused project.
               const focusLinks = hub
@@ -644,33 +664,75 @@
                     fromName: hub.name,
                     toName: point.name,
                     coords: [hub.value, point.value],
-                    lineStyle: focusLineStyle("local", hub.value[0], point.value[0]),
+                    lineStyle: focusLineStyle(hubTier, hub.value[0], point.value[0]),
                   }))
                 : [];
 
               if (hub) hub.itemStyle.borderColor = "#dbc649";
 
-              // Everything currently on screen, kept but muted, minus the
-              // focused project's own trunk link (which we don't re-draw here).
-              const mutedBackground = allLinks
-                .filter(link => {
-                  const toPoint = filteredData.find(p => p.name === link.toName);
-                  return toPoint && toPoint.visible && (!hub || link.toName !== hub.name);
-                })
-                .map(muteLink);
+              // Rebuild the same wires the base view is currently showing, but
+              // muted — and skip the focused project so its own wires only
+              // appear once, bright. This must mirror updateVisualization():
+              // when the Secretariat is selected the base view shows trunk
+              // (Center -> HQ) links; otherwise it shows each visible HQ's
+              // local (HQ -> Site) links.
+              const center = filteredData.find(p => p.type === "Center");
+              const isCenterSelected = center && center.visible;
+
+              let mutedBackground;
+              // Site markers from OTHER visible projects, so their dots don't
+              // disappear when hovering one project in a multi-project view.
+              const otherSitePoints = [];
+              if (isCenterSelected) {
+                // Trunk links to every other visible HQ.
+                mutedBackground = allLinks
+                  .filter(link => {
+                    const toPoint = filteredData.find(p => p.name === link.toName);
+                    return toPoint && toPoint.visible && (!hub || link.toName !== hub.name);
+                  })
+                  .map(muteLink);
+              } else {
+                // Hub -> Site links for every OTHER visible project (both
+                // Headquarters hubs and Node hubs like ERGA), muted.
+                mutedBackground = [];
+                filteredData
+                  .filter(p => (p.type === "Headquarters" || p.type === "Node") &&
+                               p.visible && (!hub || p.name !== hub.name))
+                  .forEach(otherHub => {
+                    const otherTier = otherHub.type === "Node" ? "regional" : "local";
+                    let otherSites = aggregatedData.filter(
+                      node => node.rawData.projectName.toLowerCase() === otherHub.rawData.projectName.toLowerCase() &&
+                              node.type === "Site"
+                    );
+                    // Node (ERGA) sites carry independent visibility flags; honor
+                    // them so muted wires match exactly what the base view drew.
+                    if (otherHub.type === "Node") {
+                      otherSites = otherSites.filter(site => site.visible);
+                    }
+                    otherSites.forEach(site => {
+                      otherSitePoints.push(site);
+                      mutedBackground.push(muteLink({
+                        coords: [otherHub.value, site.value],
+                        lineStyle: tierLineStyle(otherTier, otherHub.value[0], site.value[0]),
+                      }));
+                    });
+                  });
+              }
 
               myChart.setOption({
                 series: [
                   {
                     type: "scatter",
-                    data: [...filteredData.filter(p => p.visible), ...relatedSites],
-                                         symbolSize: function (val) {
-                       return val.type === "Site"
-                         ? 3
-                         : val.type === "Headquarters"
-                         ? 5
-                         : 9;
-                     },
+                    data: [...filteredData.filter(p => p.visible), ...otherSitePoints, ...relatedSites],
+                    // Resolve the point object (same as the base view) so sizes
+                    // match exactly and dots don't flash/resize on hover.
+                    symbolSize: function (val) {
+                      const point = val[2] ? [...filteredData.filter(p => p.visible), ...otherSitePoints, ...relatedSites].find(p => p.value[0] === val[0] && p.value[1] === val[1]) : null;
+                      if (point && point.type === "Headquarters") return 5;
+                      if (point && point.type === "Center") return 9;
+                      if (point && point.type === "Node") return 8;
+                      return 4;
+                    },
                   },
                   {
                     type: "lines",
@@ -708,7 +770,7 @@
         myChart.on("mouseout", function (params) {
           if (params.seriesType === "scatter") {
             const item = params.data;
-            if (item.type === "Headquarters" || item.type === "Site") {
+            if (item.type === "Headquarters" || item.type === "Node" || item.type === "Site") {
               // Reset the focused project's hub border, then rebuild the base view.
               const projectKey = item.rawData.projectName.toLowerCase();
               const hub = filteredData.find(
