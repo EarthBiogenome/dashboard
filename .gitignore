@@ -83,3 +83,6 @@ repo-analytics/*
 
 # v3 API experiments — throwaway playground, not production (see _v3-experiments/)
 _v3-experiments/
+
+# Design concept mockups — local-only vision/design artifacts, not production pages
+_design-concepts/

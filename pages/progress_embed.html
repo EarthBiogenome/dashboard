@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EBP Phase I Progress</title>
+    <style>
+        :root {
+            --bg-alt:        #f4f6f4;
+            --accent:        #0d7a47;
+            --accent-mid:    #16a34a;
+            --text:          #111827;
+            --text-dim:      #4b5563;
+            --border:        #e5e7eb;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+            background: transparent;
+            padding: 1rem;
+        }
+
+        /* ── Progress Section ────────────────────────────── */
+        .progress-section {
+            background: var(--bg-alt);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.25rem 2rem 2rem;
+        }
+
+        .progress-inner {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .progress-header {
+            margin-bottom: 2rem;
+        }
+
+        .progress-headline {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 0.3rem;
+            text-align: center;
+        }
+
+        .progress-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 0.6rem;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+
+        .legend-swatch {
+            width: 11px;
+            height: 11px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .legend-swatch-total {
+            background: linear-gradient(135deg, #5fae80 0%, #6fbb8d 100%);
+        }
+
+        .legend-swatch-quality {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-mid) 100%);
+        }
+
+        /* ── Progress Charts ─────────────────────────────── */
+        .progress-chart {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .progress-chart + .progress-chart {
+            margin-top: 1.5rem;
+        }
+
+        .progress-label {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            min-width: 100px;
+            height: 44px;
+        }
+
+        .progress-label svg {
+            width: 1.3rem;
+            height: 1.3rem;
+            fill: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .progress-bar-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .progress-bar-wrapper { position: relative; }
+
+        .progress-bar {
+            display: flex;
+            height: 44px;
+            background: #d8e6de;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .progress-completed {
+            background: linear-gradient(135deg, #5fae80 0%, #6fbb8d 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 0;
+            max-width: 100%;
+            position: relative;
+            cursor: default;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .progress-completed-gloss {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%);
+            border-radius: 8px 0 0 0;
+            pointer-events: none;
+        }
+
+        .progress-quality {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-mid) 100%);
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 2px 0 8px rgba(13, 122, 71, 0.3);
+            cursor: default;
+        }
+
+        /* ── Bar segment tooltips ─────────────────────────── */
+        .progress-completed[data-tooltip]::before,
+        .progress-quality[data-tooltip]::before,
+        .progress-incomplete[data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            color: var(--text);
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+            padding: 4px 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+            z-index: 5;
+        }
+
+        .progress-completed[data-tooltip]::after,
+        .progress-quality[data-tooltip]::after,
+        .progress-incomplete[data-tooltip]::after {
+            content: '';
+            position: absolute;
+            bottom: calc(100% + 4px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: #fff;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+            z-index: 5;
+        }
+
+        .progress-completed[data-tooltip]:hover::before,
+        .progress-completed[data-tooltip]:hover::after {
+            opacity: 1;
+        }
+
+        .progress-completed:has(.progress-quality:hover)::before,
+        .progress-completed:has(.progress-quality:hover)::after {
+            opacity: 0;
+        }
+
+        .progress-quality[data-tooltip]:hover::before,
+        .progress-quality[data-tooltip]:hover::after {
+            opacity: 1;
+        }
+
+        .progress-incomplete[data-tooltip]:hover::before,
+        .progress-incomplete[data-tooltip]:hover::after {
+            opacity: 1;
+        }
+
+        .progress-incomplete { background: transparent; flex: 1; position: relative; cursor: default; }
+
+        .progress-axis {
+            position: relative;
+            height: 35px;
+        }
+
+        .progress-axis-line {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: #bbb;
+        }
+
+        .progress-axis-tick {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: absolute;
+            transform: translateX(-50%);
+            top: 0;
+        }
+
+        .progress-axis-tick::before {
+            content: '';
+            width: 1px;
+            height: 8px;
+            background-color: #999;
+        }
+
+        .progress-axis-label {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .progress-footnote {
+            max-width: 960px;
+            margin: 1.25rem auto 0;
+            text-align: center;
+            font-size: 0.73rem;
+            color: var(--text-dim);
+        }
+
+        .progress-footnote a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .progress-footnote a:hover { text-decoration: underline; }
+
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width: 640px) {
+            .progress-section { padding: 1.75rem 1.25rem 1.5rem; }
+            .progress-headline { font-size: 1.3rem; }
+            .progress-chart { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .progress-label { height: auto; min-width: unset; }
+            .progress-bar-container { width: 100%; }
+            .progress-bar { height: 38px; }
+            .progress-completed { font-size: 0.9rem; }
+            .progress-axis-label { font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <section class="progress-section">
+        <div class="progress-inner">
+            <div class="progress-header">
+                <h2 class="progress-headline">EBP Phase I Progress</h2>
+                <div class="progress-legend">
+                    <span class="legend-item"><span class="legend-swatch legend-swatch-quality"></span>Meeting EBP standard</span>
+                    <span class="legend-item"><span class="legend-swatch legend-swatch-total"></span>Total EBP assemblies</span>
+                </div>
+            </div>
+
+            <div class="progress-chart">
+                <div class="progress-label">
+                    <!-- dna icon -->
+                    <svg viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path d="M144 0a16 16 0 0 0 0 32c1.1 0 2.2 0 3.2.1C147 61 158.7 84 175.5 104h97c16.8-20 28.5-43 28.3-71.9 1 0 2.1-.1 3.2-.1a16 16 0 0 0 0-32H144zM303 32c-.1 5.4-.7 10.7-1.6 16h-155c-.9-5.3-1.5-10.6-1.6-16h158.2zM144 480a16 16 0 0 0 0 32h160a16 16 0 0 0 0-32c-1.1 0-2.2 0-3.2-.1-.2-28.9-11.9-51.9-28.7-71.9h-97c-16.8 20-28.5 43-28.3 71.9-1 0-2.1.1-3.2.1zm1.8-32c.1-5.4.7-10.7 1.6-16h155c.9 5.3 1.5 10.6 1.6 16H145.8zM32 0a16 16 0 0 1 16 16c0 92.6 33.5 143 68.4 176H331.6C366.5 159 400 108.6 400 16a16 16 0 0 1 32 0c0 105.5-40.3 163.9-79.3 200 39 36.1 79.3 94.5 79.3 200a16 16 0 0 1-32 0c0-92.6-33.5-143-68.4-176H116.4C81.5 353 48 403.4 48 496a16 16 0 0 1-32 0c0-105.5 40.3-163.9 79.3-200C56.3 259.9 16 201.5 16 96 16 43 16 16 32 0z"/></svg>
+                    <span>Species</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar">
+                            <div class="progress-completed" id="progress-completed" style="width: 0%;" data-tooltip="Loading…">
+                                <div class="progress-completed-gloss"></div>
+                                <div class="progress-quality" id="progress-quality" style="width: 0%;" data-tooltip=""></div>
+                            </div>
+                            <div class="progress-incomplete" id="progress-incomplete" data-tooltip=""></div>
+                        </div>
+                    </div>
+                    <div class="progress-axis" id="progress-axis">
+                        <div class="progress-axis-line"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-chart">
+                <div class="progress-label">
+                    <!-- layer-group icon -->
+                    <svg viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg"><path d="M264.5 5.2c14.9-6.9 32.1-6.9 47 0l218.6 101c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 149.8C37.4 145.8 32 137.3 32 128s5.4-17.9 13.9-21.8L264.5 5.2zM476.9 209.6l53.2 24.6c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 277.8C37.4 273.8 32 265.3 32 256s5.4-17.9 13.9-21.8l53.2-24.6 152 70.2c23.4 10.8 50.4 10.8 73.8 0l152-70.2zm-152 198.2l152-70.2 53.2 24.6c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 405.8C37.4 401.8 32 393.3 32 384s5.4-17.9 13.9-21.8l53.2-24.6 152 70.2c23.4 10.8 50.4 10.8 73.8 0z"/></svg>
+                    <span>Families</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar">
+                            <div class="progress-completed" id="progress-family-completed" style="width: 0%;" data-tooltip="Loading…">
+                                <div class="progress-completed-gloss"></div>
+                                <div class="progress-quality" id="progress-family-quality" style="width: 0%;" data-tooltip=""></div>
+                            </div>
+                            <div class="progress-incomplete" id="progress-family-incomplete" data-tooltip=""></div>
+                        </div>
+                    </div>
+                    <div class="progress-axis" id="progress-family-axis">
+                        <div class="progress-axis-line"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="progress-footnote">
+            Live data from <a href="https://goat.genomehubs.org" target="_blank" rel="noopener">GoaT</a>.
+            Explore the full <a href="https://earthbiogenome.github.io/dashboard/" target="_blank" rel="noopener">EBP Dashboard</a>.
+        </p>
+    </section>
+
+    <script>
+        // Progress data (mirrors the EBP Dashboard landing page)
+        const PHASE_I_GOAL = 10000;
+        const SPECIES_API_URL = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=1";
+        const EBP_ARC_URL = "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span%20AND%20bioproject%3DPRJNA533106&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B0%5D=bioproject&caption=EBP%20taxa&taxonomy=ncbi&result=taxon&queryId=8EWp2aVcZB";
+        const INSDC_ARC_URL = "https://goat.genomehubs.org/api/v2/report?report=arc&x=assembly_span&rank=phylum%2Cclass%2Corder%2Cfamily%2Cgenus%2Cspecies&includeEstimates=true&excludeAncestral%5B0%5D=assembly_span&excludeMissing%5B0%5D=assembly_span&caption=INSDC%20taxa&taxonomy=ncbi&result=taxon&queryId=R8LGXM94GW";
+        const SPECIES_QUALITY_API_URL = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28species%29%20AND%20bioproject%3DPRJNA533106%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&size=1";
+        const FAMILY_QUALITY_API_URL = "https://goat.genomehubs.org/api/v2/search?result=taxon&query=tax_rank%28family%29%20AND%20bioproject%3DPRJNA533106%20AND%20ebp_standard_criteria&taxonomy=ncbi&includeEstimates=true&excludeMissing%5B0%5D=bioproject&excludeAncestral%5B0%5D=bioproject&excludeMissing%5B1%5D=ebp_standard_criteria&size=1";
+
+        function createAxisTicks(axisContainerId, max, tickValues) {
+            const axisContainer = document.getElementById(axisContainerId);
+            if (!axisContainer) return;
+            axisContainer.querySelectorAll('.progress-axis-tick').forEach(el => el.remove());
+            tickValues.forEach(value => {
+                const tick = document.createElement('div');
+                tick.classList.add('progress-axis-tick');
+                tick.style.left = `${(value / max) * 100}%`;
+                const label = document.createElement('span');
+                label.classList.add('progress-axis-label');
+                label.textContent = value.toLocaleString();
+                tick.appendChild(label);
+                axisContainer.appendChild(tick);
+            });
+        }
+
+        async function fetchSpeciesCount() {
+            try {
+                const response = await fetch(SPECIES_API_URL);
+                if (!response.ok) throw new Error('HTTP error: ' + response.status);
+                const data = await response.json();
+                const speciesCount = (data.status && data.status.hits) ? data.status.hits : 0;
+                if (speciesCount === 0) throw new Error('Zero hits returned');
+                updateProgressBar(speciesCount);
+            } catch (error) {
+                console.error('Error fetching species count:', error);
+                // Retry once after 3 seconds
+                setTimeout(async () => {
+                    try {
+                        const response = await fetch(SPECIES_API_URL);
+                        if (!response.ok) throw new Error('HTTP error: ' + response.status);
+                        const data = await response.json();
+                        const speciesCount = (data.status && data.status.hits) ? data.status.hits : 0;
+                        if (speciesCount > 0) {
+                            updateProgressBar(speciesCount);
+                        } else {
+                            document.getElementById('progress-completed').setAttribute('data-tooltip', 'Data unavailable');
+                            createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
+                        }
+                    } catch (retryError) {
+                        console.error('Retry failed:', retryError);
+                        document.getElementById('progress-completed').setAttribute('data-tooltip', 'Data unavailable');
+                        createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
+                    }
+                }, 3000);
+            }
+        }
+
+        function updateProgressBar(count) {
+            const percentage = Math.min((count / PHASE_I_GOAL) * 100, 100);
+            const completedEl = document.getElementById('progress-completed');
+            completedEl.style.width = `${percentage}%`;
+            completedEl.setAttribute('data-tooltip', count.toLocaleString());
+            document.getElementById('progress-incomplete').setAttribute('data-tooltip', `Target: ${PHASE_I_GOAL.toLocaleString()}`);
+            createAxisTicks('progress-axis', PHASE_I_GOAL, [0, 2000, 4000, 6000, 8000, 10000]);
+            fetchSpeciesQualityCount(count);
+        }
+
+        async function fetchSpeciesQualityCount(ebpCount) {
+            try {
+                const response = await fetch(SPECIES_QUALITY_API_URL);
+                if (!response.ok) throw new Error('HTTP error: ' + response.status);
+                const data = await response.json();
+                const qualityCount = (data.status && data.status.hits) ? data.status.hits : 0;
+                const qualityPercentage = ebpCount > 0 ? Math.min((qualityCount / ebpCount) * 100, 100) : 0;
+                const qualityEl = document.getElementById('progress-quality');
+                qualityEl.style.width = `${qualityPercentage}%`;
+                qualityEl.setAttribute('data-tooltip', qualityCount.toLocaleString());
+            } catch (error) {
+                console.error('Error fetching species quality count:', error);
+            }
+        }
+
+        async function fetchFamilyCounts() {
+            try {
+                const [ebpRes, insdcRes] = await Promise.all([
+                    fetch(EBP_ARC_URL).then(r => r.ok ? r.json() : null),
+                    fetch(INSDC_ARC_URL).then(r => r.ok ? r.json() : null)
+                ]);
+                const ebpFamily   = ebpRes?.report?.report?.arc?.find(item => item.rank === 'family');
+                const insdcFamily = insdcRes?.report?.report?.arc?.find(item => item.rank === 'family');
+                const ebpCount    = Math.max(0, Number(ebpFamily?.x) || 0);
+                const insdcTotal  = Math.max(0, Number(insdcFamily?.y) || 10359);
+                const totalCount  = Math.max(1, Math.round(insdcTotal / 2));
+                updateFamilyProgressBar(ebpCount, totalCount);
+                fetchFamilyQualityCount(ebpCount, totalCount);
+            } catch (error) {
+                console.error('Error fetching family counts:', error);
+                document.getElementById('progress-family-completed').setAttribute('data-tooltip', 'Data unavailable');
+            }
+        }
+
+        function updateFamilyProgressBar(ebpCount, totalCount) {
+            const total = Math.max(totalCount, 1);
+            const percentage = Math.min((ebpCount / total) * 100, 100);
+            const completedEl = document.getElementById('progress-family-completed');
+            completedEl.style.width = `${percentage}%`;
+            completedEl.setAttribute('data-tooltip', ebpCount.toLocaleString());
+            document.getElementById('progress-family-incomplete').setAttribute('data-tooltip', `Target: ${total.toLocaleString()}`);
+            const tickValues = [0, 1000, 2000, 3000, 4000, 5000];
+            createAxisTicks('progress-family-axis', total, tickValues);
+        }
+
+        async function fetchFamilyQualityCount(ebpCount, totalCount) {
+            try {
+                const response = await fetch(FAMILY_QUALITY_API_URL);
+                if (!response.ok) throw new Error('HTTP error: ' + response.status);
+                const data = await response.json();
+                const qualityCount = (data.status && data.status.hits) ? data.status.hits : 0;
+                const qualityPercentage = ebpCount > 0 ? Math.min((qualityCount / ebpCount) * 100, 100) : 0;
+                const qualityEl = document.getElementById('progress-family-quality');
+                qualityEl.style.width = `${qualityPercentage}%`;
+                qualityEl.setAttribute('data-tooltip', qualityCount.toLocaleString());
+            } catch (error) {
+                console.error('Error fetching family quality count:', error);
+            }
+        }
+
+        fetchSpeciesCount();
+        fetchFamilyCounts();
+    </script>
+</body>
+</html>
