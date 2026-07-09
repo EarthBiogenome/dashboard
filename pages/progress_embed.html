@@ -350,6 +350,18 @@
     </section>
 
     <script>
+        // Report our height to the parent so an embedding iframe can size
+        // itself exactly, avoiding clipping or a vertical scrollbar.
+        function reportHeight() {
+            const h = document.documentElement.scrollHeight;
+            parent.postMessage({ type: 'ebp-progress-height', height: h }, '*');
+        }
+        window.addEventListener('load', reportHeight);
+        window.addEventListener('resize', reportHeight);
+        if (window.ResizeObserver) {
+            new ResizeObserver(reportHeight).observe(document.body);
+        }
+
         // Progress data (mirrors the EBP Dashboard landing page)
         const PHASE_I_GOAL = 10000;
         const SPECIES_API_URL = "https://goat.genomehubs.org/api/v2/search?query=bioproject%3DPRJNA533106%20AND%20tax_rank%28species%29&result=taxon&includeEstimates=true&taxonomy=ncbi&size=1";
