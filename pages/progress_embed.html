@@ -23,14 +23,16 @@
             background: transparent;
         }
 
-        .progress-section { width: 100%; }
-
         /* ── Progress Section ────────────────────────────── */
         /* Flush/borderless so the embed blends with the host page's
-           other sections rather than reading as an inset boxed card. */
+           other sections rather than reading as an inset boxed card.
+           Vertical padding is tuned so total content height fills the
+           embedding iframe (height:440px), leaving no blank space below
+           and keeping the title clear of the top edge. */
         .progress-section {
+            width: 100%;
             background: transparent;
-            padding: 1.5rem 2rem;
+            padding: 2.25rem 2rem;
         }
 
         .progress-inner {
