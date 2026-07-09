@@ -21,14 +21,22 @@
             color: var(--text);
             line-height: 1.6;
             background: transparent;
+            /* Fill the embedding iframe (height:440px) and center content
+               vertically so the title clears the top edge and no blank
+               space remains at the bottom, regardless of minor height drift. */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
         }
+
+        .progress-section { width: 100%; }
 
         /* ── Progress Section ────────────────────────────── */
         /* Flush/borderless so the embed blends with the host page's
            other sections rather than reading as an inset boxed card. */
         .progress-section {
             background: transparent;
-            padding: 4.5rem 2rem 1.5rem;
+            padding: 1.5rem 2rem;
         }
 
         .progress-inner {
