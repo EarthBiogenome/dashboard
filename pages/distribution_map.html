@@ -744,8 +744,8 @@
                                 const p = selectedMarker;
                                 if (!p) return '';
                                 let html = `<strong>${projectAbbr(p.name)}</strong>`;
-                                if (p.institution) html += `<br/>Institution: ${p.institution}`;
-                                if (p.activities) html += `<br/>Activities: ${p.activities}`;
+                                const loc = CENTER_LOCATIONS[p.name] || simplifyLocation(p.address);
+                                if (loc) html += `<br/><span style="color:#64748B">${loc}</span>`;
                                 if (p.website) html += `<br/><a href="${p.website}" target="_blank">${p.website}</a>`;
                                 return html;
                             }
@@ -753,12 +753,20 @@
                             if (!c) return '';
                             if (c.count > 1) {
                                 const names = c.group.map(p => `• ${projectAbbr(p.name)}`).join('<br/>');
-                                return `<strong>${c.count} Project Centers in this region. Click to expand.</strong><br/>${names}`;
+                                const locs = c.group.map(p => CENTER_LOCATIONS[p.name] || simplifyLocation(p.address)).filter(Boolean);
+                                const clusterLoc = (() => {
+                                    if (!locs.length) return null;
+                                    if (locs.every(l => l === locs[0])) return locs[0];
+                                    const countries = [...new Set(locs.map(l => l.split(', ').at(-1)))];
+                                    return countries.length === 1 ? countries[0] : locs[0];
+                                })();
+                                const locStr = clusterLoc ? ` in ${clusterLoc}` : '';
+                                return `<strong>${c.count} Project Centers${locStr}. Click to expand.</strong><br/>${names}`;
                             }
                             const p = c.group[0];
                             let html = `<strong>${projectAbbr(p.name)}</strong>`;
-                            if (p.institution) html += `<br/>Institution: ${p.institution}`;
-                            if (p.activities) html += `<br/>Activities: ${p.activities}`;
+                            const loc = CENTER_LOCATIONS[p.name] || simplifyLocation(p.address);
+                            if (loc) html += `<br/><span style="color:#64748B">${loc}</span>`;
                             if (p.website) html += `<br/><a href="${p.website}" target="_blank">${p.website}</a>`;
                             return html;
                         }
