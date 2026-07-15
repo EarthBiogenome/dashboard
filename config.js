@@ -60,18 +60,18 @@ const pages = [
   },
   {
     category: "Network Visualization", 
-    pages: [
-      {
-        name: "Affiliate Network",
-        file: "./pages/wiremaps.html",
-        description: "Wired map showing EBP and affiliate network connections",
-        icon: "fa-network-wired" 
-      },
+    pages: [      
       {
         name: "Global Distribution",
         file: "./pages/distribution_map.html",
         description: "Geographic distribution of EBP affiliates",
         icon: "fa-globe"
+      },
+      {
+        name: "Affiliate Network",
+        file: "./pages/wiremaps.html",
+        description: "Wired map showing EBP and affiliate network connections",
+        icon: "fa-network-wired" 
       }
     ]
   }
