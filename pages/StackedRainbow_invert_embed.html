@@ -292,10 +292,21 @@
             })
             
             // Draw chart
-            initEchart(stackedData, annimationDelay )
+            initEchart(stackedData, annimationDelay)
             initLegendChart(legends, annimationDelay)
             renderTaxaPanel(legends)
+
+            // Report height to parent iframe after charts are drawn
+            setTimeout(() => {
+              const h = document.documentElement.scrollHeight;
+              parent.postMessage({ type: 'ebp-progress-height', height: h }, '*');
+            }, annimationDelay * 2 + 200);
           })
+
+        window.addEventListener('resize', () => {
+          const h = document.documentElement.scrollHeight;
+          parent.postMessage({ type: 'ebp-progress-height', height: h }, '*');
+        });
       };
     </script>
     <style>
@@ -329,9 +340,6 @@
       #chartContainer {
         width: 90vw;
         max-width: 1400px;
-        /* Height is the smaller of half the width (so the semi-circle arc fills the
-           container without empty space below) and the remaining viewport height
-           (so the full chart fits without scrolling). */
         height: min(45vw, calc(100vh - 140px));
         min-height: 260px;
         margin-top: 10px;
