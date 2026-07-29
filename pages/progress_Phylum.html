@@ -338,13 +338,19 @@
             trigger: 'axis',
             axisPointer: { type: 'shadow' },
             position: function (point, params, dom, rect, size) {
-              var x = point[0] + 20;
+              // Follow the cursor, but bias down-and-right into the empty space
+              // so the tooltip sits off the bars instead of on top of them.
+              var offset = 20;
+              var x = point[0] + offset;
               if (x + size.contentSize[0] > size.viewSize[0]) {
-                x = point[0] - size.contentSize[0] - 20;
+                x = point[0] - size.contentSize[0] - offset;
               }
-              var y = point[1] - size.contentSize[1] / 2;
+              if (x < 0) x = 0;
+              var y = point[1] + offset;
+              if (y + size.contentSize[1] > size.viewSize[1]) {
+                y = point[1] - size.contentSize[1] - offset;
+              }
               if (y < 0) y = 0;
-              if (y + size.contentSize[1] > size.viewSize[1]) y = size.viewSize[1] - size.contentSize[1];
               return [x, y];
             },
             formatter: function (params) {
@@ -650,7 +656,7 @@
             // totalMap starts empty; populated when totalHisto resolves in the background
             const totalMap = {};
 
-            // Chart uses top 20 from INSDC
+            // Chart uses top 10 from INSDC
             const insdcTop20Entries = Object.entries(
                 processPhylumCats(insdcHisto?.report?.report?.histogram?.cats || [], insdcTotal, 200)
               )
