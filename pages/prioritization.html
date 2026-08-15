@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="author" content="Fang Chen" />
+<title>EBP — Species Prioritization</title>
+
+<!--
+  Species prioritization — one page, three views (integration plan §7).
+
+  STATE OF THIS FILE. The "Changes over time" view is complete: it is A-T4,
+  Panel A of the per-list trend, plus A-T5's Panel B — one species' run-by-run
+  history, opened by clicking a species chip in the kinds-of-movement card. Both
+  run against the live backend (`GET /api/lists/...`). Submit and Results are
+  placeholders, and belong to Task 6 — which owns this page's shell and should
+  fill them in HERE rather than start a second page. The three-view structure,
+  the tab strip, the token bootstrap and `services_backend.js` are already in
+  place for it.
+
+  TASK 6: HOW TO OPEN PANEL B FROM A RESULTS ROW. The timeline is a singleton
+  panel that is MOVED into whichever host asks for it, so there is only ever one
+  open history and its `Since` control cannot fork. From a table row, call:
+
+      PrioritizationSpecies.open({
+        host: <the element the panel should sit in>,
+        list: trackedList, token: trackedToken, name: <Scientific Name>,
+        runs: panel.payload.runs,      // gives it absences + pipeline-change runs
+      });
+
+  Nothing else needs wiring — it fetches, renders and closes itself.
+
+  HOW A PROJECT REACHES ITS TREND (plan §12.6, option C — decided 2026-08-13).
+  The secretariat hands the project one unguessable link:
+
+      prioritization.html?list=<capability token>
+
+  There is no list picker and there never will be one at this access level: the
+  tracked lists are other projects' target lists, and a picker would enumerate
+  them. A token that opens nothing gets the same answer as a list that does not
+  exist, because the API refuses to distinguish them.
+
+  THE TREND VIEW IS CONDITIONAL, NOT DECORATIVE (§7a). It is keyed by LIST, not
+  by submission, so a freshly submitted list has no history and the tab is
+  ABSENT — not empty. An empty chart would read as "this list has never moved"
+  rather than "this list is not tracked".
+
+  Deviations from STYLE_SPEC.md, deliberate, for the record:
+    * Dark by default (botanical-ink), matching the tool mockups and
+      ebp-homepage.html. The existing 17 pages are light; theming them is a
+      separate effort with a shared app-shell.
+    * The footer is in flow rather than `position: fixed`. This page scrolls as
+      an application rather than framing one chart, and a fixed bar would sit
+      over the trend chart's x-axis at common window heights.
+    * `utils.js` / `services.js` are not loaded: they are GoaT-fetch and
+      ECharts-format helpers for the progress pages, and nothing here calls
+      GoaT directly. `services_backend.js` is this page's data layer.
+-->
+
+<script src="../config.js"></script>
+<script src="./services_backend.js"></script>
+<script src="./prioritization_trend.js"></script>
+<script src="./prioritization_species.js"></script>
+
+<style>
+  :root{
+    /* Botanical-ink ground — consistent with ebp-homepage.html and the tool mockups */
+    --ink:#0b1310; --ink-2:#0f1a14; --ink-3:#14231b; --ink-4:#1b2f24;
+    --line:#22362b; --line-soft:#1a2a20;
+    --paper:#e9f2ec; --paper-dim:#a6bcaf; --paper-mute:#6f8a7b;
+    --green:#16a34a; --green-deep:#0d7a47; --green-bright:#3fbf7f; --green-glow:#5fd39a;
+    --novel:#7aa2ff; --improve:#e0a760; --low:#8595a0; --warn:#e0a760; --red:#e0736a;
+    --radius:14px; font-synthesis:none;
+  }
+  :root[data-theme="light"]{
+    --ink:#f4f7f4; --ink-2:#ffffff; --ink-3:#eef5f0; --ink-4:#e2ede5;
+    --line:#d6e3d9; --line-soft:#e6efe8;
+    --paper:#12211a; --paper-dim:#3e5548; --paper-mute:#6b8375;
+    --green-glow:#0d7a47; --green-bright:#16a34a;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --ink:#f4f7f4; --ink-2:#ffffff; --ink-3:#eef5f0; --ink-4:#e2ede5;
+      --line:#d6e3d9; --line-soft:#e6efe8;
+      --paper:#12211a; --paper-dim:#3e5548; --paper-mute:#6b8375;
+      --green-glow:#0d7a47; --green-bright:#16a34a;
+    }
+  }
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important;} }
+  body{margin:0; background:var(--ink); color:var(--paper);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif; font-size:14px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 22px 48px;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  a{color:var(--green-glow); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  code{font-family:ui-monospace,'Cascadia Code',Menlo,monospace; font-size:.85em; color:var(--green-glow);
+    background:var(--ink-3); border:1px solid var(--line); border-radius:5px; padding:1px 6px;}
+
+  /* ── top bar ── */
+  .topbar{position:sticky; top:0; z-index:30; border-bottom:1px solid var(--line);
+    background:color-mix(in srgb, var(--ink-2) 92%, transparent); backdrop-filter:blur(8px);}
+  .topbar .inner{display:flex; align-items:center; gap:12px; padding:13px 22px; max-width:1180px; margin:0 auto;}
+  .logo{display:flex; align-items:center; gap:9px; font-weight:800; font-size:14px; white-space:nowrap; color:var(--paper);}
+  .logo .mk{width:25px; height:25px; border-radius:7px; background:linear-gradient(135deg,var(--green-deep),var(--green));
+    display:flex; align-items:center; justify-content:center; font-size:13px;}
+  .topnav{margin-left:auto; display:flex; gap:3px; align-items:center;}
+  .topnav .n{font-size:13px; padding:8px 13px; border-radius:8px; color:var(--paper-dim); white-space:nowrap;}
+  .topnav .n.on{background:var(--ink-4); color:var(--green-glow); font-weight:700;}
+  .theme-toggle{background:transparent; border:1px solid var(--line); color:var(--paper-dim); border-radius:999px;
+    padding:7px 12px; font:inherit; font-size:12px; font-weight:600; cursor:pointer; margin-left:8px; white-space:nowrap;}
+  .theme-toggle:hover{color:var(--green-glow); border-color:rgba(63,191,127,.4);}
+
+  /* ── sub-header: breadcrumb, title, tabs ── */
+  .subhead{border-bottom:1px solid var(--line);
+    background:radial-gradient(760px 220px at 22% -30%, rgba(22,163,74,.10), transparent);
+    margin-bottom:22px; padding:22px 0 0;}
+  .subhead .wrap{padding-bottom:0;}
+  .crumb{font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--green-glow); font-weight:700;}
+  .subhead h1{font-size:clamp(22px,3vw,28px); margin:6px 0 8px; font-weight:800; letter-spacing:-.02em; text-wrap:balance;}
+  .subhead .sub{font-size:14px; color:var(--paper-dim); line-height:1.55; margin:0; text-wrap:pretty; max-width:70ch;}
+  .headrow{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap;}
+  .headrow .head-left{min-width:0; flex:1 1 420px;}
+  .head-right{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+  .head-right[hidden]{display:none;}
+  .head-stat{text-align:right; line-height:1.3; border-left:2px solid var(--line); padding-left:14px;}
+  .head-stat .hname{font-size:15px; font-weight:700; color:var(--paper); letter-spacing:-.01em;}
+  .head-stat .hl{font-size:12px; color:var(--paper-mute);}
+  .head-stat .hl b{color:var(--paper-dim); font-weight:700;}
+  .tabs{display:flex; gap:4px; margin-top:18px;}
+  .tabs button{border:none; background:transparent; color:var(--paper-dim); font:inherit; font-size:13.5px;
+    padding:9px 15px; border-radius:8px 8px 0 0; cursor:pointer;}
+  .tabs button:hover{background:var(--ink-3); color:var(--paper);}
+  .tabs button.on{background:var(--ink-2); color:var(--green-glow); font-weight:650;
+    border:1px solid var(--line); border-bottom:none;}
+  .tabs button[hidden]{display:none;}
+
+  .view{display:none;} .view.on{display:block;}
+  .view-head{margin-bottom:18px;}
+  .view-head .vt{font-size:19px; font-weight:650; letter-spacing:-.01em;}
+  .view-head .vs{font-size:13px; color:var(--paper-dim); margin-top:2px;}
+
+  .card{background:var(--ink-2); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px 22px; margin-bottom:18px;}
+  .card h2{font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--paper-mute);
+    margin:0 0 12px; font-weight:700;}
+  .card p{margin:0 0 10px; color:var(--paper-dim); font-size:13px; line-height:1.65;}
+  .card p:last-child{margin-bottom:0;}
+  .card p b{color:var(--paper);}
+
+  .site-footer{border-top:1px solid var(--line); background:var(--ink-2); color:var(--paper-mute);
+    font-size:12.5px; text-align:center; padding:14px 22px;}
+  :focus-visible{outline:2px solid var(--green-bright); outline-offset:2px; border-radius:5px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="inner">
+    <a class="logo" href="../index.html"><span class="mk">🌳</span> Earth BioGenome</a>
+    <nav class="topnav"><span class="n on">Tools</span></nav>
+    <button class="theme-toggle" id="themeToggle" type="button">◑ Theme</button>
+  </div>
+</div>
+
+<header class="subhead">
+  <div class="wrap">
+    <div class="headrow">
+      <div class="head-left">
+        <div class="crumb">Prioritization · one question</div>
+        <h1>Is my species list worth sequencing?</h1>
+        <p class="sub">Screen a species list against GoaT for <em>taxonomic novelty</em> and current
+          project status across the EBP network — the highest-novelty species with no project on them
+          are the strongest sequencing targets.</p>
+      </div>
+      <!-- populated once a tracked list resolves (or, later, once a list is submitted) -->
+      <div class="head-right" id="head-right" hidden>
+        <div class="head-stat">
+          <div class="hname" id="head-name">—</div>
+          <div class="hl"><b class="tnum" id="head-count">0</b> species tracked</div>
+        </div>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button data-tab="submit" role="tab" class="on" type="button">Submit</button>
+      <button data-tab="results" role="tab" type="button">Results</button>
+      <!-- absent until a tracked list resolves — see the note at the top of this file -->
+      <button data-tab="trends" role="tab" type="button" id="tab-trends" hidden>Changes over time</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== SUBMIT — Task 6 ===== -->
+<div class="view on" id="view-submit">
+  <div class="wrap">
+    <div class="view-head">
+      <div class="vt">Submit a species list</div>
+      <div class="vs">Drag-drop a CSV or XLSX, or paste scientific names</div>
+    </div>
+    <div class="card">
+      <p><b>Not built yet — this is Task 6.</b> The upload form, the progress indicator and the
+        <code>POST /api/submissions</code> call land here, in this view.</p>
+      <p>The backend endpoint already exists and is tested; only this page's half is outstanding.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESULTS — Task 6 ===== -->
+<div class="view" id="view-results">
+  <div class="wrap">
+    <div class="view-head">
+      <div class="vt">Results</div>
+      <div class="vs">Every species, its novelty and who is already working on it</div>
+    </div>
+    <div class="card">
+      <p><b>Not built yet — this is Task 6.</b> The filterable
+        <code>Taxonomic_Priority</code> × <code>Project_Priority</code> table, the priority-distribution
+        chart and the Excel export land here.</p>
+      <p><b>Panel B already exists</b> — <code>prioritization_species.js</code> (A-T5). It is live in
+        the <b>Changes over time</b> view, where clicking any species name in the kinds-of-movement
+        card opens that species' run-by-run history. Task 6 opens the same panel from a results row:
+        see the call at the top of this file.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHANGES OVER TIME — Panel A (A-T4) ===== -->
+<div class="view" id="view-trends">
+  <div class="wrap">
+    <div class="view-head">
+      <div class="vt">Changes over time</div>
+      <div class="vs">What moved underneath this list between runs</div>
+    </div>
+    <!-- prioritization_trend.js renders the whole panel in here -->
+    <div id="trend-host"></div>
+    <!-- Panel B lands here, and is moved up between the kinds-of-movement card
+         and the chart once that card exists — the chip you clicked is then
+         directly above its own timeline. -->
+    <div id="tl-host-trends"></div>
+  </div>
+</div>
+
+<div class="site-footer">
+  Species and assembly data from
+  <a href="https://goat.genomehubs.org" target="_blank" rel="noopener noreferrer">Genomes on a Tree (GoaT)</a>,
+  used with permission · conservation status from the
+  <a href="https://www.iucnredlist.org" target="_blank" rel="noopener noreferrer">IUCN Red List</a>.
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── theme ── */
+  const root = document.documentElement;
+  let panel = null;      // Panel A, once a tracked list has rendered
+  let tracked = null;    // {list, token} — what every backend read is keyed by
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    let current = root.getAttribute('data-theme');
+    if (!current) {
+      current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    // The chart's colours are read from the CSS variables, so it has to redraw.
+    if (panel) panel.redraw();
+  });
+
+  /* ── views ── */
+  const tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs button'));
+  const views = { submit: 'view-submit', results: 'view-results', trends: 'view-trends' };
+  function show(name) {
+    tabs.forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
+    Object.keys(views).forEach(function (key) {
+      document.getElementById(views[key]).classList.toggle('on', key === name);
+    });
+    // A canvas has no width while its view is display:none, so the chart can
+    // only be sized once the view is actually on screen.
+    if (name === 'trends' && panel) panel.redraw();
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
+
+  /* ── the trend view exists only for a tracked list ──
+     The link carries a capability token, never a list name: `?list=<token>`.
+     Resolving it is the one hop from the token to the list name every other
+     call is keyed by. */
+  async function openTrackedList(token) {
+    let who;
+    try {
+      who = await EBPBackend.resolveList(token);
+    } catch (err) {
+      // 404 covers "no such list" AND "wrong token" — the API will not say
+      // which, and neither will this page.
+      const host = document.getElementById('trend-host');
+      document.getElementById('tab-trends').hidden = false;
+      show('trends');
+      host.innerHTML = '<div class="card"><p>' + (err.notFound
+        ? '<b>This link does not open a list.</b> Trend links are issued per list by the EBP '
+          + 'secretariat, and are replaced when a list’s link is rotated. Ask for a current one.'
+        : '<b>Could not reach the EBP backend.</b> ' + String(err.message)) + '</p></div>';
+      return;
+    }
+
+    document.getElementById('head-name').textContent = who.list;
+    document.getElementById('head-count').textContent = who.species_count;
+    document.getElementById('head-right').hidden = false;
+    document.getElementById('tab-trends').hidden = false;
+    // A trend link is a link TO the trend — open on it rather than on Submit.
+    show('trends');
+
+    const host = document.getElementById('trend-host');
+    const result = await PrioritizationTrend.mount(host, { list: who.list, token: token });
+    panel = result.state === 'ok' ? result : null;
+    if (panel) panel.redraw();
+
+    /* Panel B sits directly under the card its entry points live in. Where the
+       list has no attributable window there is no card and no chip, so the
+       host stays where it is — below the chart — and nothing opens it from
+       this view until Task 6's results table does. */
+    const moves = host.querySelector('.ebp-moves');
+    if (moves) moves.insertAdjacentElement('afterend', document.getElementById('tl-host-trends'));
+
+    tracked = { list: who.list, token: token };
+  }
+
+  /* ── Panel B — one species' history (A-T5) ──
+     Opened by the `ebp-trend:species` event Panel A raises when a species chip
+     is clicked. Task 6's results table opens the same panel by calling
+     PrioritizationSpecies.open() directly with its own host. */
+  document.addEventListener('ebp-trend:species', function (event) {
+    if (!tracked) return;
+    const name = event.detail.name;
+    // A second click on the open species closes it, so the chip is a toggle.
+    if (PrioritizationSpecies.openSpecies() === name) { PrioritizationSpecies.close(); return; }
+    PrioritizationSpecies.open({
+      host: document.getElementById('tl-host-trends'),
+      list: tracked.list,
+      token: tracked.token,
+      name: name,
+      // The list's runs, so an absence is drawn as an absence and the runs our
+      // own pipeline changed on are flagged rather than folded away.
+      runs: (panel && panel.payload && panel.payload.runs) || [],
+    });
+  });
+
+  /* One `Since` value on the page, whichever control set it. Panel A dispatches
+     on change and Panel B does too; each `setSince` is deliberately silent, so
+     the two cannot ping-pong. */
+  document.addEventListener('ebp-trend:since', function (event) {
+    if (event.detail.source === 'species') {
+      if (panel) panel.setSince(event.detail.since);
+    } else {
+      PrioritizationSpecies.setSince(event.detail.since);
+    }
+  });
+
+  const token = new URLSearchParams(window.location.search).get('list');
+  if (token) openTrackedList(token);
+})();
+</script>
+</body>
+</html>
