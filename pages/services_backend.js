@@ -122,9 +122,44 @@ const EBPBackend = (function () {
   const listPath = (list) => '/api/lists/' + encodeURIComponent(list);
   const submissionPath = (id) => '/api/submissions/' + encodeURIComponent(id);
 
+  /** Is this page pointed at a backend on the developer's own machine? */
+  function isLocalBackend() {
+    return base().indexOf('localhost') >= 0 || base().indexOf('127.0.0.1') >= 0;
+  }
+
+  /**
+   * Why a request failed, in words the reader can act on. Returns HTML.
+   *
+   * "Could not reach the EBP backend: Failed to fetch" is what the browser
+   * says, and it is useless: locally the cause is almost always that the API
+   * process is simply not running, and the fix is one command. The page knows
+   * which backend it is pointed at, so it can say which of those it is instead
+   * of handing the reader the fetch error and leaving them to guess.
+   */
+  function explain(err) {
+    if (err && err.unconfigured) {
+      return '<b>No backend is configured for this deployment yet.</b> This page needs the EBP '
+        + 'backend, which has not been given a hostname in <code>services_backend.js</code>.';
+    }
+    if (err && err.unreachable && isLocalBackend()) {
+      return '<b>The EBP backend is not answering on <code>' + base() + '</code>.</b> '
+        + 'It is a separate process and has to be running alongside this page — from the '
+        + '<code>ebp-backend</code> repo:<br>'
+        + '<code>python -m uvicorn app.main:app --app-dir api --port 8000</code><br>'
+        + 'Nothing was lost. Start it and screen the list again.';
+    }
+    if (err && err.unreachable) {
+      return '<b>Could not reach the EBP backend.</b> It may be down, or a network or CORS rule may '
+        + 'be blocking the request. ' + String(err.message || '');
+    }
+    return String((err && err.message) || 'Unknown error.');
+  }
+
   return {
     BackendError: BackendError,
     backendBase: base,
+    isLocalBackend: isLocalBackend,
+    explain: explain,
 
     /**
      * Screen a species list. → the result body, or a 202 acknowledgement.

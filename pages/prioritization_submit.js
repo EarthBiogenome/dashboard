@@ -102,10 +102,14 @@ const PrioritizationSubmit = (function () {
   .ebp-counter{font-size:13px; color:var(--paper-dim,#a6bcaf);}
   .ebp-counter b{color:var(--green-glow,#5fd39a); font-variant-numeric:tabular-nums;}
 
-  .ebp-sub-err{margin-top:14px; font-size:12.5px; line-height:1.6; border-radius:9px; padding:10px 13px;
+  .ebp-sub-err{margin-top:14px; font-size:12.5px; line-height:1.75; border-radius:9px; padding:11px 14px;
     color:var(--red,#e0736a); background:rgba(224,115,106,.1); border:1px solid rgba(224,115,106,.3);}
   .ebp-sub-err[hidden]{display:none;}
   .ebp-sub-err b{color:var(--red,#e0736a);}
+  /* The recovery command is the point of the message, so it is legible rather
+     than inheriting the page's green-on-ink code style inside a red box. */
+  .ebp-sub-err code{background:rgba(224,115,106,.12); border-color:rgba(224,115,106,.28);
+    color:inherit; font-size:.92em;}
 
   .ebp-steps{list-style:none; padding:0; margin:0; display:grid; gap:11px;}
   .ebp-steps li{display:flex; gap:11px; align-items:flex-start; font-size:13px; color:var(--paper-dim,#a6bcaf);
@@ -357,11 +361,13 @@ const PrioritizationSubmit = (function () {
     stopWaiting();
     els.proc.hidden = true;
     els.input.hidden = false;
-    const message = err && err.unconfigured
-      ? '<b>No backend is configured for this deployment yet.</b> Screening runs on the EBP backend, '
-        + 'which has not been given a hostname in <code>services_backend.js</code>.'
-      : '<b>The run did not complete.</b> ' + esc((err && err.message) || 'Unknown error.');
-    setError(message);
+    /* `explain()` knows which backend this page is pointed at, so it can name
+       the actual cause — locally, almost always "the API process is not
+       running" — instead of surfacing the browser's "Failed to fetch". */
+    const cause = EBPBackend.explain(err);
+    setError(err && (err.unreachable || err.unconfigured)
+      ? cause
+      : '<b>The run did not complete.</b> ' + esc(cause));
     if (hooks.onError) hooks.onError(err);
   }
 

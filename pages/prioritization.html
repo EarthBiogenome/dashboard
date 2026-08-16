@@ -382,7 +382,7 @@
       host.innerHTML = '<div class="card"><p>' + (err.notFound
         ? '<b>This link does not open a list.</b> Trend links are issued per list by the EBP '
           + 'secretariat, and are replaced when a list’s link is rotated. Ask for a current one.'
-        : '<b>Could not reach the EBP backend.</b> ' + String(err.message)) + '</p></div>';
+        : EBPBackend.explain(err)) + '</p></div>';
       return;
     }
 
