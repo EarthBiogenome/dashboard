@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Fang Chen" />
+    <title>EBP Global Network</title>
+    <script src="./echarts.min.js"></script>
+    <script src="./d3.v6.js"></script>
+    <script src="./geoMap/world.zh.js"></script>
+    <script src="./geoMap/EBPnetwork_20260612_africaplus.js"></script>
+    <!-- <script src="./geoMap/updated_projectsWebsites.js"></script> -->
+    <link href="./geoMap/bootstrap.min.css" rel="stylesheet">
+    <script src="./geoMap/jquery-3.6.0.min.js"></script>
+    <script src="./geoMap/popper.min.js"></script>
+    <script src="./geoMap/bootstrap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #mapContainer {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #E6F0F5;
+        }
+        #barContainer {
+            width: 80vw;
+            height: 160vh;
+            margin: 60px auto 80px auto;
+            overflow: hidden;
+        }
+        #mapZoomControls {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            z-index: 99999999;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #CBD5E1;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            background-color: #ffffff;
+        }
+        #mapZoomControls button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border: none;
+            border-bottom: 1px solid #E2E8F0;
+            background-color: #ffffff;
+            color: #1E293B;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            outline: none;
+            transition: background-color 0.15s;
+        }
+        #mapZoomControls button:last-child {
+            border-bottom: none;
+        }
+        #mapZoomControls button:hover {
+            background-color: #F1F5F9;
+        }
+        .btns {
+            position: fixed;
+            right: 16px;
+            bottom: 20px;
+            display: flex;
+            border-radius: 25px;
+            overflow: hidden;
+            height: 40px;
+            border: 1px solid #CBD5E1;
+            z-index: 99999999;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .btns button {
+            display: inline-flex;
+            width: 80px;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            cursor: pointer;
+            background-color: #ffffff;
+            color: #1E293B;
+            font-size: 13px;
+            outline: none;
+            transition: background-color 0.15s;
+        }
+        .btns button:hover {
+            background-color: #F1F5F9;
+        }
+        .btns .selected {
+            background-color: #E2E8F0;
+            font-weight: 600;
+        }
+        #downloadDropdown {
+            position: absolute;
+            left: 230px;
+            bottom: 20px;
+            z-index: 99999999;
+            display: flex;
+            height: 40px;
+            border-radius: 25px;
+            border: 1px solid #CBD5E1;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        #downloadDropdown .dropdown-toggle,
+        #downloadDropdown .dropdown-toggle:focus,
+        #downloadDropdown .dropdown-toggle:active,
+        #downloadDropdown .dropdown-toggle.show,
+        #downloadDropdown .dropdown-toggle:not(:disabled):not(.disabled):active {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 24px;
+            border: none !important;
+            border-radius: 25px;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #ffffff;
+            color: #1E293B;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background-color 0.15s;
+        }
+        #downloadDropdown .dropdown-toggle::after {
+            display: none;
+        }
+        #downloadDropdown .dropdown-toggle:hover {
+            background-color: #F1F5F9;
+        }
+        #downloadDropdown .dropdown-menu {
+            min-width: 120px;
+            border-radius: 8px;
+            border: 1px solid #CBD5E1;
+            font-size: 13px;
+            color: #1E293B;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        #relationshipGraph {
+            width: 766px;
+            height: 400px;
+        }
+        #mapSidebar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background-color: #ffffff;
+            border-right: 1px solid #CBD5E1;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px 20px 16px;
+            color: #1E293B;
+        }
+        #mapSidebar .sidebar-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1E293B;
+            letter-spacing: 0.03em;
+            margin-bottom: 20px;
+        }
+        #mapSidebar .sidebar-subtitle {
+            font-size: 11px;
+            color: #64748B;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+        #mapSidebar .legend-heading {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748B;
+            margin-bottom: 12px;
+        }
+        #mapSidebar .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 12.5px;
+            line-height: 1.35;
+            color: #1E293B;
+        }
+        #mapSidebar .lc {
+            flex-shrink: 0;
+            border-radius: 50%;
+        }
+        #mapSidebar .ls {
+            flex-shrink: 0;
+            width: 16px;
+            height: 11px;
+            border-radius: 3px;
+        }
+        #mapSidebar .sidebar-divider {
+            border: none;
+            border-top: 1px solid #CBD5E1;
+            margin: 20px 0;
+        }
+        #mapSidebar .sidebar-caption {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #1E293B;
+            flex: 1;
+        }
+        #mapSidebar .sidebar-caption p {
+            margin-bottom: 10px;
+        }
+        #total {
+            position: absolute;
+            left: 50px;
+            bottom: 50px;
+            color: #000;
+            font-size: 26px;
+        }
+        #projectsList {
+            height: 500px;
+            overflow: auto;
+        }
+        #projectsList li {
+            margin: 10px;
+        }
+        #mapSidebar .sidebar-intro {
+            font-size: 12px;
+            color: #64748B;
+            line-height: 1.5;
+            margin-bottom: 14px;
+        }
+        #mapSidebar .sidebar-intro strong {
+            color: #1E293B;
+        }
+        #centerSearch {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #1E293B;
+            outline: none;
+            margin-bottom: 10px;
+            transition: border-color 0.15s;
+        }
+        #centerSearch:focus {
+            border-color: #94A3B8;
+        }
+        #centerList {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 -6px;
+            padding: 0 6px;
+        }
+        .center-item {
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            line-height: 1.3;
+            color: #1E293B;
+            cursor: pointer;
+            transition: background-color 0.12s;
+        }
+        .center-item:hover {
+            background-color: #F1F5F9;
+        }
+        .center-item.selected {
+            background-color: #FDE9DD;
+            color: #9A3412;
+            font-weight: 600;
+        }
+        .center-item .center-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 6px;
+            font-size: 9.5px;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: #EA580C;
+            border-radius: 8px;
+            vertical-align: middle;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .center-item .center-sub {
+            display: block;
+            font-size: 11px;
+            color: #64748B;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        .center-empty {
+            font-size: 12px;
+            color: #94A3B8;
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="btns">
+        <button>Map</button>
+        <button>Statistic</button>
+    </div>
+    <div id="downloadDropdown" class="dropup">
+        <button class="dropdown-toggle" data-toggle="dropdown">Download Map</button>
+        <div class="dropdown-menu">
+            <a class="dropdown-item" id="downloadSvgBtn" href="#">SVG (vector)</a>
+            <a class="dropdown-item" id="downloadPngBtn" href="#">PNG (high-res)</a>
+        </div>
+    </div>
+    <div id="mapSidebar">
+        <div class="sidebar-title">EBP Global Network</div>
+        <div class="legend-item">
+            <span class="lc" style="width:12px;height:12px;background:#EA580C;"></span>
+            <span>Project center (Number indicates cluster count)</span>
+        </div>
+        <div class="legend-item">
+            <span class="ls" style="background:#0F5A66;"></span>
+            <span>Country with EBP presence</span>
+        </div>
+        <hr class="sidebar-divider">
+        <div class="sidebar-intro">
+            <strong>EBP Secretariat</strong> + <strong id="countYellow">—</strong> affiliated project centers
+            across <strong id="countCountries">—</strong> countries. Search, click or zoom into a cluster to explore project centers.
+        </div>
+        <input id="centerSearch" type="text" placeholder="Search centers…" autocomplete="off" />
+        <div id="centerList"></div>
+    </div>
+    <div id="mapZoomControls">
+        <button id="zoomInBtn" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+        <button id="zoomOutBtn" type="button" title="Zoom out" aria-label="Zoom out">&#8722;</button>
+        <button id="resetViewBtn" type="button" title="Reset to global view" aria-label="Reset to global view">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 11l9-8 9 8"></path>
+                <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"></path>
+            </svg>
+        </button>
+    </div>
+    <div id="mapContainer"></div>
+    <div id="barContainer"></div>
+    <!-- Modal for displaying project list by country -->
+    <div class="modal fade" id="relationshipModal" tabindex="-1" aria-labelledby="relationshipModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="relationshipModalLabel">Project Relationships</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="projectsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const data = projectsData;
+        let mapChartInstance = null;
+
+        /**
+         * Returns the project's abbreviation (the text inside the LAST parentheses),
+         * e.g. "Darwin Tree of Life (DTOL)" → "DTOL". Falls back to the full project
+         * name when no parenthesized abbreviation is present.
+         */
+        function projectAbbr(name) {
+            if (!name) return name;
+            const m = name.match(/\(([^)]+)\)\s*$/);
+            return m ? m[1].trim() : name;
+        }
+
+        /**
+         * Pre-resolved "City, State/Province, Country" labels for every displayed
+         * center (Center/Headquarters/Node), derived from each entry's coordinates
+         * and address. States/provinces use postal abbreviations and countries use
+         * short forms. Keyed by projectName; falls back to simplifyLocation() for
+         * any entry not listed here.
+         */
+        const CENTER_LOCATIONS = {
+            "EBP Secretariat": "Tempe, AZ, USA",
+            "10,000 Plant Genomes (10KP)": "Shenzhen, China",
+            "1,000 Chilean Genomes (1000GCH)": "Santiago, Chile",
+            "1,000 Bat Genomes (Bat1K)": "Dresden, Germany",
+            "5,000 Insect Genomes (i5K)": "Beltsville, MD, USA",
+            "Ancient Environmental Genomics Initiative for Sustainability (AEGIS)": "Copenhagen, Denmark",
+            "African BioGenome Project (AfricaBP)": "Benguerir, Morocco",
+            "Ag100Pest Initiative (AG100PEST)": "Washington, DC, USA",
+            "Amphibian Genomics Consortium (AGC)": "Melbourne, VIC, Australia",
+            "Aquatic Symbiosis Genomics Project (ASG)": "Hinxton, UK",
+            "An Atlas of Eukaryotic Marine Genomes (ATLASea)": "Paris, France",
+            "Australian Amphibian and Reptile Genomics Initiative Collaboration (AusARG)": "Canberra, ACT, Australia",
+            "Beenome100 project (BEENOME100)": "Beltsville, MD, USA",
+            "Bird 10,000 Genomes Project (B10K)": "Shenzhen, China",
+            "BRIDGE Colombia (BRIDGE-Col)": "Bogotá, Colombia",
+            "Butterfly Genome Project (BGP)": "Kunming, China",
+            "California Conservation Genomics Project (CCGP)": "Los Angeles, CA, USA",
+            "Canadian Biogenome Project (CanBP)": "Vancouver, BC, Canada",
+            "Canada 150 Sequencing Initiative (CanSeq150)": "Toronto, ON, Canada",
+            "Cartilaginous Fish Genome Project (CFGP)": "Xi'an, China",
+            "Catalan Biogenome Project (CBP)": "Barcelona, Spain",
+            "Cetacean Genomes Project (CGP)": "La Jolla, CA, USA",
+            "Crab Genome Project (CrabGP)": "Yancheng, China",
+            "Darwin Tree of Life (DTOL)": "Hinxton, UK",
+            "Deep-Ocean Genomes Project (DOG)": "Falmouth, MA, USA",
+            "Diversity Initiative for the Southern California Ocean (DISCO)": "Los Angeles, CA, USA",
+            "Dresden HQ Genomes Project (DresdenHQ)": "Dresden, Germany",
+            "Earth Biogenome Project Norway (EBPN)": "Oslo, Norway",
+            "Italian Endemics (Endemixit)": "Ferrara, Italy",
+            "Epizoic Diatom Genomes Project (EDGP)": "Bodø, Norway",
+            "Euglena International Network (EIN)": "Nottingham, UK",
+            "European Reference Genome Atlas (ERGA)": "Berlin, Germany",
+            "Fish 10,000 Genomes (Fish10K)": "Shenzhen, China",
+            "Genome 10K (G10K)": "New York, NY, USA",
+            "Genomics of the Brazilian Biodiversity (GBB)": "Rio de Janeiro, Brazil",
+            "Global Ant Genomics Alliance (GAGA)": "Hangzhou, China",
+            "Global Genome Biodiversity Network (GGBN)": "Washington, DC, USA",
+            "Global Invertebrate Genome Alliance (GIGA)": "Dania Beach, FL, USA",
+            "Hong Kong EBP (EBPHK)": "Hong Kong",
+            "Illinois EBP Pilot (ILEBP)": "Urbana, IL, USA",
+            "Kazusa Genome Project (KAZUSA)": "Kisarazu, Japan",
+            "Lilioid Monocots Core Group Genome Project (LMGP)": "Xi'an, China",
+            "Senckenberg Translational Biodiversity Genomics (LOEWE-TBG)": "Frankfurt, Germany",
+            "Ocean Genomes (OG)": "Perth, WA, Australia",
+            "Open Green Genomes (OGG)": "Athens, GA, USA",
+            "PHYLOALPS (PHYLOALPS)": "Grenoble, France",
+            "Plant and Fungi Trees of Life (PAFTOL)": "London, UK",
+            "Plant GARDEN (PlantGARDEN)": "Kisarazu, Japan",
+            "Polar Genomes Project (PGP)": "Incheon, South Korea",
+            "Primate Genomes Project (PRGP)": "Hangzhou, China",
+            "Project Psyche (PSYCHE)": "Hinxton, UK",
+            "Rodent2k (r2k)": "Toronto, ON, Canada",
+            "Soil Invertebrate Genome Initiative (METAINVERT)": "Frankfurt, Germany",
+            "Genome Sequencing and Assembly of Chondrichthyans (SQUALOMIX)": "Mishima, Japan",
+            "Taiwan BioGenome Project (TBP)": "Taipei, Taiwan",
+            "Threatened Species Initiative (TSI)": "Sydney, NSW, Australia",
+            "Ungulates Genome Project (UGP)": "Xi'an, China",
+            "University of California Consortium (CAL-EBP)": "Sacramento, CA, USA",
+            "Vertebrate Genomes Project (VGP)": "New York, NY, USA",
+            "Wise Ancestors (WA)": "Scotts Valley, CA, USA",
+            "Yggdrasil (YGG)": "Copenhagen, Denmark",
+            "Zoonomia (Zoonomia)": "Cambridge, MA, USA",
+            "Protist 10,000 Genomes Project (P10K)": "Wuhan, China",
+            "BioINSPIRE (BIOINSPIRE)": "Brasília, Brazil",
+            "HUNTomics (HUNTomics)": "Issy-les-Moulineaux, France",
+            "Kazusa Genome Project (Kazusa)": "Kisarazu, Japan"
+        };
+
+        /**
+         * Reduces a full postal address to a compact "City, State/Province, Country"
+         * string by stripping street lines, building/room details, postal codes, and
+         * institution/campus names. Best-effort heuristic for heterogeneous
+         * international addresses; falls back to the last raw segments if nothing
+         * else can be derived.
+         *
+         * @param {string} address  Full address string.
+         * @returns {string}  Simplified location (may be '').
+         */
+        function simplifyLocation(address) {
+            if (!address) return '';
+
+            const STREET_WORD = /^(st|street|ave|avenue|rd|road|dr|drive|blvd|boulevard|ln|lane|way|ct|court|pl|place|sq|square|str|av|hwy|highway|route|rue|calle|via|strada|piazza|platz|plaza)\.?$/i;
+            const STREET_SUFFIX = /(stra(ss|ß)e|strasse|gade|vej|weg|allee|laan)$/i;
+            const UNIT_WORD = /^(building|bldg|floor|fl|suite|ste|room|rm|unit|block|fronthouse|po|p\.o\.|box|no|nr)\.?$/i;
+            const DIRECTION = /^(n|s|e|w|nw|ne|sw|se)$/i;
+            const INSTITUTION_WORD = /\b(university|universit[eé]|institute|institut|college|campus|trust|laborator(y|ies)|lab|research|centre|center|hospital|museum|department|school|foundation|academy|society|company|ltd|inc|gmbh|bgi)\b/i;
+            const COUNTRY_FIX = {
+                'usa': 'USA', 'u.s.a.': 'USA', 'united states': 'USA',
+                'united states of america': 'USA', 'us': 'USA',
+                'uk': 'UK', 'u.k.': 'UK', 'united kingdom': 'UK',
+                'england': 'UK', 'scotland': 'UK', 'wales': 'UK'
+            };
+
+            const stripCodes = s => s
+                .replace(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/gi, ' ') // UK postcode
+                .replace(/\b\d{4,6}(-\d{3,4})?\b/g, ' ')                  // 4-6 digit / zip+4
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+
+            const rawSegments = address.split(',').map(s => stripCodes(s.trim())).filter(Boolean);
+            const kept = [];
+
+            rawSegments.forEach((seg, segIdx) => {
+                const isLast = segIdx === rawSegments.length - 1;
+                let tokens = seg.split(/\s+/).filter(Boolean);
+
+                // Street handling: locate the last street-type token.
+                let streetIdx = -1;
+                tokens.forEach((t, i) => {
+                    if (STREET_WORD.test(t) || STREET_SUFFIX.test(t)) streetIdx = i;
+                });
+                if (streetIdx !== -1) {
+                    // English "<name> Dr. <City>" keeps the trailing city; romance/German
+                    // "<#> rue <name>" / "Av. <name>" / "<name>straße" is all street → drop.
+                    const precededByNumber = streetIdx > 0 && /^\d+[a-z-]*$/i.test(tokens[streetIdx - 1]);
+                    if (streetIdx > 0 && !precededByNumber) {
+                        const after = tokens.slice(streetIdx + 1)
+                            .filter(t => !/\d/.test(t) && !DIRECTION.test(t) && !UNIT_WORD.test(t));
+                        if (after.length && after.length <= 3) kept.push(after.join(' '));
+                    }
+                    return;
+                }
+
+                // Institution/campus names are never a city (but keep a final country).
+                if (!isLast && INSTITUTION_WORD.test(seg)) return;
+
+                tokens = tokens.filter(t =>
+                    !/^\d+[a-z-]*$/i.test(t) && !UNIT_WORD.test(t) && !DIRECTION.test(t));
+                const cleaned = tokens.join(' ').trim();
+                if (cleaned) kept.push(cleaned);
+            });
+
+            if (!kept.length) return rawSegments.slice(-2).join(', ');
+
+            const last = kept[kept.length - 1];
+            const fix = COUNTRY_FIX[last.toLowerCase()];
+            if (fix) kept[kept.length - 1] = fix;
+
+            const dedup = kept.filter((s, i) => i === 0 || s.toLowerCase() !== kept[i - 1].toLowerCase());
+            return dedup.join(', ');
+        }
+        
+        function initMap (worldJson) {
+            const YELLOW_TYPES = new Set(['Center', 'Headquarters', 'Node']);
+
+            // Filter out entries with missing coordinates or Site type, then jitter duplicates
+            const addressMap = {};
+            const aggregatedData = data
+                .filter(item => item.latitude != null && item.longitude != null && YELLOW_TYPES.has(item.type))
+                .map(item => {
+                    const address = item.address;
+                    if (!addressMap[address]) addressMap[address] = 1;
+                    else addressMap[address]++;
+                    const offsetX = addressMap[address] > 1 ? (Math.random() - 0.5) * 2 / 10 : 0;
+                    const offsetY = addressMap[address] > 1 ? (Math.random() - 0.5) * 2 / 10 : 0;
+                    return {
+                        name: item.projectName,
+                        value: [item.longitude + offsetX, item.latitude + offsetY, addressMap[address]],
+                        website: item.website,
+                        address: address,
+                        institution: item.institution || null,
+                        activities: item.activities || null,
+                        type: item.type,
+                        isYellow: YELLOW_TYPES.has(item.type)
+                    };
+                });
+
+            const colorMap =  [
+                "#EA580C", // color code for project headquarters
+                "#5B8DB8", // color code for areas samples collected
+                "#F28C28",
+                "#B0B3B8", // Smoke gray
+                "#D4808B", // Golden
+                "#708090", // Slate gray
+                "#FFD700", // Rose pink
+                "#6B8E23", // Bright olive green
+                "#191970", // Midnight blue
+                "#FFF8E1"  // Light ivory
+            ];
+
+            // Render Sites first (below), then Headquarters/Center/Node on top
+            const promiseArr = aggregatedData.sort((a, b) => {
+                if (a.isYellow && !b.isYellow) return 1;
+                if (!a.isYellow && b.isYellow) return -1;
+                return 0;
+            }).map(item => Promise.resolve({
+                ...item,
+                symbol: 'circle',
+                size: item.isYellow ? 8 : 8,
+                color: item.isYellow ? colorMap[0] : colorMap[1]
+            }));
+
+            Promise.all(promiseArr).then(arr => {
+                const myChart = echarts.init(document.getElementById('mapContainer'), null, { renderer: 'svg' });
+                mapChartInstance = myChart;
+
+                // Raw markers — source of truth for clustering
+                const rawMarkers = arr;
+
+                // Tracks current clusters in sync with series data order
+                let currentClusters = [];
+                // The center currently selected from the sidebar list (drives the
+                // highlight ring's tooltip/click so overlapping neighbors can't hijack it).
+                let selectedMarker = null;
+
+                // Country list
+                const countries = new Set();
+                const countryNameMap = {
+                    "united states": "United States of America",
+                    "usa": "United States of America",
+                    "united kingdom": "United Kingdom",
+                    "uk": "United Kingdom",
+                    "democratic republic of the congo": "Democratic Republic of the Congo",
+                    "türkiye": "Turkey",
+                    "czech republic": "Czech Republic",
+                    "trinidad": "Trinidad and Tobago",
+                    "côte d'ivoire": "Côte d'Ivoire",
+                    "bosnia and herzegovina": "Bosnia and Herzegovina",
+                    "united republic of tanzania": "Tanzania",
+                    "republic of madagascar": "Madagascar",
+                };
+                // Shade only countries hosting a displayed center (Center/Headquarters/
+                // Node). Site-type entries are excluded since aggregatedData is already
+                // filtered to YELLOW_TYPES.
+                aggregatedData.forEach(project => {
+                    const { address } = project;
+                    if (!address) return;
+                    const raw = address.split(', ').at(-1)?.trim() ?? '';
+                    if (!raw || /\d/.test(raw)) return;
+                    const country = countryNameMap[raw.toLowerCase()] || raw;
+                    countries.add(country);
+                });
+
+                // Affiliate count excludes the EBP Secretariat (the sole 'Center')
+                const affiliateCount = rawMarkers.filter(m => m.type !== 'Center').length;
+                document.getElementById('countYellow').textContent = affiliateCount;
+
+                // Country count is owned by initBar()'s extractCountry()-based tally,
+                // which canonicalizes name variants (USA/United States, UK/United
+                // Kingdom/Saffron Walden) into a single country. Do NOT overwrite it
+                // here with `countries.size`: that set is built from the raw last
+                // address segment and double-counts those spelling variants (and
+                // misses Taiwan), inflating the total. The `countries` set is still
+                // used for map shading above — just not for the displayed count.
+
+                // ── Clustering ──────────────────────────────────────────────
+
+                /**
+                 * Groups raw markers into spatial clusters based on screen-pixel
+                 * distance at the current zoom level.
+                 * @param {number} pixelRadius  Points within this many pixels are merged.
+                 * @returns {Array} Array of cluster objects { group, lon, lat, count }.
+                 */
+                function clusterPoints(pixelRadius) {
+                    const withPixel = rawMarkers.map(p => ({
+                        ...p,
+                        px: myChart.convertToPixel({ geoIndex: 0 }, [p.value[0], p.value[1]])
+                    })).filter(p => p.px && !isNaN(p.px[0]));
+
+                    const used = new Set();
+                    const clusters = [];
+
+                    for (let i = 0; i < withPixel.length; i++) {
+                        if (used.has(i)) continue;
+                        const group = [withPixel[i]];
+                        used.add(i);
+
+                        for (let j = i + 1; j < withPixel.length; j++) {
+                            if (used.has(j)) continue;
+                            const dx = withPixel[i].px[0] - withPixel[j].px[0];
+                            const dy = withPixel[i].px[1] - withPixel[j].px[1];
+                            if (Math.sqrt(dx * dx + dy * dy) < pixelRadius) {
+                                group.push(withPixel[j]);
+                                used.add(j);
+                            }
+                        }
+
+                        const lon = group.reduce((s, p) => s + p.value[0], 0) / group.length;
+                        const lat = group.reduce((s, p) => s + p.value[1], 0) / group.length;
+                        clusters.push({ group, lon, lat, count: group.length });
+                    }
+                    return clusters;
+                }
+
+                /**
+                 * Converts cluster objects into ECharts scatter data items.
+                 * Clusters render as labelled bubbles; single points as plain dots.
+                 */
+                function buildSeriesData(clusters) {
+                    return clusters.map(c => {
+                        if (c.count === 1) {
+                            return {
+                                value: [c.lon, c.lat],
+                                symbolSize: 9,
+                                symbol: 'circle',
+                                itemStyle: { color: '#EA580C' },
+                                label: { show: false },
+                                // Cluster carried on the data item so click/tooltip never
+                                // rely on a (fragile) dataIndex → currentClusters lookup.
+                                _cluster: c,
+                            };
+                        }
+                        // Area-proportional sizing (√count) so a bubble that looks
+                        // twice as big represents ~twice as many projects, capped at 60px.
+                        const size = Math.min(10 + Math.sqrt(c.count) * 6, 60);
+                        // Scale label with the bubble so small clusters stay readable.
+                        const labelFontSize = Math.max(9, Math.min(size * 0.4, 16));
+                        return {
+                            value: [c.lon, c.lat],
+                            symbolSize: size,
+                            symbol: 'circle',
+                            itemStyle: { color: '#EA580C', opacity: 0.88 },
+                            label: {
+                                show: true,
+                                position: 'inside',
+                                align: 'center',
+                                verticalAlign: 'middle',
+                                formatter: String(c.count),
+                                color: '#ffffff',
+                                fontSize: labelFontSize,
+                                fontWeight: 'bold',
+                                // Match line height to font size and zero the padding so
+                                // the digits sit exactly in the bubble's center rather
+                                // than being nudged by the default text baseline/box.
+                                lineHeight: labelFontSize,
+                                padding: 0,
+                            },
+                            _cluster: c,
+                        };
+                    });
+                }
+
+                /** Re-clusters at current zoom and pushes updated data to the chart. */
+                function updateClusters() {
+                    currentClusters = clusterPoints(5);
+                    myChart.setOption({ series: [{ data: buildSeriesData(currentClusters) }] });
+                }
+
+                // ── Initial render ───────────────────────────────────────────
+
+                const proj = d3.geoEqualEarth();
+                echarts.registerMap('world', worldJson);
+                myChart.setOption({
+                    tooltip: {
+                        trigger: 'item',
+                        confine: true,
+                        formatter: function (params) {
+                            // Highlight ring (series 1): always describe the selected center.
+                            if (params.seriesIndex === 1) {
+                                const p = selectedMarker;
+                                if (!p) return '';
+                                let html = `<strong>${projectAbbr(p.name)}</strong>`;
+                                const loc = CENTER_LOCATIONS[p.name] || simplifyLocation(p.address);
+                                if (loc) html += `<br/><span style="color:#64748B">${loc}</span>`;
+                                if (p.website) html += `<br/><a href="${p.website}" target="_blank">${p.website}</a>`;
+                                return html;
+                            }
+                            const c = params.data && params.data._cluster;
+                            if (!c) return '';
+                            if (c.count > 1) {
+                                const names = c.group.map(p => `• ${projectAbbr(p.name)}`).join('<br/>');
+                                const locs = c.group.map(p => CENTER_LOCATIONS[p.name] || simplifyLocation(p.address)).filter(Boolean);
+                                const clusterLoc = (() => {
+                                    if (!locs.length) return null;
+                                    if (locs.every(l => l === locs[0])) return locs[0];
+                                    const countries = [...new Set(locs.map(l => l.split(', ').at(-1)))];
+                                    return countries.length === 1 ? countries[0] : locs[0];
+                                })();
+                                const locStr = clusterLoc ? ` in ${clusterLoc}` : '';
+                                return `<strong>${c.count} Project Centers${locStr}. Click to expand.</strong><br/>${names}`;
+                            }
+                            const p = c.group[0];
+                            let html = `<strong>${projectAbbr(p.name)}</strong>`;
+                            const loc = CENTER_LOCATIONS[p.name] || simplifyLocation(p.address);
+                            if (loc) html += `<br/><span style="color:#64748B">${loc}</span>`;
+                            if (p.website) html += `<br/><a href="${p.website}" target="_blank">${p.website}</a>`;
+                            return html;
+                        }
+                    },
+                    geo: {
+                        map: 'world',
+                        roam: true,
+                        left: '220px',
+                        top: '3%',
+                        bottom: '3%',
+                        right: '0%',
+                        label: { show: false },
+                        itemStyle: {
+                            normal: { areaColor: '#F8FAFC', borderColor: '#CBD5E1' },
+                            emphasis: { areaColor: '#b8d4b8' }
+                        },
+                        regions: Array.from(countries).map(countryName => ({
+                            name: countryName,
+                            itemStyle: { areaColor: '#0F5A66' }
+                        })),
+                        projection: {
+                            project: (point) => proj(point),
+                            unproject: (point) => proj.invert(point)
+                        }
+                    },
+                    series: [{
+                        type: 'scatter',
+                        coordinateSystem: 'geo',
+                        data: [],
+                        encode: { tooltip: 0 }
+                    }, {
+                        // Pulsing ring marking the center selected from the sidebar list.
+                        // Clickable and on top (zlevel 1) so it is the click/hover target
+                        // even where other markers overlap the same location.
+                        type: 'effectScatter',
+                        coordinateSystem: 'geo',
+                        zlevel: 1,
+                        silent: false,
+                        rippleEffect: { scale: 4, brushType: 'stroke' },
+                        symbolSize: 18,
+                        itemStyle: { color: '#EA580C', borderColor: '#ffffff', borderWidth: 2 },
+                        data: []
+                    }]
+                });
+
+                // Default ("home") framing, captured once so the reset button can
+                // always snap back to the initial global overview.
+                let homeView = { zoom: 1, center: proj([0, 0]) };
+
+                // First cluster pass after the map's initial render. The chart's
+                // 'finished' event never fires for this geo + custom-projection setup
+                // (confirmed: it doesn't trigger even after a long idle wait), so the
+                // first pass can't be gated on it — call directly instead.
+                {
+                    const g = myChart.getOption().geo[0];
+                    homeView = { zoom: g.zoom || 1, center: g.center || proj([0, 0]) };
+                    updateClusters();
+                }
+
+                // Re-cluster after each user pan/zoom once the render is settled
+                let roamPending = false;
+                myChart.on('georoam', function () {
+                    if (roamPending) return;
+                    roamPending = true;
+                    myChart.on('rendered', function onRoamRender() {
+                        myChart.off('rendered', onRoamRender);
+                        roamPending = false;
+                        updateClusters();
+                    });
+                });
+
+                // Click: zoom into cluster (preserving projection), or open website
+                myChart.on('click', function (params) {
+                    if (params.componentType !== 'series') return;
+
+                    // Highlight ring (series 1): act on the selected center directly.
+                    if (params.seriesIndex === 1) {
+                        if (selectedMarker && selectedMarker.website) {
+                            window.open(selectedMarker.website, '_blank');
+                        } else if (selectedMarker) {
+                            window.alert('no website!');
+                        }
+                        return;
+                    }
+
+                    const c = params.data && params.data._cluster;
+                    if (!c) return;
+
+                    if (c.count > 1) {
+                        const currentZoom = myChart.getOption().geo[0].zoom || 1;
+                        // With a custom projection, `center` must be given in
+                        // PROJECTED coordinates, not raw lng/lat. The projection
+                        // also has to be re-supplied or ECharts drops it.
+                        myChart.setOption({
+                            geo: {
+                                zoom: currentZoom * 2.5,
+                                center: proj([c.lon, c.lat]),
+                                projection: {
+                                    project:   (point) => proj(point),
+                                    unproject: (point) => proj.invert(point)
+                                }
+                            }
+                        });
+                        myChart.on('rendered', function onZoomRender() {
+                            myChart.off('rendered', onZoomRender);
+                            updateClusters();
+                        });
+                    } else {
+                        const p = c.group[0];
+                        if (p.website) window.open(p.website, '_blank');
+                        else window.alert('no website!');
+                    }
+                });
+
+                // ── Interactive center list ──────────────────────────────────
+
+                const centerList = document.getElementById('centerList');
+                const centerSearch = document.getElementById('centerSearch');
+
+                // EBP Secretariat pinned first, remaining affiliates alphabetical.
+                const isSecretariat = marker => marker.type === 'Center';
+                const sortedCenters = rawMarkers
+                    .map((marker, idx) => ({ marker, idx }))
+                    .sort((a, b) => {
+                        if (isSecretariat(a.marker) !== isSecretariat(b.marker)) {
+                            return isSecretariat(a.marker) ? -1 : 1;
+                        }
+                        return a.marker.name.localeCompare(b.marker.name);
+                    });
+
+                let selectedIdx = null;
+
+                /**
+                 * Zooms the map to a center and pulses a ring over its location,
+                 * so it stands out even where markers overlap.
+                 */
+                function highlightCenter(marker) {
+                    selectedMarker = marker;
+                    const lon = marker.value[0];
+                    const lat = marker.value[1];
+                    myChart.setOption({
+                        geo: {
+                            zoom: 8,
+                            center: proj([lon, lat]),
+                            projection: {
+                                project:   (point) => proj(point),
+                                unproject: (point) => proj.invert(point)
+                            }
+                        },
+                        series: [{}, { data: [{ value: [lon, lat] }] }]
+                    });
+                    myChart.on('rendered', function onHighlightRender() {
+                        myChart.off('rendered', onHighlightRender);
+                        updateClusters();
+                        // Pin the selected center's info immediately so the user sees
+                        // exactly which marker was located, regardless of overlaps.
+                        myChart.dispatchAction({ type: 'showTip', seriesIndex: 1, dataIndex: 0 });
+                    });
+                }
+
+                /** Renders the (optionally filtered) list of centers. */
+                function renderCenterList(filter) {
+                    const query = (filter || '').trim().toLowerCase();
+                    centerList.innerHTML = '';
+
+                    const matches = sortedCenters.filter(({ marker }) => {
+                        if (!query) return true;
+                        return (
+                            marker.name.toLowerCase().includes(query) ||
+                            (marker.institution && marker.institution.toLowerCase().includes(query)) ||
+                            (marker.address && marker.address.toLowerCase().includes(query))
+                        );
+                    });
+
+                    if (!matches.length) {
+                        const empty = document.createElement('div');
+                        empty.className = 'center-empty';
+                        empty.textContent = 'No matching centers';
+                        centerList.appendChild(empty);
+                        return;
+                    }
+
+                    matches.forEach(({ marker, idx }) => {
+                        const item = document.createElement('div');
+                        item.className = 'center-item' + (idx === selectedIdx ? ' selected' : '');
+
+                        const nameEl = document.createElement('span');
+                        nameEl.textContent = marker.name;
+                        item.appendChild(nameEl);
+
+                        if (isSecretariat(marker)) {
+                            const badge = document.createElement('span');
+                            badge.className = 'center-badge';
+                            badge.textContent = 'Secretariat';
+                            item.appendChild(badge);
+                        }
+
+                        const subText = CENTER_LOCATIONS[marker.name] ||
+                            simplifyLocation(marker.address) || marker.institution;
+                        if (subText) {
+                            const subEl = document.createElement('span');
+                            subEl.className = 'center-sub';
+                            subEl.textContent = subText;
+                            item.appendChild(subEl);
+                        }
+
+                        item.onclick = () => {
+                            selectedIdx = idx;
+                            centerList.querySelectorAll('.center-item').forEach(el =>
+                                el.classList.remove('selected'));
+                            item.classList.add('selected');
+                            highlightCenter(marker);
+                        };
+
+                        centerList.appendChild(item);
+                    });
+                }
+
+                centerSearch.addEventListener('input', e => renderCenterList(e.target.value));
+                renderCenterList('');
+
+                // ── Floating zoom / reset controls ───────────────────────────
+                // The custom d3 projection must be re-supplied on every geo update
+                // or ECharts drops it (blanking the map); clusters are recomputed
+                // once the new frame has rendered.
+                const ECHARTS_PROJECTION = {
+                    project:   (point) => proj(point),
+                    unproject: (point) => proj.invert(point)
+                };
+                const MIN_ZOOM = 1;
+                const MAX_ZOOM = 64;
+
+                function recomputeClustersAfterRender() {
+                    myChart.on('rendered', function onControlRender() {
+                        myChart.off('rendered', onControlRender);
+                        updateClusters();
+                    });
+                }
+
+                /** Zooms about the current center by a multiplicative factor. */
+                function zoomMapBy(factor) {
+                    const geo = myChart.getOption().geo[0];
+                    const nextZoom = Math.min(MAX_ZOOM,
+                        Math.max(MIN_ZOOM, (geo.zoom || 1) * factor));
+                    myChart.setOption({
+                        geo: { zoom: nextZoom, projection: ECHARTS_PROJECTION }
+                    });
+                    recomputeClustersAfterRender();
+                }
+
+                /** Snaps back to the initial global overview and clears any selection. */
+                function resetMapView() {
+                    selectedMarker = null;
+                    selectedIdx = null;
+                    myChart.setOption({
+                        geo: {
+                            zoom: homeView.zoom,
+                            center: homeView.center,
+                            projection: ECHARTS_PROJECTION
+                        },
+                        series: [{}, { data: [] }]
+                    });
+                    renderCenterList(centerSearch.value);
+                    recomputeClustersAfterRender();
+                }
+
+                document.getElementById('zoomInBtn').onclick = () => zoomMapBy(1.6);
+                document.getElementById('zoomOutBtn').onclick = () => zoomMapBy(1 / 1.6);
+                document.getElementById('resetViewBtn').onclick = resetMapView;
+            })
+
+            function showRelationshipGraph(aggregatedItem) {
+                const relationshipGraph = echarts.init(document.getElementById('relationshipGraph'));
+
+                // Prepare graph data
+                // const nodes = [{ name: aggregatedItem.name, symbolize: true, symbolSize: 40, category: 0 }];
+                const nodes = [{ name: aggregatedItem.name, symbolize: true, symbolSize: 40, category: 0, label: { show: false} }];
+                const links = [];
+
+                aggregatedItem.projects.forEach(project => {
+                    nodes.push({ name: project.projectName, url: project.website, symbolSize: 30, category: 1 });
+                    links.push({ source: aggregatedItem.name, target: project.projectName });
+                });
+
+                const graphOption = {
+                    tooltip: {},
+                    animation: false,
+                    series: [{
+                        type: 'graph',
+                        layout: 'force',
+                        data: nodes,
+                        links: links,
+                        categories: [
+                            { name: 'address' },
+                            { name: 'project' },
+                        ],
+                        focusNodeAdjacency: true,
+                        roam: true,
+                        edgeSymbol: ['circle', 'arrow'],
+                        edgeSymbolSize: [4, 10],
+                        force: {
+                            repulsion: 2000, // increase repulsion distance
+                        },
+                        label: {
+                            show: true,
+                            position: 'inside', // Center the labels inside the nodes
+                            formatter: params => params.data.name // Show name only for simplicity
+                        },
+                        lineStyle: {
+                            color: 'source',
+                            // curveness: 0.3
+                        }
+                    }]
+                };
+
+                relationshipGraph.setOption(graphOption);
+                
+                relationshipGraph.on('click', function (params) {
+                    if (params.data.url) {
+                        window.open(params.data.url, '_blank'); // open the link in a new tab
+                    } 
+                });
+            }
+        }
+
+        function initBar() {
+            const BAR_TYPES = new Set(['Headquarters', 'Node']);
+            const count = projectsData.filter(p => BAR_TYPES.has(p.type)).length;
+            // Canonical name corrections — city/district/neighbourhood → country
+            const barCountryMap = {
+                // United Kingdom
+                'uk': 'United Kingdom', 'united kingdom': 'United Kingdom',
+                'england': 'United Kingdom', 'scotland': 'United Kingdom', 'wales': 'United Kingdom',
+                'saffron walden': 'United Kingdom', 'hinxton': 'United Kingdom',
+                // United States
+                'usa': 'United States', 'united states': 'United States', 'united states of america': 'United States',
+                // Australia
+                'australia': 'Australia', 'sydney': 'Australia',
+                // China
+                'china': 'China', 'pingshan': 'China', 'yantian district': 'China',
+                'shenzhen': 'China', 'beijing': 'China', 'shanghai': 'China',
+                // Japan
+                'japan': 'Japan', 'chiba': 'Japan',
+                // Norway
+                'norway': 'Norway', 'blindern': 'Norway',
+                // Taiwan
+                'taiwan': 'Taiwan', 'taipei city': 'Taiwan',
+                // South Korea
+                'south korea': 'South Korea', 'korea': 'South Korea',
+                // Other
+                'hong kong': 'Hong Kong',
+                'uae': 'United Arab Emirates',
+            };
+            // US state abbreviations
+            const US_STATES = new Set(['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC','PR']);
+
+            function extractCountry(address) {
+                if (!address) return null;
+                const segments = address.split(', ').map(s => s.trim()).filter(Boolean);
+                for (let i = segments.length - 1; i >= 0; i--) {
+                    const seg = segments[i];
+                    const lower = seg.toLowerCase();
+                    // Clean alpha-only segment — treat as country/region name
+                    if (!/\d/.test(seg)) {
+                        return barCountryMap[lower] ||
+                            lower.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                    }
+                    // Segment has digits — try extracting country from last word(s)
+                    const words = seg.split(/\s+/);
+                    // Check last word alone
+                    const lastWord = words.at(-1).toLowerCase().replace(/[^a-z]/g, '');
+                    if (barCountryMap[lastWord]) return barCountryMap[lastWord];
+                    // Check last two words (e.g. "United States", "United Kingdom")
+                    if (words.length >= 2) {
+                        const lastTwo = words.slice(-2).join(' ').toLowerCase().replace(/[^a-z ]/g, '');
+                        if (barCountryMap[lastTwo]) return barCountryMap[lastTwo];
+                    }
+                    // US: state abbreviation + zip pattern (e.g. "CA 90007", "DC 20250")
+                    if (/^[A-Z]{2}\s+\d{4,5}/.test(seg) && US_STATES.has(seg.split(/\s+/)[0])) return 'United States';
+                    // US: city + state + zip (e.g. "Athens GA 30605")
+                    if (words.length >= 3 && US_STATES.has(words.at(-2)) && /^\d{4,5}/.test(words.at(-1))) return 'United States';
+                    // UK postcode pattern (e.g. "TW9 3AE", "CB10 1RQ")
+                    if (/^[A-Z]{1,2}\d{1,2}\s+\d[A-Z]{2}$/.test(seg)) return 'United Kingdom';
+                }
+                return null;
+            }
+
+            const countryProjects = {};
+            projectsData.forEach(project => {
+                if (!BAR_TYPES.has(project.type)) return;
+                if (project.latitude == null || project.longitude == null) return;
+                const country = extractCountry(project.address);
+                if (!country) return;
+                if (!countryProjects[country]) {
+                    countryProjects[country] = [];
+                }
+                countryProjects[country].push(project);
+            });
+
+            // Sort ascending so largest bar appears at the top
+            const sortedArr = Object.entries(countryProjects).sort((a, b) => a[1].length - b[1].length);
+            const keys = sortedArr.map(item => item[0]);
+            const barData = sortedArr.map(item => item[1].length);
+
+            document.getElementById('countCountries').textContent = sortedArr.length;
+
+            var myChart = echarts.init(document.getElementById('barContainer'));
+            var option = {
+                title: {
+                    text: `Distribution of ${count} EBP Affiliated Projects by Country`,
+                    left: 'center'
+                },
+                grid: {
+                    top: '8%',
+                    left: '1%',
+                    right: '12%',
+                    bottom: '5%',
+                    containLabel: true
+                },
+                tooltip: {},
+                xAxis: {
+                    type: 'value',
+                    name: 'Number of Projects',
+                    nameLocation: 'middle',
+                    nameGap: 30,
+                    nameTextStyle: { fontSize: 14 },
+                    splitLine: { show: true },
+                    axisLine: { show: true },
+                    minInterval: 1
+                },
+                yAxis: {
+                    type: 'category',
+                    data: keys,
+                    axisLabel: { fontSize: 12 }
+                },
+                series: [{
+                    name: 'Country',
+                    type: 'bar',
+                    data: barData,
+                    itemStyle: { color: '#38aadd' },
+                    barWidth: '60%',
+                    label: {
+                        show: true,
+                        position: 'right',
+                        fontSize: 12
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+
+            myChart.on('click', function (params) {
+                if (params.componentType === 'series') {
+                    const projects = countryProjects[params.name];
+                    document.getElementById('relationshipModalLabel').innerText = `${params.name}  (${projects.length})`;
+                    const projectsContainer = document.getElementById('projectsList');
+                    projectsContainer.innerHTML = projects.map(project => {
+                        const { projectName, institution, website } = project;
+                        const label = institution ? `${projectName} — ${institution}` : projectName;
+                        return website
+                            ? `<li><a href="${website}" title="${website}" target="_blank">${label}</a></li>`
+                            : `<li>${label}</li>`;
+                    }).join('');
+                    $('#relationshipModal').modal('show');
+                }
+            });
+        }
+
+        initMap(worldJson);
+        initBar();
+
+        document.querySelectorAll('.btns button').forEach(btn => {
+            btn.onclick = e => {
+                const type = e.target.innerHTML;
+                if (type !== 'Map' && type !== 'Statistic') return;
+                document.querySelectorAll('.btns button').forEach(b => { b.className = ''; });
+                e.target.className = 'selected';
+                const map = document.getElementById('mapContainer');
+                const bar = document.getElementById('barContainer');
+                const sidebar = document.getElementById('mapSidebar');
+                const downloadDropdown = document.getElementById('downloadDropdown');
+                const zoomControls = document.getElementById('mapZoomControls');
+                if (type == 'Map') {
+                    map.style.display = 'block';
+                    bar.style.display = 'none';
+                    sidebar.style.display = 'flex';
+                    downloadDropdown.style.display = 'flex';
+                    zoomControls.style.display = 'flex';
+                } else {
+                    map.style.display = 'none';
+                    bar.style.display = 'block';
+                    sidebar.style.display = 'none';
+                    downloadDropdown.style.display = 'none';
+                    zoomControls.style.display = 'none';
+                }
+            };
+        });
+        document.querySelector('.btns button').click();
+
+        function getSidebarOverlaySVG(svgHeight) {
+            const W = 220, PAD = 16, FONT = 13, LH = 21, MAX_CH = 25;
+            const yellowN  = document.getElementById('countYellow').textContent;
+            const countryN = document.getElementById('countCountries').textContent;
+            const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+            function wrap(str) {
+                const words = str.split(' '), lines = [];
+                let line = '';
+                for (const w of words) {
+                    const test = line ? line + ' ' + w : w;
+                    if (test.length > MAX_CH && line) { lines.push(line); line = w; }
+                    else line = test;
+                }
+                if (line) lines.push(line);
+                return lines;
+            }
+
+            function para(boldPart, normalPart, x, y) {
+                const lines = wrap((boldPart || '') + (normalPart || ''));
+                return lines.map((line, i) => {
+                    const yPos = y + i * LH;
+                    if (boldPart && i === 0 && line.startsWith(boldPart)) {
+                        const rest = line.slice(boldPart.length);
+                        return `<text x="${x}" y="${yPos}" font-family="sans-serif" font-size="${FONT}" fill="#1E293B"><tspan font-weight="bold">${esc(boldPart)}</tspan>${esc(rest)}</text>`;
+                    }
+                    return `<text x="${x}" y="${yPos}" font-family="sans-serif" font-size="${FONT}" fill="#1E293B">${esc(line)}</text>`;
+                });
+            }
+
+            const captionParts = [
+                [null,                   'Geographic distribution of EBP network of networks.'],
+                ['Yellow circles',       ` mark ${yellowN} project coordination centers and regional nodes.`],
+                ['Teal-shaded countries',` (${countryN}) host at least one EBP-affiliated project or site.`],
+                [null,                   'Click any marker to visit the project website.'],
+            ];
+
+            let y = 160;
+            const captionLines = [];
+            for (const [bold, rest] of captionParts) {
+                const rendered = para(bold, rest, PAD, y);
+                captionLines.push(...rendered);
+                y += rendered.length * LH + 8;
+            }
+
+            return `
+                <rect x="0" y="0" width="${W}" height="${svgHeight}" fill="#ffffff"/>
+                <line x1="${W}" y1="0" x2="${W}" y2="${svgHeight}" stroke="#CBD5E1" stroke-width="1"/>
+                <text x="${PAD}" y="44" font-family="sans-serif" font-size="15" font-weight="bold" fill="#1E293B">EBP Global Network</text>
+                <circle cx="28" cy="82" r="4" fill="#EA580C"/>
+                <text x="46" y="87" font-family="sans-serif" font-size="12.5" fill="#1E293B">Project center (Number indicates cluster count)</text>
+                <rect x="20" y="103" width="16" height="11" rx="3" fill="#0F5A66"/>
+                <text x="46" y="112" font-family="sans-serif" font-size="12.5" fill="#1E293B">Country with EBP presence</text>
+                <line x1="${PAD}" y1="133" x2="${W - PAD}" y2="133" stroke="#CBD5E1" stroke-width="1"/>
+                ${captionLines.join('\n                ')}
+            `;
+        }
+
+        function buildDownloadSVG() {
+            const svgEl = mapChartInstance.getDom().querySelector('svg');
+            return svgEl.outerHTML.replace(
+                /(<svg[^>]*>)/,
+                `$1<rect width="100%" height="100%" fill="#E6F0F5"/>`
+            );
+        }
+
+        document.getElementById('downloadSvgBtn').onclick = function (e) {
+            e.preventDefault();
+            if (!mapChartInstance) return;
+            const svgStr = buildDownloadSVG();
+            const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = 'EBP_global_distribution.svg';
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        document.getElementById('downloadPngBtn').onclick = function (e) {
+            e.preventDefault();
+            if (!mapChartInstance) return;
+            const svgStr = buildDownloadSVG();
+            const img = new Image();
+            const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width * 4;
+                canvas.height = img.height * 4;
+                const ctx = canvas.getContext('2d');
+                ctx.scale(4, 4);
+                ctx.drawImage(img, 0, 0);
+                const a = document.createElement('a');
+                a.download = 'EBP_global_distribution.png';
+                a.href = canvas.toDataURL('image/png');
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+            img.src = url;
+        };
+
+    </script>
+</body>
+</html>
