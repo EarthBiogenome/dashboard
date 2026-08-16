@@ -142,11 +142,23 @@ const EBPBackend = (function () {
         + 'backend, which has not been given a hostname in <code>services_backend.js</code>.';
     }
     if (err && err.unreachable && isLocalBackend()) {
-      return '<b>The EBP backend is not answering on <code>' + base() + '</code>.</b> '
-        + 'It is a separate process and has to be running alongside this page — from the '
-        + '<code>ebp-backend</code> repo:<br>'
+      /* Two causes, and `fetch` cannot tell them apart: nothing listening, and a
+         CORS origin mismatch. In the second the server HANDLES the request and
+         returns 200 — it is in its access log — but omits
+         Access-Control-Allow-Origin, so the browser discards the response and
+         rejects with the same bare "Failed to fetch". Saying "the backend is not
+         answering" was wrong in exactly that case, and wrong confidently: a
+         308-species run had completed server-side while this message claimed
+         nothing was there. Name both, in the order they are worth checking. */
+      return '<b>The request to <code>' + base() + '</code> did not complete.</b> '
+        + 'Two different things look identical from here:<br>'
+        + '· <b>The backend is not running.</b> Start it from the <code>ebp-backend</code> repo: '
         + '<code>python -m uvicorn app.main:app --app-dir api --port 8000</code><br>'
-        + 'Nothing was lost. Start it and screen the list again.';
+        + '· <b>It is running, and the browser blocked the reply</b> because this page was opened '
+        + 'from an origin the backend does not allow. Check the address bar: serve the page over '
+        + '<code>http://localhost</code> or <code>http://127.0.0.1</code> — a <code>file://</code> '
+        + 'path cannot call the backend at all.<br>'
+        + 'Either way nothing was lost, and the list can simply be screened again.';
     }
     if (err && err.unreachable) {
       return '<b>Could not reach the EBP backend.</b> It may be down, or a network or CORS rule may '
