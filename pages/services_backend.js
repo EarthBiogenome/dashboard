@@ -128,6 +128,21 @@ const EBPBackend = (function () {
   }
 
   /**
+   * Was this page opened as a file rather than served? Then NOTHING will work.
+   *
+   * A `file://` document has the opaque origin `null`, which CORS cannot be
+   * configured to allow — not a setting we have failed to set, a thing that
+   * cannot be granted. Every request will fail with "Failed to fetch", the
+   * backend will log nothing, and the page otherwise looks entirely functional
+   * until a list has been uploaded and screening has failed.
+   *
+   * Callers should say so up front rather than letting someone discover it.
+   */
+  function fileOrigin() {
+    return (window.location && window.location.protocol) === 'file:';
+  }
+
+  /**
    * Why a request failed, in words the reader can act on. Returns HTML.
    *
    * "Could not reach the EBP backend: Failed to fetch" is what the browser
@@ -137,6 +152,12 @@ const EBPBackend = (function () {
    * of handing the reader the fetch error and leaving them to guess.
    */
   function explain(err) {
+    if (fileOrigin()) {
+      return '<b>This page was opened as a file, so it cannot reach any backend.</b> '
+        + 'A <code>file://</code> document has no origin, which the backend can never be configured '
+        + 'to accept. Serve this folder over http instead — from the <code>ebp-backend</code> repo, '
+        + '<code>run_dev.cmd</code> starts both halves and opens the right address.';
+    }
     if (err && err.unconfigured) {
       return '<b>No backend is configured for this deployment yet.</b> This page needs the EBP '
         + 'backend, which has not been given a hostname in <code>services_backend.js</code>.';
@@ -171,6 +192,7 @@ const EBPBackend = (function () {
     BackendError: BackendError,
     backendBase: base,
     isLocalBackend: isLocalBackend,
+    fileOrigin: fileOrigin,
     explain: explain,
 
     /**

@@ -187,6 +187,17 @@
   .card p:last-child{margin-bottom:0;}
   .card p b{color:var(--paper);}
 
+  /* Shown when the page can never reach a backend from where it was opened —
+     a file:// document. Deliberately loud and above every view: the failure it
+     prevents otherwise surfaces only after a list has been uploaded and
+     screened for half a minute. */
+  .origin-warning{max-width:1180px; margin:0 auto 18px; padding:13px 18px; border-radius:10px;
+    font-size:13px; line-height:1.7; color:var(--warn); background:rgba(224,167,96,.1);
+    border:1px solid rgba(224,167,96,.35);}
+  .origin-warning[hidden]{display:none;}
+  .origin-warning b{color:var(--warn);}
+  .origin-warning code{color:inherit; background:rgba(224,167,96,.14); border-color:rgba(224,167,96,.3);}
+
   .site-footer{border-top:1px solid var(--line); background:var(--ink-2); color:var(--paper-mute);
     font-size:12.5px; text-align:center; padding:14px 22px;}
   :focus-visible{outline:2px solid var(--green-bright); outline-offset:2px; border-radius:5px;}
@@ -241,6 +252,10 @@
     </div>
   </div>
 </header>
+
+<!-- Filled in at boot only when the page cannot reach a backend from where it
+     was opened. See the origin check at the bottom of this file. -->
+<div class="wrap"><div class="origin-warning" id="origin-warning" role="alert" hidden></div></div>
 
 <!-- ===== SUBMIT — Task 6 ===== -->
 <div class="view on" id="view-submit">
@@ -564,6 +579,25 @@
     }
     showResults(body, { source: null });
   }
+
+  /* ── can this page reach a backend at all? ──
+     Checked BEFORE anything is offered, because the alternative is finding out
+     after uploading a list and waiting through a screening run that was never
+     going to be delivered. A `file://` document has the opaque origin `null`,
+     which CORS cannot be configured to accept — it is not a setting anyone
+     forgot, it cannot be granted — so the page says so and disables submitting
+     rather than looking entirely functional. */
+  (function checkOrigin() {
+    if (!EBPBackend.fileOrigin()) return;
+    const box = document.getElementById('origin-warning');
+    box.innerHTML = EBPBackend.explain(null);
+    box.hidden = false;
+    const go = document.getElementById('ebp-go');
+    if (go) {
+      go.disabled = true;
+      go.title = 'This page must be served over http to reach the backend.';
+    }
+  })();
 
   /* ── bootstrap ──
      The tracked list resolves first: it decides whether the Trend tab exists at
