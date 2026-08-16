@@ -657,5 +657,21 @@ const PrioritizationSpecies = (function () {
       const entry = (kind === 'tax' ? TAX : PROJ)[label];
       return entry ? { cls: entry[0], text: entry[1] } : { cls: 'c-unknown', text: '' };
     },
+
+    /**
+     * Every label of one vocabulary, as [{label, cls, text}]. [Task 6]
+     *
+     * The help panel's tables are BUILT from this rather than written out again,
+     * so the glossary a reader opens and the tooltip on a chip cannot say
+     * different things about the same label. Order is this file's declaration
+     * order; a caller that wants the workbook's rank order sorts it, because
+     * that is a display concern and this is the vocabulary.
+     */
+    glossary(kind) {
+      const table = kind === 'tax' ? TAX : PROJ;
+      return Object.keys(table).map((label) => ({
+        label: label, cls: table[label][0], text: table[label][1],
+      }));
+    },
   };
 })();

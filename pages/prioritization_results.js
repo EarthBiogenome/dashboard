@@ -504,6 +504,11 @@ const PrioritizationResults = (function () {
 
     ${chartsCard}
 
+    <!-- The filter matrix, where the filtering happens. The full glossary is a
+         click away in the help panel; this is the three lines that answer
+         "I have filtered — now what?" without leaving the table. -->
+    ${typeof PrioritizationHelp === 'undefined' ? '' : PrioritizationHelp.matrixHtml()}
+
     <div class="ebp-filters">
       <div><label for="ebp-f-tax">Novelty </label>
         <select id="ebp-f-tax">${options(tax, TAX_RANK, 'All novelty')}</select></div>

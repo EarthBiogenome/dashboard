@@ -79,6 +79,7 @@
 <script src="./prioritization_submit.js"></script>
 <script src="./prioritization_results.js"></script>
 <script src="./prioritization_coverage.js"></script>
+<script src="./prioritization_help.js"></script>
 
 <style>
   :root{
@@ -207,6 +208,10 @@
       <div class="head-left">
         <div class="crumb">Prioritization · one question</div>
         <h1>Is my species list worth sequencing?</h1>
+        <!-- Reference material, reachable from every view rather than owned by
+             one — the same labels appear in Results, Coverage and both trend
+             panels. `#help` deep-links straight into it. -->
+        <button class="ebp-help-btn" id="helpBtn" type="button">? How to read this</button>
       </div>
       <!-- Populated by whichever of the two identities the page has. They are
            not the same claim, so the unit is not the same word: a tracked list
@@ -346,6 +351,19 @@
   tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
   document.getElementById('results-goto-submit')
     .addEventListener('click', function () { show('submit'); });
+
+  /* "How to read this" — available from every view, and from ?…#help. Its
+     Sources block names the IUCN release rather than carrying a version string,
+     for the reason iucn_release.py gives; the GoaT reference size arrives with
+     the first submission. Neither is required for the panel to open. */
+  PrioritizationHelp.mount(document.getElementById('helpBtn'));
+  EBPBackend.health()
+    .then(function (health) {
+      PrioritizationHelp.setContext({
+        iucnRelease: ((health.caches || {}).iucn_cache || {}).release || null,
+      });
+    })
+    .catch(function () { /* no backend configured, or unreachable — omit it */ });
 
   /* ── the trend view exists only for a tracked list ──
      The link carries a capability token, never a list name: `?list=<token>`.
@@ -505,6 +523,7 @@
         : null,
     });
     document.getElementById('tab-coverage').hidden = false;
+    PrioritizationHelp.setContext({ referenceCount: payload.reference_species_count || null });
 
     /* The header's list identity belongs to the tracked list where there is
        one — it is the stronger claim, and it is what the trend is keyed by.
