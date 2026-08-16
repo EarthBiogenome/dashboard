@@ -9,26 +9,35 @@
 <!--
   Species prioritization — one page, three views (integration plan §7).
 
-  STATE OF THIS FILE. The "Changes over time" view is complete: it is A-T4,
-  Panel A of the per-list trend, plus A-T5's Panel B — one species' run-by-run
-  history, opened by clicking a species chip in the kinds-of-movement card. Both
-  run against the live backend (`GET /api/lists/...`). Submit and Results are
-  placeholders, and belong to Task 6 — which owns this page's shell and should
-  fill them in HERE rather than start a second page. The three-view structure,
-  the tab strip, the token bootstrap and `services_backend.js` are already in
-  place for it.
+  STATE OF THIS FILE. All three views are built. Submit and Results are Task 6
+  (`prioritization_submit.js`, `prioritization_results.js`); "Changes over time"
+  is A-T4's Panel A plus A-T5's Panel B, one species' run-by-run history. Every
+  view runs against the live backend through `services_backend.js`, which holds
+  the one `BACKEND_BASE`.
 
-  TASK 6: HOW TO OPEN PANEL B FROM A RESULTS ROW. The timeline is a singleton
-  panel that is MOVED into whichever host asks for it, so there is only ever one
-  open history and its `Since` control cannot fork. From a table row, call:
+  THE THREE VIEWS ARE NOT THE SAME KIND OF THING, and conflating them is the
+  mistake this comment exists to prevent:
+
+    * Submit and Results are keyed by SUBMISSION — anyone may run a list, the
+      opaque submission id is the capability, and the run has no list identity.
+    * Changes over time is keyed by TRACKED LIST — a per-list capability token,
+      issued by the secretariat, and the CLI is the only thing that writes runs.
+
+  So the Trend tab is ABSENT rather than empty when no `?list=` token resolves
+  (§7a): an empty chart would read as "this list has never moved" instead of
+  "this list is not tracked". And a results row can only open a species timeline
+  when a tracked list happens to be open in the same page — see openTimeline().
+
+  PANEL B IS A SINGLETON THAT IS MOVED into whichever host asks for it, so there
+  is only ever one open history and its `Since` control cannot fork. Both entry
+  points — a species chip in the trend's kinds-of-movement card, and a results
+  row — go through openTimeline() below, which is the whole wiring:
 
       PrioritizationSpecies.open({
         host: <the element the panel should sit in>,
         list: trackedList, token: trackedToken, name: <Scientific Name>,
         runs: panel.payload.runs,      // gives it absences + pipeline-change runs
       });
-
-  Nothing else needs wiring — it fetches, renders and closes itself.
 
   HOW A PROJECT REACHES ITS TREND (plan §12.6, option C — decided 2026-08-13).
   The secretariat hands the project one unguessable link:
@@ -40,10 +49,10 @@
   them. A token that opens nothing gets the same answer as a list that does not
   exist, because the API refuses to distinguish them.
 
-  THE TREND VIEW IS CONDITIONAL, NOT DECORATIVE (§7a). It is keyed by LIST, not
-  by submission, so a freshly submitted list has no history and the tab is
-  ABSENT — not empty. An empty chart would read as "this list has never moved"
-  rather than "this list is not tracked".
+  DEEP LINKS. `?submission=<id>` opens straight to Results (and resumes the
+  poll if that run is still going), `?list=<token>` opens the trend, and the two
+  compose. The submission id is put in the address bar the moment the server
+  issues one, not when the run finishes — a background run outlives the tab.
 
   Deviations from STYLE_SPEC.md, deliberate, for the record:
     * Dark by default (botanical-ink), matching the tool mockups and
@@ -55,12 +64,21 @@
     * `utils.js` / `services.js` are not loaded: they are GoaT-fetch and
       ECharts-format helpers for the progress pages, and nothing here calls
       GoaT directly. `services_backend.js` is this page's data layer.
+    * ECharts is loaded for the Results view's two distribution bars only. The
+      trend chart is hand-drawn canvas (A-T4) because it has to dash selected
+      segments; a category bar has no such requirement, so it uses the library
+      the other 17 pages already use. Vendored, as they are — nothing entered
+      `package.json`.
 -->
 
 <script src="../config.js"></script>
+<script src="./echarts.min.js"></script>
 <script src="./services_backend.js"></script>
 <script src="./prioritization_trend.js"></script>
 <script src="./prioritization_species.js"></script>
+<script src="./prioritization_submit.js"></script>
+<script src="./prioritization_results.js"></script>
+<script src="./prioritization_coverage.js"></script>
 
 <style>
   :root{
@@ -119,7 +137,10 @@
   .subhead .wrap{padding-bottom:0;}
   .crumb{font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--green-glow); font-weight:700;}
   .subhead h1{font-size:clamp(22px,3vw,28px); margin:6px 0 8px; font-weight:800; letter-spacing:-.02em; text-wrap:balance;}
-  .subhead .sub{font-size:14px; color:var(--paper-dim); line-height:1.55; margin:0; text-wrap:pretty; max-width:70ch;}
+  /* Full page width — it sits below .headrow rather than inside .head-left, so
+     it is not competing with the list stat for horizontal space. */
+  .subhead .sub{font-size:14px; color:var(--paper-dim); line-height:1.55; margin:8px 0 0;
+    text-wrap:pretty;}
   .headrow{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap;}
   .headrow .head-left{min-width:0; flex:1 1 420px;}
   .head-right{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
@@ -138,8 +159,24 @@
 
   .view{display:none;} .view.on{display:block;}
   .view-head{margin-bottom:18px;}
+  /* .row is for a view whose heading carries actions (Results). The Trend view
+     deliberately keeps the plain block form — it has none. */
+  .view-head.row{display:flex; justify-content:space-between; align-items:flex-start;
+    gap:20px; flex-wrap:wrap;}
   .view-head .vt{font-size:19px; font-weight:650; letter-spacing:-.01em;}
   .view-head .vs{font-size:13px; color:var(--paper-dim); margin-top:2px;}
+
+  /* Shell furniture, shared by both Task 6 views — kept here rather than in
+     either component so the two cannot drift into two button styles. */
+  .btn{background:var(--ink-2); color:var(--paper-dim); border:1px solid var(--line); border-radius:8px;
+    padding:9px 15px; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex;
+    align-items:center; gap:7px; text-decoration:none; font-family:inherit;}
+  .btn:hover{color:var(--paper); border-color:var(--paper-mute); text-decoration:none;}
+  .btn.primary{background:var(--green-deep); color:#fff; border-color:transparent; padding:12px 22px;
+    font-size:14px; font-weight:700;}
+  .btn.primary:hover{background:var(--green); color:#fff;}
+  .btn:disabled{background:var(--ink-4); color:var(--paper-mute); cursor:not-allowed;}
+  .btn[hidden]{display:none;}
 
   .card{background:var(--ink-2); border:1px solid var(--line); border-radius:var(--radius);
     padding:20px 22px; margin-bottom:18px;}
@@ -170,21 +207,30 @@
       <div class="head-left">
         <div class="crumb">Prioritization · one question</div>
         <h1>Is my species list worth sequencing?</h1>
-        <p class="sub">Screen a species list against GoaT for <em>taxonomic novelty</em> and current
-          project status across the EBP network — the highest-novelty species with no project on them
-          are the strongest sequencing targets.</p>
       </div>
-      <!-- populated once a tracked list resolves (or, later, once a list is submitted) -->
+      <!-- Populated by whichever of the two identities the page has. They are
+           not the same claim, so the unit is not the same word: a tracked list
+           IS tracked; a submission was only screened. -->
       <div class="head-right" id="head-right" hidden>
         <div class="head-stat">
           <div class="hname" id="head-name">—</div>
-          <div class="hl"><b class="tnum" id="head-count">0</b> species tracked</div>
+          <div class="hl"><b class="tnum" id="head-count">0</b> <span id="head-unit">species tracked</span></div>
         </div>
       </div>
     </div>
+    <!-- Below .headrow, not inside .head-left: the strapline runs the full width
+         of the page rather than being squeezed into the column left of the list
+         stat, which pushed it to three short lines. -->
+    <p class="sub">Screen a species list against GoaT for <em>taxonomic novelty</em> and current
+      project status across the EBP network — the highest-novelty species with no project on them
+      are the strongest sequencing targets.</p>
     <div class="tabs" role="tablist">
       <button data-tab="submit" role="tab" class="on" type="button">Submit</button>
       <button data-tab="results" role="tab" type="button">Results</button>
+      <!-- Derived entirely from a completed submission, so it appears when there
+           is one. Results stays visible with an empty state because it is where a
+           run lands; nothing ever lands here. -->
+      <button data-tab="coverage" role="tab" type="button" id="tab-coverage" hidden>Coverage</button>
       <!-- absent until a tracked list resolves — see the note at the top of this file -->
       <button data-tab="trends" role="tab" type="button" id="tab-trends" hidden>Changes over time</button>
     </div>
@@ -196,32 +242,41 @@
   <div class="wrap">
     <div class="view-head">
       <div class="vt">Submit a species list</div>
-      <div class="vs">Drag-drop a CSV or XLSX, or paste scientific names</div>
+      <div class="vs">Drop a CSV or XLSX, or paste scientific names</div>
     </div>
-    <div class="card">
-      <p><b>Not built yet — this is Task 6.</b> The upload form, the progress indicator and the
-        <code>POST /api/submissions</code> call land here, in this view.</p>
-      <p>The backend endpoint already exists and is tested; only this page's half is outstanding.</p>
-    </div>
+    <!-- prioritization_submit.js renders the form, the wait and the errors here -->
+    <div id="submit-host"></div>
   </div>
 </div>
 
 <!-- ===== RESULTS — Task 6 ===== -->
 <div class="view" id="view-results">
   <div class="wrap">
-    <div class="view-head">
-      <div class="vt">Results</div>
-      <div class="vs">Every species, its novelty and who is already working on it</div>
+    <!-- Shown until something has been screened. A results table with no results
+         would be a table of the page's own furniture. -->
+    <div id="results-empty">
+      <div class="view-head">
+        <div class="vt">Results</div>
+        <div class="vs">Every species, its novelty, and who is already working on it</div>
+      </div>
+      <div class="card">
+        <p><b>Nothing screened yet.</b> Submit a species list and its results open here — or open a
+          link of the form <code>?submission=&lt;id&gt;</code> to reopen a run.</p>
+        <p><button class="btn" type="button" id="results-goto-submit">Go to Submit</button></p>
+      </div>
     </div>
-    <div class="card">
-      <p><b>Not built yet — this is Task 6.</b> The filterable
-        <code>Taxonomic_Priority</code> × <code>Project_Priority</code> table, the priority-distribution
-        chart and the Excel export land here.</p>
-      <p><b>Panel B already exists</b> — <code>prioritization_species.js</code> (A-T5). It is live in
-        the <b>Changes over time</b> view, where clicking any species name in the kinds-of-movement
-        card opens that species' run-by-run history. Task 6 opens the same panel from a results row:
-        see the call at the top of this file.</p>
-    </div>
+    <!-- prioritization_results.js renders the whole view in here, including the
+         host it moves Panel B into. -->
+    <div id="results-host"></div>
+  </div>
+</div>
+
+<!-- ===== COVERAGE — Task 6 ===== -->
+<div class="view" id="view-coverage">
+  <div class="wrap">
+    <!-- prioritization_coverage.js renders the whole view in here, from the
+         submission payload alone — no endpoint, no second fetch. -->
+    <div id="coverage-host"></div>
   </div>
 </div>
 
@@ -255,6 +310,8 @@
   /* ── theme ── */
   const root = document.documentElement;
   let panel = null;      // Panel A, once a tracked list has rendered
+  let results = null;    // the Results view, once something has been screened
+  let coverage = null;   // the Coverage view, built from the same payload
   let tracked = null;    // {list, token} — what every backend read is keyed by
   document.getElementById('themeToggle').addEventListener('click', function () {
     let current = root.getAttribute('data-theme');
@@ -262,23 +319,33 @@
       current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-    // The chart's colours are read from the CSS variables, so it has to redraw.
+    // Every chart reads its colours from the CSS variables, so all of them redraw.
     if (panel) panel.redraw();
+    if (results) results.redraw();
+    if (coverage) coverage.redraw();
   });
 
   /* ── views ── */
   const tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs button'));
-  const views = { submit: 'view-submit', results: 'view-results', trends: 'view-trends' };
+  const views = {
+    submit: 'view-submit', results: 'view-results',
+    coverage: 'view-coverage', trends: 'view-trends',
+  };
   function show(name) {
     tabs.forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
     Object.keys(views).forEach(function (key) {
       document.getElementById(views[key]).classList.toggle('on', key === name);
     });
-    // A canvas has no width while its view is display:none, so the chart can
-    // only be sized once the view is actually on screen.
+    // Neither a canvas nor an ECharts container has a width while its view is
+    // display:none, so a chart can only be sized once the view is on screen.
+    // (Coverage is CSS-only and needs no such call, but it is redrawn on a theme
+    // flip like the others.)
     if (name === 'trends' && panel) panel.redraw();
+    if (name === 'results' && results) results.redraw();
   }
   tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
+  document.getElementById('results-goto-submit')
+    .addEventListener('click', function () { show('submit'); });
 
   /* ── the trend view exists only for a tracked list ──
      The link carries a capability token, never a list name: `?list=<token>`.
@@ -324,23 +391,43 @@
   }
 
   /* ── Panel B — one species' history (A-T5) ──
-     Opened by the `ebp-trend:species` event Panel A raises when a species chip
-     is clicked. Task 6's results table opens the same panel by calling
-     PrioritizationSpecies.open() directly with its own host. */
-  document.addEventListener('ebp-trend:species', function (event) {
+     Two entry points, one panel: a species chip in the trend's kinds-of-movement
+     card, and a row of the results table. Both land here, so neither can produce
+     a second open history or a second `Since` value.
+
+     It is keyed by TRACKED LIST, not by submission, so it opens only where a
+     `?list=` token resolved. From the results table that also means the history
+     shown is the tracked list's — a species the submission carries but the list
+     does not has no timeline there, and says so. */
+  function openTimeline(name, host, inList) {
     if (!tracked) return;
-    const name = event.detail.name;
-    // A second click on the open species closes it, so the chip is a toggle.
+    // A second click on the open species closes it, so the entry point is a toggle.
     if (PrioritizationSpecies.openSpecies() === name) { PrioritizationSpecies.close(); return; }
     PrioritizationSpecies.open({
-      host: document.getElementById('tl-host-trends'),
+      host: host,
       list: tracked.list,
       token: tracked.token,
       name: name,
       // The list's runs, so an absence is drawn as an absence and the runs our
       // own pipeline changed on are flagged rather than folded away.
       runs: (panel && panel.payload && panel.payload.runs) || [],
+      /* Only the chip path can assert membership: that name came out of this
+         list's own movement data. A results row cannot — a submission is not
+         the tracked list, and an empty timeline there has two readings. */
+      inList: !!inList,
     });
+  }
+
+  document.addEventListener('ebp-trend:species', function (event) {
+    openTimeline(event.detail.name, document.getElementById('tl-host-trends'), true);
+  });
+
+  /* Panel A marks its own chips; the results table's rows are ours to mark. */
+  document.addEventListener('ebp-species:open', function (event) {
+    if (results) results.select(event.detail.name);
+  });
+  document.addEventListener('ebp-species:close', function () {
+    if (results) results.select(null);
   });
 
   /* One `Since` value on the page, whichever control set it. Panel A dispatches
@@ -354,8 +441,122 @@
     }
   });
 
-  const token = new URLSearchParams(window.location.search).get('list');
-  if (token) openTrackedList(token);
+  /* ── Submit → Results (Task 6) ──────────────────────────────────────────── */
+
+  /* The address bar becomes the way back to a run. Done the moment the server
+     issues an id rather than when the run finishes: a background submission
+     outlives this tab, and an id nobody wrote down is an id nobody can reopen.
+     `?list=` is preserved — the two deep links compose. */
+  function announce(id) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('submission') === id) return;
+    params.set('submission', id);
+    window.history.replaceState({}, '', window.location.pathname + '?' + params.toString());
+  }
+
+  const submit = PrioritizationSubmit.mount(document.getElementById('submit-host'), {
+    onAccepted: announce,
+    onResult: showResults,
+  });
+
+  function showResults(payload, meta) {
+    if (payload.id) announce(payload.id);
+    document.getElementById('results-empty').hidden = true;
+
+    /* Switch to the view BEFORE rendering into it. ECharts sizes itself from
+       its container at init, and a container inside a `display:none` view has
+       no size — it would warn to the console and then draw nothing. */
+    results = null;
+    show('results');
+
+    let exportUrl = null;
+    try {
+      if (payload.id) exportUrl = EBPBackend.submissionExportUrl(payload.id);
+    } catch (err) {
+      // Only ever the "no hostname configured" case, and we would not be
+      // holding results without one. The button is simply omitted.
+      exportUrl = null;
+    }
+
+    /* What to call this run. `list_name` is the submitter's own label and is
+       persisted, so it survives a `?submission=` reopen days later; `meta.source`
+       is only what this page knows about a run it just started itself. */
+    const label = payload.list_name || (meta && meta.source) || null;
+
+    results = PrioritizationResults.render(document.getElementById('results-host'), {
+      payload: payload,
+      exportUrl: exportUrl,
+      source: label,
+      onNew: function () { show('submit'); submit.reset(); },
+      /* Only where a tracked list is open — the history endpoint has nothing to
+         key a submission by (§12.6). Without it the names stay plain text
+         rather than becoming links to nothing. */
+      onSpecies: tracked
+        ? function (name) { openTimeline(name, document.getElementById('tl-host-results')); }
+        : null,
+    });
+
+    /* Coverage is the same rows read by lineage instead of listed, so it is
+       built from the same payload and never fetches anything of its own. */
+    coverage = PrioritizationCoverage.render(document.getElementById('coverage-host'), {
+      payload: payload,
+      onSpecies: tracked
+        ? function (name) { openTimeline(name, document.getElementById('tl-host-coverage')); }
+        : null,
+    });
+    document.getElementById('tab-coverage').hidden = false;
+
+    /* The header's list identity belongs to the tracked list where there is
+       one — it is the stronger claim, and it is what the trend is keyed by.
+       Otherwise it names the thing that was actually screened. */
+    if (!tracked) {
+      document.getElementById('head-name').textContent = label || 'This submission';
+      document.getElementById('head-count').textContent = (payload.species_count || 0).toLocaleString();
+      document.getElementById('head-unit').textContent = 'species screened';
+      document.getElementById('head-right').hidden = false;
+    }
+  }
+
+  /** `?submission=<id>` — reopen a finished run, or rejoin one still going. */
+  async function openSubmission(id) {
+    let body;
+    try {
+      body = await EBPBackend.getSubmission(id);
+    } catch (err) {
+      document.getElementById('results-empty').innerHTML =
+        '<div class="card"><p>' + (err.notFound
+          ? '<b>No submission with that id.</b> A results link is only as durable as the backend '
+            + 'database it points into; screen the list again to get a new one.'
+          : '<b>Could not reach the EBP backend.</b> ' + String(err.message)) + '</p></div>';
+      show('results');
+      return;
+    }
+    if (body.status === 'processing') {
+      show('submit');
+      submit.resume(id, body);
+      return;
+    }
+    if (body.status === 'failed') {
+      document.getElementById('results-empty').innerHTML =
+        '<div class="card"><p><b>That run did not finish.</b> ' + String(body.error || '')
+        + '</p></div>';
+      show('results');
+      return;
+    }
+    showResults(body, { source: null });
+  }
+
+  /* ── bootstrap ──
+     The tracked list resolves first: it decides whether the Trend tab exists at
+     all, and whether a results row can open a species timeline. A submission
+     link then wins the opening view, being the more specific of the two. */
+  (async function boot() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('list');
+    const submissionId = params.get('submission');
+    if (token) await openTrackedList(token);
+    if (submissionId) await openSubmission(submissionId);
+  })();
 })();
 </script>
 </body>

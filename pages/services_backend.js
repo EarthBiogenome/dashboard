@@ -94,11 +94,96 @@ const EBPBackend = (function () {
     return response.json();
   }
 
+  /**
+   * POST a FormData body.
+   *
+   * Deliberately sets no headers. `multipart/form-data` is CORS-safelisted and
+   * the browser has to add its own boundary, so leaving both alone keeps this a
+   * simple request — no preflight, and nothing for the backend's
+   * `allow_headers` list to have to know about.
+   */
+  async function postForm(path, formData) {
+    let response;
+    try {
+      response = await fetch(url(path), { method: 'POST', body: formData });
+    } catch (err) {
+      if (err instanceof BackendError) throw err;
+      throw new BackendError('Could not reach the EBP backend: ' + err.message, 0);
+    }
+    if (!response.ok) {
+      let detail = null;
+      try { detail = (await response.json()).detail; } catch (ignored) { /* not JSON */ }
+      throw new BackendError(
+        detail || ('Backend returned ' + response.status), response.status, detail);
+    }
+    return response.json();
+  }
+
   const listPath = (list) => '/api/lists/' + encodeURIComponent(list);
+  const submissionPath = (id) => '/api/submissions/' + encodeURIComponent(id);
 
   return {
     BackendError: BackendError,
     backendBase: base,
+
+    /**
+     * Screen a species list. → the result body, or a 202 acknowledgement.
+     *
+     * ONE CALL, TWO SHAPES, and the caller must branch on `status` rather than
+     * on how many names it sent (plan §5b): at or below the server's
+     * `EBP_SUBMISSION_SYNC_MAX` this returns the whole result body with
+     * `status: 'complete'`; above it, `{id, status: 'processing', batches_total}`
+     * for `getSubmission()` to poll. The threshold is a server setting and this
+     * client does not know it.
+     *
+     * A file wins over pasted names, which is the server's precedence.
+     */
+    createSubmission(options) {
+      const opts = options || {};
+      const form = new FormData();
+      if (opts.file) form.append('file', opts.file, opts.file.name);
+      else form.append('names', opts.names || '');
+      if (opts.selfProject) form.append('self_project', opts.selfProject);
+      // A label, stored with the run: it names the results header and the
+      // exported workbook, and it confers no list identity (§12.6).
+      if (opts.listName) form.append('list_name', opts.listName);
+      return postForm('/api/submissions', form);
+    },
+
+    /**
+     * One submission: its status, and once complete the full result snapshot.
+     *
+     * Open by id — the opaque id IS the capability, matching the open POST, so
+     * there is no token here. `offset` / `limit` page the `results` array;
+     * omitted, the whole snapshot comes back.
+     */
+    getSubmission(id, options) {
+      const opts = options || {};
+      return getJSON(submissionPath(id), { offset: opts.offset, limit: opts.limit });
+    },
+
+    /**
+     * The .xlsx download URL for a submission — the CLI's workbook.
+     *
+     * A URL rather than a fetch: the browser's own download handling is what
+     * should carry a 2 MB file, and a blob round-trip would only add a copy in
+     * memory. Throws the same `unconfigured` BackendError as everything else
+     * when Phase B has not set a hostname.
+     */
+    submissionExportUrl(id) {
+      return url(submissionPath(id) + '/export');
+    },
+
+    /**
+     * Liveness, upstream reachability, cache ages and the IUCN release.
+     *
+     * The submit page reads `caches.iucn_cache.release` from this so it can
+     * name the Red List release it screens against instead of hardcoding one —
+     * a hardcoded version goes stale at the next reseed with nothing to catch it.
+     */
+    health() {
+      return getJSON('/api/health');
+    },
 
     /**
      * Which list does this capability token open? → {list, species_count}

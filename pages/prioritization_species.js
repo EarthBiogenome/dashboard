@@ -534,6 +534,9 @@ const PrioritizationSpecies = (function () {
    *           which is what lets the panel draw an absence and flag our own
    *           pipeline changes. Panel A already holds them (`payload.runs`).
    *   since   optional: the currently selected window start, for dimming
+   *   inList  optional: assert that this species IS on this list. Set it only
+   *           when the name came FROM the list (Panel A's chips); it decides
+   *           which of two readings an empty timeline is given — see below.
    *
    * Resolves to {state}: 'ok' · 'no-history' (the species never moved, so the
    * payload carries no timeline for it) · 'not-found' (the link opens nothing) ·
@@ -571,10 +574,28 @@ const PrioritizationSpecies = (function () {
          token also gets, while the species-level one names the species — and to
          see it at all you already hold a token that opens this list. */
       if (err.notFound && err.detail !== 'List not found') {
-        messageOnly('<b>No stored history for this species.</b> A timeline is kept only for '
-          + 'species that moved in at least one window, so this one has held the same novelty, '
-          + 'status and projects across every captured run of <code>' + esc(opts.list)
-          + '</code>.');
+        /* WHAT THIS 404 CAN AND CANNOT BE READ AS. A timeline is stored only for
+           species that MOVED, so its absence has two possible causes — the
+           species held the same values across every run, or it is not on this
+           list at all — and nothing in the response separates them. Neither can
+           the backend: `list_species_history` holds movers, not membership, so
+           the list's full roster is not on either side of this call.
+
+           `inList` is therefore the caller's assertion, not a fetched fact, and
+           only a caller that got the name FROM this list may make it: Panel A's
+           species chips qualify, a Task 6 results row does not — a submission is
+           not the tracked list (§12.6) and can carry any species at all. Without
+           it, both readings are stated. (A-T5 shipped the strong sentence
+           unconditionally, which was true while the chip was the only entry
+           point and false the moment the results table became the second one.) */
+        messageOnly(opts.inList
+          ? '<b>No stored history for this species.</b> A timeline is kept only for species that '
+            + 'moved in at least one window, so this one has held the same novelty, status and '
+            + 'projects across every captured run of <code>' + esc(opts.list) + '</code>.'
+          : '<b>No stored history for this species in <code>' + esc(opts.list) + '</code>.</b> '
+            + 'A timeline is kept only for species that moved in at least one window, so either '
+            + 'this species has held the same novelty, status and projects across every captured '
+            + 'run of that list — or it is not on that list. The two look the same from here.');
         return { state: 'no-history' };
       }
       if (err.notFound) {
@@ -622,5 +643,19 @@ const PrioritizationSpecies = (function () {
     /** The species currently open, or null — so a host can keep its own row highlighted. */
     openSpecies() { return state.name; },
     element: element,
+
+    /**
+     * The label glossary — a chip class and a plain-English reading. [Task 6]
+     *
+     * Exported because the results table shows the same two labels this timeline
+     * does, and this wording is the workbook's INSTRUCTIONS sheet in prose. Two
+     * copies of it would drift, and the copy a PI happened to read would decide
+     * what they thought `High_S` meant. `kind` is 'tax' or 'proj'; an unmapped
+     * label is reported as unmapped rather than glossed as something else.
+     */
+    gloss(kind, label) {
+      const entry = (kind === 'tax' ? TAX : PROJ)[label];
+      return entry ? { cls: entry[0], text: entry[1] } : { cls: 'c-unknown', text: '' };
+    },
   };
 })();
