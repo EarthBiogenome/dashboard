@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="author" content="Fang Chen" />
+<title>EBP — Cross-project Duplication</title>
+
+<!--
+  Cross-project duplication — one page, one question (duplication plan §5). [A-D4]
+
+      "Is another EBP project already sequencing the species on my target
+       list — and at what stage?"
+
+  This is the coordination-facing sibling of prioritization.html's novelty
+  question, and it replaces the quarterly duplication email: the same three
+  reports, over the same numbers, on demand instead of once a quarter.
+
+  BUILT TO `docs/duplication-mockup.html`. The layout is the mockup's — control
+  strip, KPI row, card tabs, panel with a dashed-underline description, heatmap
+  with a drill-down drawer, CSS stacked bars, bottom legend, footer actions, and
+  the trend panel below. The status ramp is the mockup's `--s-*` scale, kept as
+  designed. What the mockup could only illustrate, this does for real: its
+  drill-down synthesised species names from a seeded PRNG, and its own comment
+  said production would carry them "in the SAME GoaT response". That is now
+  exactly what happens — see `duplication_report.js`.
+
+  THE REPORTS ARE WEEKLY-FRESH BY DESIGN, AND THIS PAGE HAS TO SAY SO.
+  Decision 11 (checklist §7) precomputes every project's payload on the weekly
+  capture job and stores it; `GET /api/duplication/{project}` is a DB read that
+  never calls GoaT. That is what makes the page instant — DTOL's superset is 16
+  paginated GoaT calls and 37 seconds — and it is also why `generated_date` is
+  load-bearing rather than decorative. A PI who reads a week-old report as live
+  has been misled by the page, not by the data, so the date sits in the control
+  strip and not in a footnote.
+
+  AND `generated_date` ALONE IS NOT ENOUGH. A report can be a week old because
+  it is weekly (fine) or because the last three captures FAILED and this is the
+  previous payload (not fine), and the date is identical in both cases. The
+  endpoint carries `stored.stale` plus the `consecutive_failures` /
+  `last_error` / `last_attempt_at` triple for exactly this, and the page renders
+  it as a banner above the reports (A-D5b, checklist §4).
+
+  FOUR KINDS OF "NOTHING TO SHOW", AND THEY ARE NOT INTERCHANGEABLE:
+    * `not_yet_computed`  reportable, the job has not reached it — the only one
+                          anyone can act on, so it is the only one that names
+                          the admin refresh route.
+    * `umbrella_project`  `ebp` / `erga` (decision 13). They HAVE accessions;
+                          without their own message they would read as "not
+                          computed yet" and send someone to run a refresh that
+                          can never produce anything.
+    * `not_reportable`    a known project with no BioProject accession.
+    * `unknown_project`   almost always a typo in `?project=`.
+  The endpoint returns the reason machine-readably so this page never has to
+  parse prose to tell them apart.
+
+  AND A FIFTH, WHICH IS NOT AN ERROR AT ALL: a report that is genuinely empty.
+  `long_list_species === 0` means GoaT holds no target list for the project, so
+  every report is empty because there was nothing to compare — the opposite
+  reading from "no duplication found" (A-D3 finding 2). Both are handled in
+  duplication_report.js, where the empty panel is drawn.
+
+  DEEP LINK: `?project=<key>` opens straight onto that project, and selecting a
+  project rewrites it, so a report can be sent to the PI it concerns.
+
+  Deviations from STYLE_SPEC.md are the same three prioritization.html records:
+  dark by default (botanical-ink), the footer in flow rather than fixed, and
+  `utils.js` / `services.js` not loaded — nothing here calls GoaT directly, and
+  `services_backend.js` is this page's only data layer.
+
+  CHARTING, per checklist §5's "ECharts + vanilla JS only": ECharts draws the
+  trend, because a multi-series time line is exactly its primitive. The heatmap
+  is a `<table>` and the stacked bars are CSS — not for consistency's sake but
+  because neither is a chart the library draws better. The heatmap tints each
+  cell by its ROW's hue (nine of them), which `visualMap`'s single scale cannot
+  express, and it needs sticky columns, vertical headers, a selection ring and
+  real table semantics; the bars reproduce the mockup's exact bar format. The
+  house rule this follows is library by default, hand-roll with a stated reason
+  — see the note above `option()` in duplication_trend.js for the one place that
+  reason was re-examined and did not hold.
+-->
+
+<script src="../config.js"></script>
+<script src="./echarts.min.js"></script>
+<script src="./services_backend.js"></script>
+<script src="./duplication_report.js"></script>
+<script src="./duplication_trend.js"></script>
+
+<style>
+  :root{
+    /* Botanical-ink ground — the same tokens prioritization.html and the mockup
+       define, so the two tools of this suite are one surface. */
+    --ink:#0b1310; --ink-2:#0f1a14; --ink-3:#14231b; --ink-4:#1b2f24;
+    --line:#22362b; --line-soft:#1a2a20;
+    --paper:#e9f2ec; --paper-dim:#a6bcaf; --paper-mute:#6f8a7b;
+    --green:#16a34a; --green-deep:#0d7a47; --green-bright:#3fbf7f; --green-glow:#5fd39a;
+
+    /* ── the sequencing-status ramp, from the mockup ──
+       Semantic: gray → blue → teal → olive → gold → brown → green, "further
+       down the pipeline". Distinct from the taxonomic-rank viridis spectrum the
+       progress pages use, on purpose: these are pipeline stages, not ranks.
+
+       MEASURED LIMIT, recorded so nobody re-derives it: nine categorical hues
+       cannot be made mutually distinguishable, and this ramp's worst adjacent
+       pair is `in_assembly` (#8a9f56) against `in_progress` (#b4923e) at ΔE 2.9
+       under protanopia and 6.5 under normal vision (OKLab ×100, Machado 2009 at
+       severity 1.0). Re-stepping only moves the collision — a nine-hue scale has
+       nowhere to put it. Two things make it safe rather than merely known:
+       those two are GoaT's own OVERLAPPING categories (the glossary defines
+       `in_progress` as including `in_assembly`), so confusing them asserts
+       nothing false; and colour is never the only encoding — every heatmap row
+       is labelled, every bar segment has a 2px gap and a hover title, the legend
+       names every colour, and both views print the number. */
+    --s-not:#3a4a41;          /* not_started — dim, de-emphasised */
+    --s-collected:#4a6fa5;    /* sample_collected */
+    --s-acquired:#4d8fb0;     /* sample_acquired */
+    --s-datagen:#5fa39a;      /* data_generation */
+    --s-assembly:#8a9f56;     /* in_assembly */
+    --s-progress:#b4923e;     /* in_progress */
+    --s-open:#9d6b3f;         /* open */
+    --s-insdc:#3fa06a;        /* insdc_open */
+    --s-published:#5fd39a;    /* published — brightest, EBP green */
+
+    --warn:#e0a760; --gap:#7aa2ff; --red:#e0736a;
+
+    /* Outbound links — cited sources, GoaT records — are BLUE, the convention
+       readers already have for "this leaves the site", while green stays the
+       in-product navigation colour. Measured against this page's own grounds
+       rather than picked: 7.16:1 on --ink-2 and 6.56:1 on --ink-3, so it clears
+       4.5:1 for body text on both. (Bootstrap's #0d6efd is only 4.17:1 on the
+       light page ground, which is why the light step below is not it.) */
+    --link-out:#7aa2ff;
+
+    /* The trend's three report lines. Each also carries a dash pattern and a
+       direct end-label, because green against amber collides under deuteranopia
+       (ΔE 7.1 dark / 5.1 light) however it is stepped — see SERIES in
+       duplication_trend.js. */
+    --trend-r1:#5fd39a; --trend-r2:#e0a760; --trend-r3:#7aa2ff;
+
+    --radius:14px; font-synthesis:none;
+  }
+  :root[data-theme="light"]{
+    --ink:#f4f7f4; --ink-2:#ffffff; --ink-3:#eef5f0; --ink-4:#e2ede5;
+    --line:#d6e3d9; --line-soft:#e6efe8;
+    --paper:#12211a; --paper-dim:#3e5548; --paper-mute:#6b8375;
+    --green-glow:#0d7a47; --green-bright:#16a34a;
+    --s-not:#c3d0c8;
+    /* Re-stepped for a white ground: the dark line colours sit at 1.6–2.1:1
+       there. These clear 3:1 and separate best under normal vision (ΔE 22.3). */
+    --trend-r1:#0d7a47; --trend-r2:#a8452a; --trend-r3:#3f63c8;
+    --link-out:#1558c4;      /* 6.51:1 on white, 6.03:1 on the page ground */
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --ink:#f4f7f4; --ink-2:#ffffff; --ink-3:#eef5f0; --ink-4:#e2ede5;
+      --line:#d6e3d9; --line-soft:#e6efe8;
+      --paper:#12211a; --paper-dim:#3e5548; --paper-mute:#6b8375;
+      --green-glow:#0d7a47; --green-bright:#16a34a;
+      --s-not:#c3d0c8;
+      --trend-r1:#0d7a47; --trend-r2:#a8452a; --trend-r3:#3f63c8;
+      --link-out:#1558c4;
+    }
+  }
+
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important;} }
+  body{margin:0; background:var(--ink); color:var(--paper);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;
+    font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 24px;}
+  a{color:var(--green-glow); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  /* Every link that leaves the site, in one selector, so a future one gets it
+     without anybody remembering to. Buttons are excluded: a button is an action
+     and reads as one, not as a citation. */
+  a[href^="http"]:not(.btn){color:var(--link-out);}
+  code{font-family:ui-monospace,'Cascadia Code',Menlo,monospace; font-size:.85em;
+    color:var(--green-glow); background:var(--ink-3); border:1px solid var(--line);
+    border-radius:5px; padding:1px 6px;}
+
+  /* ── top bar ── */
+  .topbar{display:flex; align-items:center; gap:12px; padding:14px 0;
+    border-bottom:1px solid var(--line); background:var(--ink-2);}
+  .logo{display:flex; align-items:center; gap:9px; font-weight:800; font-size:14px; color:var(--paper);}
+  .logo .mk{width:24px; height:24px; border-radius:7px;
+    background:linear-gradient(135deg,var(--green-deep),var(--green));
+    display:flex; align-items:center; justify-content:center; font-size:13px;}
+  .topnav{margin-left:auto; display:flex; gap:4px;}
+  .topnav .n{font-size:12.5px; padding:6px 11px; border-radius:7px; color:var(--paper-dim);}
+  .topnav .n.on{background:var(--ink-4); color:var(--green-glow); font-weight:700;}
+  .theme-toggle{background:transparent; border:1px solid var(--line); color:var(--paper-dim);
+    border-radius:999px; padding:6px 12px; font:inherit; font-size:12px; font-weight:600;
+    cursor:pointer; margin-left:8px;}
+  .theme-toggle:hover{color:var(--green-glow); border-color:rgba(63,191,127,.4);}
+
+  /* ── question header ── */
+  header.q{padding:30px 0 22px;
+    background:radial-gradient(760px 220px at 22% -30%, rgba(22,163,74,.12), transparent);}
+  .qeyebrow{font-size:11.5px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--green-glow); font-weight:700; margin-bottom:9px;}
+  header.q h1{font-size:clamp(22px,3.2vw,30px); line-height:1.12; letter-spacing:-.02em;
+    font-weight:800; margin:0 0 8px; text-wrap:balance;}
+  /* Full page width, no measure cap — the same rule the heatmap notes, the
+     reading guide and the trend subtitle follow. At 88ch it stopped at 712px of
+     the 1,072px the header column now offers. */
+  header.q p{margin:0; color:var(--paper-dim); font-size:15px; text-wrap:pretty;}
+  /* One column, full width. The mockup's header has no right-hand stat either,
+     and adding one cost the headline its single line: it needs 855px at 30px and
+     a shared row left it 816px. Everything the stat said is on the page twice
+     already — the project name is the dropdown's own value, and its species
+     total is the first KPI tile. */
+  .qrow{display:flex; flex-wrap:wrap;}
+  .qrow .q-left{min-width:0; flex:1 1 100%;}
+
+  /* ── control strip ── */
+  .controls{display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:16px 0;
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:22px;}
+  .ctl{display:flex; align-items:center; gap:8px;}
+  .ctl label{font-size:11.5px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--paper-mute); font-weight:700;}
+  select{font:inherit; font-size:13.5px; padding:8px 11px; background:var(--ink-2);
+    color:var(--paper); border:1px solid var(--line); border-radius:8px; cursor:pointer;
+    max-width:360px;}
+  .asof{margin-left:auto; font-size:12px; color:var(--paper-mute); text-align:right; line-height:1.6;}
+  .asof b{color:var(--paper-dim);}
+  .asof .d{color:var(--paper); font-weight:700; font-variant-numeric:tabular-nums;}
+  .asof.overdue .age{color:var(--warn);}
+
+  /* ── KPI row ── */
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px;}
+  .kpis[hidden]{display:none;}
+  .kpi{border:1px solid var(--line); border-radius:11px; padding:14px 16px; background:var(--ink-2);
+    position:relative; overflow:hidden;}
+  .kpi .stripe{position:absolute; left:0; top:0; bottom:0; width:3px;}
+  .kpi .n{font-size:25px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums;}
+  .kpi .l{font-size:11.5px; color:var(--paper-mute); margin-top:2px; line-height:1.35;}
+  .kpi.k-total .stripe{background:var(--paper-mute);}
+  .kpi.k-r1 .stripe{background:var(--s-published);} .kpi.k-r1 .n{color:var(--s-published);}
+  .kpi.k-r2 .stripe{background:var(--s-progress);} .kpi.k-r2 .n{color:var(--warn);}
+  .kpi.k-r3 .stripe{background:var(--gap);} .kpi.k-r3 .n{color:var(--gap);}
+
+  /* ── staleness ── */
+  .stale{margin-bottom:22px; padding:13px 17px; border-radius:11px; font-size:13px; line-height:1.7;
+    color:var(--warn); background:rgba(224,167,96,.1); border:1px solid rgba(224,167,96,.4);}
+  .stale[hidden]{display:none;}
+  .stale b{color:var(--warn);}
+  .stale code{color:inherit; background:rgba(224,167,96,.14); border-color:rgba(224,167,96,.3);}
+
+  /* ── footer actions on the panel ── */
+  .foot{display:flex; align-items:center; gap:12px; margin-top:20px; flex-wrap:wrap;}
+  .btn{font:inherit; font-size:12.5px; font-weight:650; padding:9px 15px; border-radius:8px;
+    cursor:pointer; display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line);
+    background:var(--ink-2); color:var(--paper-dim); text-decoration:none;}
+  .btn:hover{border-color:rgba(63,191,127,.4); color:var(--green-glow); text-decoration:none;}
+  .btn.primary{background:var(--green-deep); color:#fff; border-color:transparent;}
+  .btn.primary:hover{background:var(--green); color:#fff;}
+  .foot .src{margin-left:auto; font-size:11.5px; color:var(--paper-mute);}
+
+  /* ── generic notice card (the five "nothing to show" states) ── */
+  .notice{border:1px solid var(--line); border-radius:var(--radius); background:var(--ink-2);
+    padding:20px 22px; margin-bottom:26px;}
+  .notice b.hd{display:block; font-size:15px; color:var(--paper); margin-bottom:7px;}
+  .notice p{margin:0 0 10px; color:var(--paper-dim); font-size:13px; line-height:1.7; max-width:92ch;}
+  .notice p:last-child{margin-bottom:0;}
+  .notice.caution{border-color:rgba(224,167,96,.35); background:rgba(224,167,96,.07);}
+  .notice.caution b.hd{color:var(--warn);}
+
+  /* ── reading guide ── */
+  .guide{border:1px solid var(--line); border-radius:var(--radius); background:var(--ink-2);
+    padding:20px 22px; margin-bottom:26px;}
+  .guide[hidden]{display:none;}
+  .guide h2{font-size:12.5px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--paper-mute); margin:0 0 12px; font-weight:700;}
+  .guide h2+h2{margin-top:20px;}
+  /* Full card width, no measure cap — the same rule the heatmap's notes follow.
+     These sit under a full-width card, and a 92ch column left a ragged void down
+     the right-hand half of it. */
+  .guide p{margin:0 0 10px; color:var(--paper-dim); font-size:13px; line-height:1.7;}
+  .guide p b{color:var(--paper);}
+  .gloss{display:grid; grid-template-columns:auto 1fr; gap:5px 16px; font-size:12.5px; margin:0;}
+  .gloss dt{font-family:ui-monospace,'Cascadia Code',Menlo,monospace; font-size:12px;
+    white-space:nowrap; display:flex; align-items:center; gap:7px; color:var(--paper);}
+  .gloss dt i{width:9px; height:9px; border-radius:2px; flex:none;}
+  .gloss dd{margin:0; color:var(--paper-dim);}
+
+  .origin-warning{margin:0 0 22px; padding:13px 18px; border-radius:10px; font-size:13px;
+    line-height:1.7; color:var(--warn); background:rgba(224,167,96,.1);
+    border:1px solid rgba(224,167,96,.35);}
+  .origin-warning[hidden]{display:none;}
+  .origin-warning b{color:var(--warn);}
+  .origin-warning code{color:inherit; background:rgba(224,167,96,.14); border-color:rgba(224,167,96,.3);}
+
+  .site-footer{border-top:1px solid var(--line); background:var(--ink-2); color:var(--paper-mute);
+    font-size:12.5px; text-align:center; padding:16px 24px; margin-top:10px;}
+  :focus-visible{outline:2px solid var(--green-bright); outline-offset:2px; border-radius:5px;}
+  @media (max-width:720px){ .kpis{grid-template-columns:repeat(2,1fr);} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap" style="display:flex; align-items:center; gap:12px; width:100%;">
+    <a class="logo" href="../index.html"><span class="mk">🌳</span> Earth BioGenome</a>
+    <div class="topnav">
+      <a class="n" href="./prioritization.html">Prioritization</a><span class="n on">Duplication</span>
+    </div>
+    <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
+  </div>
+</div>
+
+<header class="q">
+  <div class="wrap">
+    <div class="qrow">
+      <div class="q-left">
+        <div class="qeyebrow">Coordination · one question</div>
+        <h1>Is another project already sequencing the species on my list?</h1>
+        <p>Cross-project overlap in GoaT, one project at a time.</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="controls">
+    <div class="ctl">
+      <label for="project">Project</label>
+      <select id="project"><option value="">Loading projects…</option></select>
+    </div>
+    <!-- The capture date, always, and never below the fold: these reports are
+         weekly-fresh by design and a reader who assumes otherwise has been
+         misled by the page rather than by the data (decision 11). -->
+    <div class="asof" id="asof"></div>
+  </div>
+
+  <!-- Filled in at boot only where the page can never reach a backend from
+       where it was opened — see the origin check at the bottom of this file. -->
+  <div class="origin-warning" id="origin-warning" role="alert" hidden></div>
+
+  <!-- Shown only when the newest capture FAILED and what is on screen is the
+       previous payload — which the date above cannot say (A-D5b). -->
+  <div class="stale" id="stale" role="alert" hidden></div>
+
+  <div class="kpis" id="kpis" hidden></div>
+
+  <!-- Either the three report panels, or the one of five "nothing to show"
+       states that applies. -->
+  <div id="report-host"></div>
+
+  <!-- Accrues one point per weekly capture; cannot be backfilled. -->
+  <div id="trend-host"></div>
+
+  <div class="guide" id="guide" hidden>
+    <h2>How to read this</h2>
+    <p><b>The three reports do not overlap.</b> Report 1 selects species with an EBP-standard
+      assembly already in INSDC; reports 2 and 3 select species without one, split by whether your
+      project has started work. So a species appears in exactly one of them, and the three counts
+      add up to the total.</p>
+    <p><b>Every number counts species by <em>your</em> project’s sequencing status.</b> The other
+      project’s status for the same species is in GoaT — that is what the columns are: how many of
+      your species each of them also holds.</p>
+    <!-- Reworded 2026-08-23. This used to open "This page never queries GoaT", which was true of
+         the data path and confusing next to a button labelled "Open this target list in GoaT" —
+         and it described an implementation property when what a reader needs is WHEN the numbers
+         are from. -->
+    <p><b>These numbers are as of the capture date, not this moment.</b> Each project’s report is
+      built once a week from GoaT and stored; opening one reads the stored copy, which is what makes
+      it instant — rebuilding Darwin Tree of Life’s takes 16 GoaT queries and about 37 seconds. The
+      GoaT links on this page do open GoaT and will show you what is true there right now; the
+      counts here do not change until the next capture.</p>
+    <p><b>Where duplication is not the same as waste.</b> Two projects on one species may be a
+      deliberate reference-quality re-sequencing, a different population, or a collaboration already
+      under way. These reports say what GoaT records; the projects decide what to do about it.</p>
+    <h2>Sequencing status</h2>
+    <dl class="gloss" id="gloss"></dl>
+  </div>
+</div>
+
+<div class="site-footer">
+  Species, assembly and project data from
+  <a href="https://goat.genomehubs.org" target="_blank" rel="noopener noreferrer">Genomes on a Tree (GoaT)</a>,
+  used with permission.
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const root = document.documentElement;
+  let view = null;        // the live DuplicationReport view, if a report is open
+  let trend = null;       // the live DuplicationTrend panel, if history loaded
+  let index = null;       // GET /api/duplication/projects
+  let byKey = {};         // project key → its entry in that list
+
+  const el = (id) => document.getElementById(id);
+  const esc = (value) => String(value === null || value === undefined ? '' : value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const num = (value) => (Number(value) || 0).toLocaleString();
+
+  el('themeToggle').addEventListener('click', function () {
+    let current = root.getAttribute('data-theme');
+    if (!current) {
+      current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    /* Every colour in both views is read from a CSS variable at draw time, and
+       the two themes carry different validated ramps, so a flip is a redraw. */
+    if (view) view.redraw();
+    if (trend) trend.redraw();
+  });
+  window.addEventListener('resize', function () { if (trend) trend.redraw(); });
+
+  /* ── dates ────────────────────────────────────────────────────────────────
+     Parsed as LOCAL noon rather than with `new Date('2026-08-22')`, which is
+     parsed as UTC midnight and then read back in local time — west of Greenwich
+     that is the previous day, and a report would read as a day older than it is. */
+  function parseDate(iso) {
+    const parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    if (!parts) return null;
+    return new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]), 12);
+  }
+
+  function ageDays(iso) {
+    const when = parseDate(iso);
+    if (!when) return null;
+    const now = new Date();
+    return Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12) - when)
+      / 86400000);
+  }
+
+  function ageWords(iso) {
+    const days = ageDays(iso);
+    if (days === null) return '';
+    if (days <= 0) return 'today';
+    if (days === 1) return 'yesterday';
+    return days + ' days ago';
+  }
+
+  /**
+   * A capture timestamp, to the minute.
+   *
+   * Formatted by STRING SURGERY, not by `new Date(iso).toISOString()`. The
+   * backend stores these naive and in UTC (the workbook's OVERVIEW sheet labels
+   * them so), and a naive string is parsed by JS as LOCAL time — so the round
+   * trip shifted a 21:41 failure to "04:41 UTC the next day" and put a UTC label
+   * on it. A wrong time under a confident label is worse than no time at all.
+   */
+  function stamp(iso) {
+    const text = String(iso || '');
+    const parts = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/.exec(text);
+    return parts ? parts[1] + ' ' + parts[2] + ' UTC' : (text || '—');
+  }
+
+  /* ── the dropdown ─────────────────────────────────────────────────────────
+     Two groups, because `/projects` is the union of the registry's reportable
+     projects and the stored rows, and the caller needs both facts: a project the
+     weekly job has not reached belongs in the list — leaving it out would read
+     as "no such project" — but it is not selectable, because selecting it can
+     only produce a 404. */
+  function fillProjects() {
+    const select = el('project');
+    const ready = index.projects.filter(function (p) { return p.has_report; });
+    const waiting = index.projects.filter(function (p) { return !p.has_report; });
+
+    const option = (p) => '<option value="' + esc(p.project) + '">'
+      + esc(p.display_name || p.project.toUpperCase())
+      + (p.erga_node ? ' · ERGA node' : '')
+      + (p.stale ? ' · ⚠ stale' : '')
+      + '</option>';
+
+    select.innerHTML = '<option value="">Choose a project…</option>'
+      + '<optgroup label="With a report (' + ready.length + ')">'
+      + ready.map(option).join('') + '</optgroup>'
+      + (waiting.length
+        ? '<optgroup label="Not yet computed (' + waiting.length + ')" disabled>'
+          + waiting.map(option).join('') + '</optgroup>'
+        : '');
+  }
+
+  function networkLine() {
+    return '<b>' + num(index.with_report_count) + '</b> of ' + num(index.reportable_count)
+      + ' projects have a report'
+      + (index.stale_count
+        ? ' · <span style="color:var(--warn)">⚠ ' + num(index.stale_count)
+          + ' failed their last capture</span>' : '');
+  }
+
+  /* ── the freshness line and the staleness banner ─────────────────────────── */
+  function showFreshness(payload) {
+    const stored = payload.stored || {};
+    const generated = payload.generated_date;
+    const days = ageDays(generated);
+    /* The job runs weekly, so anything past nine days means it has not run —
+       which `stale` does NOT cover: `stale` is a capture that ran and failed,
+       and a job that never ran fails nothing. Marked as a caution and worded as
+       an observation, because the page cannot see the schedule. */
+    const overdue = days !== null && days > 9;
+    const box = el('asof');
+    box.className = 'asof' + (overdue ? ' overdue' : '');
+    box.innerHTML = 'Report generated <span class="d">' + esc(generated || '—') + '</span> '
+      + '<span class="age">· ' + esc(ageWords(generated))
+      + (overdue ? ' — older than the weekly capture cadence' : '') + '</span>'
+      + '<br>' + networkLine();
+
+    const stale = el('stale');
+    if (stored.stale) {
+      stale.innerHTML = '<b>⚠ You are looking at the previous report, not the newest one.</b> '
+        + 'The most recent capture attempt for this project (' + esc(stamp(stored.last_attempt_at))
+        + ') failed, and ' + (stored.consecutive_failures > 1
+          ? 'so did the ' + (stored.consecutive_failures - 1) + ' before it. '
+          : 'it is the first failure in a row. ')
+        + 'What is shown below was captured on <b>' + esc(generated) + '</b> and is otherwise '
+        + 'a complete, valid report — it is simply older than it should be, which the date on its '
+        + 'own cannot tell you.'
+        + (stored.last_error ? '<br>Last error: <code>' + esc(stored.last_error) + '</code>' : '');
+      stale.hidden = false;
+    } else {
+      stale.hidden = true;
+    }
+  }
+
+  function showKpis(payload) {
+    const stored = payload.stored || {};
+    const rows = [
+      ['k-total', stored.total_species, 'Species with cross-project overlap'],
+      ['k-r1', stored.report_1_species,
+        'Already EBP-standard done elsewhere <span style="color:var(--paper-mute)">(Report 1)</span>'],
+      ['k-r2', stored.report_2_species,
+        'Active elsewhere, no assembly yet <span style="color:var(--paper-mute)">(Report 2)</span>'],
+      ['k-r3', stored.report_3_species,
+        'You haven’t started, others have <span style="color:var(--paper-mute)">(Report 3)</span>'],
+    ];
+    el('kpis').innerHTML = rows.map(function (row) {
+      return '<div class="kpi ' + row[0] + '"><span class="stripe"></span>'
+        + '<div class="n">' + num(row[1]) + '</div><div class="l">' + row[2] + '</div></div>';
+    }).join('');
+    el('kpis').hidden = false;
+  }
+
+  /* ── the five "nothing to show" states ───────────────────────────────────── */
+  function notice(html, caution) {
+    el('report-host').innerHTML = '<div class="notice' + (caution ? ' caution' : '') + '">'
+      + html + '</div>';
+    el('trend-host').innerHTML = '';
+    el('trend-host').className = '';
+    el('stale').hidden = true;
+    el('kpis').hidden = true;
+    el('guide').hidden = true;
+    if (trend && trend.dispose) trend.dispose();
+    trend = null;
+    view = null;
+  }
+
+  /**
+   * A 404 is four different situations and they need four different messages.
+   *
+   * `reason` is machine-readable precisely so this branch does not have to
+   * inspect prose — A-D2 split them for this page. Only `not_yet_computed` is
+   * actionable, so it is the only one that names the refresh route; telling
+   * someone to run a refresh for an umbrella project would send them after an
+   * answer that can never exist.
+   */
+  function showMissing(project, detail) {
+    const reason = (detail && detail.reason) || '';
+    const entry = byKey[project];
+    const name = (entry && entry.display_name) || project.toUpperCase();
+    if (reason === 'not_yet_computed') {
+      notice('<b class="hd">No report has been computed for ' + esc(name) + ' yet.</b>'
+        + '<p>This project <b>can</b> have one — it has a BioProject accession, and the weekly '
+        + 'capture job covers it — but the job has not produced a payload for it. This page never '
+        + 'builds a report on demand: doing so would be a 37-second GoaT query on a page load.</p>'
+        + '<p>The next weekly capture will pick it up. To have it sooner, an administrator can run '
+        + '<code>POST /api/admin/duplication/refresh?project=' + esc(project) + '</code>.</p>', true);
+      return;
+    }
+    if (reason === 'umbrella_project') {
+      notice('<b class="hd">' + esc(name) + ' is an umbrella project, and is not reported on.</b>'
+        + '<p>The projects underneath it do the sequencing, so asking which projects duplicate an '
+        + 'umbrella asks which projects overlap with <em>everything</em> — the answer is all of '
+        + 'them, and it says nothing. Choose one of its member projects instead.</p>'
+        + '<p>This is not a missing report and no refresh will produce one.</p>');
+      return;
+    }
+    if (reason === 'not_reportable') {
+      notice('<b class="hd">' + esc(name) + ' has no BioProject accession on record.</b>'
+        + '<p>All three reports are defined against one — they compare the species registered under '
+        + 'your project’s accession in GoaT with those registered under everyone else’s. Without an '
+        + 'accession there is nothing to compare, and no report can be built.</p>'
+        + '<p>This resolves when the project is assigned a BioProject and it reaches the EBP '
+        + 'project registry.</p>');
+      return;
+    }
+    notice('<b class="hd">No EBP project called <code>' + esc(project) + '</code>.</b>'
+      + '<p>The backend’s registry has never heard of that name, which is almost always a typo in '
+      + 'the <code>?project=</code> link. Pick one from the list above.</p>');
+  }
+
+  /* ── open one project ────────────────────────────────────────────────────── */
+  async function openProject(project, options) {
+    const opts = options || {};
+    view = null;
+    if (trend && trend.dispose) trend.dispose();
+    trend = null;
+    el('project').value = project;
+    if (!opts.keepUrl) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('project', project);
+      window.history.replaceState({}, '', window.location.pathname + '?' + params.toString());
+    }
+    el('report-host').innerHTML = '<div class="notice"><p>Loading ' + esc(project) + '…</p></div>';
+    el('trend-host').innerHTML = '';
+    el('trend-host').className = '';
+
+    let payload;
+    try {
+      payload = await EBPBackend.duplicationReport(project);
+    } catch (err) {
+      if (err.notFound) { showMissing(project, err.detail); return; }
+      notice('<b class="hd">Could not load this report.</b><p>' + EBPBackend.explain(err) + '</p>',
+        true);
+      return;
+    }
+
+    const entry = byKey[project] || {};
+    const name = entry.display_name || (payload.project || project).toUpperCase();
+    showFreshness(payload);
+    showKpis(payload);
+    /* The export URL is passed IN rather than appended after: the component
+       re-renders its panel on every tab switch and theme flip, so anything the
+       page grafts on afterwards is destroyed by the first click. */
+    let exportUrl = null;
+    try {
+      exportUrl = EBPBackend.duplicationExportUrl(project);
+    } catch (err) {
+      exportUrl = null;      // only ever the unconfigured-hostname case
+    }
+    view = DuplicationReport.render(el('report-host'),
+      { payload: payload, exportUrl: exportUrl });
+
+    el('guide').hidden = false;
+    trend = await DuplicationTrend.mount(el('trend-host'),
+      { project: payload.project || project, displayName: name });
+  }
+
+  el('project').addEventListener('change', function () {
+    if (this.value) openProject(this.value);
+  });
+
+  /* ── the status glossary, from the component's one copy ──────────────────── */
+  (function fillGlossary() {
+    el('gloss').innerHTML = DuplicationReport.STATUSES.map(function (status) {
+      return '<dt><i style="background:var(' + status.varn + ')"></i>' + esc(status.key) + '</dt>'
+        + '<dd>' + esc(status.gloss) + '</dd>';
+    }).join('');
+  })();
+
+  /* ── can this page reach a backend at all? ──
+     Checked before anything is offered, for the reason prioritization.html
+     gives: a `file://` document has the opaque origin `null`, which CORS can
+     never be configured to accept, and the failure otherwise presents as an
+     empty project list with no explanation. */
+  (function checkOrigin() {
+    if (!EBPBackend.fileOrigin()) return;
+    const box = el('origin-warning');
+    box.innerHTML = EBPBackend.explain(null);
+    box.hidden = false;
+  })();
+
+  /* ── bootstrap ──────────────────────────────────────────────────────────── */
+  (async function boot() {
+    const wanted = new URLSearchParams(window.location.search).get('project');
+    try {
+      index = await EBPBackend.duplicationProjects();
+    } catch (err) {
+      el('project').innerHTML = '<option value="">— unavailable —</option>';
+      notice('<b class="hd">Could not load the project list.</b><p>'
+        + EBPBackend.explain(err) + '</p>', true);
+      return;
+    }
+    index.projects.forEach(function (entry) { byKey[entry.project] = entry; });
+    fillProjects();
+    el('asof').innerHTML = networkLine()
+      + (index.oldest_generated_date
+        ? '<br>oldest capture <b>' + esc(index.oldest_generated_date) + '</b> · '
+          + ageWords(index.oldest_generated_date) : '');
+
+    if (wanted) {
+      /* Deep-linked. Opened even where the list says there is no report, so the
+         reader gets the endpoint's own reason rather than this page guessing
+         one — and a project dropped from the registry since the link was sent
+         still explains itself. */
+      await openProject(wanted.trim().toLowerCase(), { keepUrl: true });
+      return;
+    }
+    el('report-host').innerHTML = '<div class="notice">'
+      + '<b class="hd">Choose a project to see its duplication reports.</b>'
+      + '<p>Reports exist for the ' + num(index.with_report_count) + ' EBP projects whose target '
+      + 'species are registered against a BioProject accession in GoaT. Each is rebuilt weekly, and '
+      + 'the capture date is shown with it.</p></div>';
+  })();
+})();
+</script>
+</body>
+</html>

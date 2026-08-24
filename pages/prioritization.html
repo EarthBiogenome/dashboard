@@ -89,6 +89,11 @@
     --paper:#e9f2ec; --paper-dim:#a6bcaf; --paper-mute:#6f8a7b;
     --green:#16a34a; --green-deep:#0d7a47; --green-bright:#3fbf7f; --green-glow:#5fd39a;
     --novel:#7aa2ff; --improve:#e0a760; --low:#8595a0; --warn:#e0a760; --red:#e0736a;
+    /* Outbound links — cited sources — are BLUE, the convention readers already
+       have for "this leaves the site"; green stays in-product navigation.
+       Measured on this page's grounds: 7.16:1 on --ink-2. Matches
+       duplication_overview.html so the two tools cite the same way. */
+    --link-out:#7aa2ff;
     --radius:14px; font-synthesis:none;
   }
   :root[data-theme="light"]{
@@ -96,6 +101,7 @@
     --line:#d6e3d9; --line-soft:#e6efe8;
     --paper:#12211a; --paper-dim:#3e5548; --paper-mute:#6b8375;
     --green-glow:#0d7a47; --green-bright:#16a34a;
+    --link-out:#1558c4;      /* 6.51:1 on white, 6.03:1 on the page ground */
   }
   @media (prefers-color-scheme: light){
     :root:not([data-theme="dark"]){
@@ -103,6 +109,7 @@
       --line:#d6e3d9; --line-soft:#e6efe8;
       --paper:#12211a; --paper-dim:#3e5548; --paper-mute:#6b8375;
       --green-glow:#0d7a47; --green-bright:#16a34a;
+      --link-out:#1558c4;
     }
   }
   *{box-sizing:border-box;}
@@ -114,6 +121,10 @@
   .tnum{font-variant-numeric:tabular-nums;}
   a{color:var(--green-glow); text-decoration:none;}
   a:hover{text-decoration:underline;}
+  /* Every link that leaves the site, in one selector, so a future one gets it
+     without anybody remembering to. Buttons are excluded: a button is an action
+     and reads as one, not as a citation. */
+  a[href^="http"]:not(.btn){color:var(--link-out);}
   code{font-family:ui-monospace,'Cascadia Code',Menlo,monospace; font-size:.85em; color:var(--green-glow);
     background:var(--ink-3); border:1px solid var(--line); border-radius:5px; padding:1px 6px;}
 

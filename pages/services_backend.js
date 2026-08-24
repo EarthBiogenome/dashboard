@@ -1,8 +1,8 @@
 /**
  * EBP backend client — the ONE place that knows where the backend lives.
  *
- * Every call to `ebp-backend` (prioritization, the per-list trend, and later
- * duplication) goes through this file. That is a deliberate rule from the
+ * Every call to `ebp-backend` (prioritization, the per-list trend, and
+ * cross-project duplication) goes through this file. That is a deliberate rule from the
  * integration plan §7: the existing dashboard hard-codes the GoaT host in five
  * separate pages, and moving it has cost real time every time. One constant,
  * one place.
@@ -60,6 +60,23 @@ const EBPBackend = (function () {
     }
   }
 
+  /**
+   * The human half of a FastAPI `detail`, which is not always a string.
+   *
+   * Most endpoints raise `HTTPException(detail='...')` and this is that string.
+   * The duplication routes raise a structured detail instead — `{reason,
+   * project, message, hint}` — because four different kinds of "there is
+   * nothing to serve" have to be told apart by the caller rather than by
+   * reading prose (A-D2). Passing that object straight to `Error` produced
+   * `[object Object]` as the message, so the object is kept on `err.detail`
+   * for branching and its `message` becomes the readable one.
+   */
+  function detailMessage(detail, status) {
+    if (typeof detail === 'string' && detail) return detail;
+    if (detail && typeof detail.message === 'string' && detail.message) return detail.message;
+    return 'Backend returned ' + status;
+  }
+
   function url(path, params) {
     const origin = base();
     if (!origin) {
@@ -89,7 +106,7 @@ const EBPBackend = (function () {
       let detail = null;
       try { detail = (await response.json()).detail; } catch (ignored) { /* not JSON */ }
       throw new BackendError(
-        detail || ('Backend returned ' + response.status), response.status, detail);
+        detailMessage(detail, response.status), response.status, detail);
     }
     return response.json();
   }
@@ -114,13 +131,14 @@ const EBPBackend = (function () {
       let detail = null;
       try { detail = (await response.json()).detail; } catch (ignored) { /* not JSON */ }
       throw new BackendError(
-        detail || ('Backend returned ' + response.status), response.status, detail);
+        detailMessage(detail, response.status), response.status, detail);
     }
     return response.json();
   }
 
   const listPath = (list) => '/api/lists/' + encodeURIComponent(list);
   const submissionPath = (id) => '/api/submissions/' + encodeURIComponent(id);
+  const duplicationPath = (project) => '/api/duplication/' + encodeURIComponent(project);
 
   /** Is this page pointed at a backend on the developer's own machine? */
   function isLocalBackend() {
@@ -288,6 +306,66 @@ const EBPBackend = (function () {
         since: opts.since,
         include: opts.includeSpecies ? 'species' : null,
       });
+    },
+
+    /**
+     * Every project a cross-project duplication report exists or could exist for.
+     *
+     * The UNION of the registry's reportable projects and the stored rows
+     * (A-D2), so `reportable` and `has_report` are BOTH needed to size a
+     * dropdown: a project the weekly job has not reached belongs in the list as
+     * unselectable, not as an option that 404s when it is clicked.
+     *
+     * Each entry also carries `generated_date`, `stale` and `long_list_species`,
+     * which is what lets a caller mark a failed capture, and tell an empty
+     * report from a project GoaT holds no target list for, without a detail
+     * call per project.
+     */
+    duplicationProjects(options) {
+      const opts = options || {};
+      return getJSON('/api/duplication/projects',
+        { stored_only: opts.storedOnly ? 'true' : null });
+    },
+
+    /**
+     * One project's stored three-report payload. → `{project, bioproject,
+     * generated_date, report_1..3, superset, stored}`
+     *
+     * A DB read of what the weekly job precomputed — never a live GoaT query
+     * (decision 11), so it answers in milliseconds and can be a week old by
+     * design. `stored.stale` is the only thing that separates that from a week
+     * old because the last captures FAILED; `generated_date` cannot say it.
+     *
+     * A miss is a 404 whose `err.detail.reason` is one of `not_yet_computed`,
+     * `umbrella_project`, `not_reportable` or `unknown_project` — four
+     * different situations, and a page that shows one message for all four is
+     * wrong about three of them.
+     */
+    duplicationReport(project) {
+      return getJSON(duplicationPath(project));
+    },
+
+    /**
+     * The .xlsx download URL for one project's duplication report.
+     *
+     * A URL rather than a fetch, like `submissionExportUrl` — the browser's own
+     * download handling should carry the file, and the workbook is built from
+     * the same stored row the JSON comes from, so the two cannot disagree.
+     */
+    duplicationExportUrl(project) {
+      return url(duplicationPath(project) + '/export');
+    },
+
+    /**
+     * One dated metric series from `report_snapshots`. → `{metric_key, points}`
+     *
+     * The weekly capture writes these; nothing computes them on read, and there
+     * is no way to backfill one — GoaT keeps no history, so a week not captured
+     * is gone. Used by the duplication trend panel for
+     * `duplication.<report>.<project>`.
+     */
+    trend(metricKey) {
+      return getJSON('/api/trends/' + encodeURIComponent(metricKey));
     },
 
     /** One species' timeline across the runs of a list — Panel B (A-T5). */
