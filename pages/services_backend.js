@@ -191,13 +191,20 @@ const EBPBackend = (function () {
          nothing was there. Name both, in the order they are worth checking. */
       return '<b>The request to <code>' + base() + '</code> did not complete.</b> '
         + 'Two different things look identical from here:<br>'
-        + '· <b>The backend is not running.</b> Start it from the <code>ebp-backend</code> repo: '
+        + '· <b>The backend is not running.</b> From the <code>ebp-backend</code> repo, '
+        + '<code>.\\run_dev.cmd</code> starts both halves and opens the page at the right '
+        + 'address; or just the API with '
         + '<code>python -m uvicorn app.main:app --app-dir api --port 8000</code><br>'
         + '· <b>It is running, and the browser blocked the reply</b> because this page was opened '
         + 'from an origin the backend does not allow. Check the address bar: serve the page over '
         + '<code>http://localhost</code> or <code>http://127.0.0.1</code> — a <code>file://</code> '
         + 'path cannot call the backend at all.<br>'
-        + 'Either way nothing was lost, and the list can simply be screened again.';
+        /* Deliberately generic. This said "the list can simply be screened
+           again", which is the prioritization tool's story — on the duplication
+           page nothing was being screened, and a reader was being told to redo
+           work they never started. `explain()` is shared by both tools, so
+           anything it says has to be true on either. */
+        + 'Either way nothing is lost: reload once the backend answers.';
     }
     if (err && err.unreachable) {
       return '<b>Could not reach the EBP backend.</b> It may be down, or a network or CORS rule may '
