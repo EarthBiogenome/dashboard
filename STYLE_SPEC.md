@@ -147,9 +147,11 @@ Placed **immediately below** the chart container it describes, with minimal gap:
 The two tool pages are not static: they read the `ebp-backend` API, and until Phase B
 sets `BACKEND_BASE_PRODUCTION` in `pages/services_backend.js` there is no hostname for
 them on the public deployment. Such a card renders as `.link.unavailable` — a `<div>`
-rather than an `<a>`, dashed border on `--bg-alt`, `--border` icon tile, a
-`.link-badge` reading "Coming soon" on its own row under the title, and a `.link-note`
-saying why. No hover lift and no arrow: those signal a destination, and there isn't one.
+rather than an `<a>`, dashed border on `--bg-alt`, `--border` icon tile, and a
+`.link-badge` reading "Coming soon" on its own row under the title. No hover lift and no
+arrow: those signal a destination, and there isn't one. The badge is all it says — the
+card does not explain *why* the tool is unavailable, because this page is public and the
+reason is internal deployment state.
 
 Mark it in `config.js` with `requiresBackend: true`. **Do not hardcode the condition** —
 `index.html` asks `EBPBackend.backendBase()`, so setting that one constant is the only

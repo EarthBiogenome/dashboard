@@ -453,8 +453,9 @@
            Rendered as a <div>, not an <a>: until Phase B sets
            BACKEND_BASE_PRODUCTION the page behind these two can only say "no
            backend is configured", so a link here would be a dead end dressed as
-           a working tool. Muted, no hover, no arrow — and it carries the reason
-           rather than leaving the reader to click and find out. */
+           a working tool. Muted, no hover, no arrow. The "Coming soon" badge is
+           the whole of what it says: the card states that the tool is not ready,
+           and deliberately does NOT explain why on a public page. */
         .link.unavailable {
             background: var(--bg-alt);
             border-style: dashed;
@@ -486,13 +487,6 @@
             font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-        }
-
-        .link-note {
-            margin-top: 0.35rem;
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            line-height: 1.4;
         }
 
         /* ── Footer ──────────────────────────────────────── */
@@ -789,14 +783,6 @@
                 }
 
                 content.appendChild(description);
-
-                if (unavailable) {
-                    const note = document.createElement('div');
-                    note.classList.add('link-note');
-                    note.textContent = 'Built and running locally. It needs the EBP backend, which has not been deployed yet.';
-                    content.appendChild(note);
-                }
-
                 link.appendChild(content);
 
                 if (!unavailable) {
