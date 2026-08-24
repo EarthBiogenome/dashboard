@@ -86,6 +86,13 @@
     /* Botanical-ink ground — consistent with ebp-homepage.html and the tool mockups */
     --ink:#0b1310; --ink-2:#0f1a14; --ink-3:#14231b; --ink-4:#1b2f24;
     --line:#22362b; --line-soft:#1a2a20;
+    /* A boundary that has to be SEEN, not merely sensed: --line is a
+       hairline for panels a reader is not looking for, and at 1.46:1 on
+       --ink it falls under WCAG 1.4.11's 3:1 for a control's own outline.
+       Used by the "How to read results" chip, whose pill shape is the only
+       thing marking it off from the label badges. 3.17:1 on --ink,
+       3.00:1 on --ink-2. */
+    --line-strong:#4a6b57;
     --paper:#e9f2ec; --paper-dim:#a6bcaf; --paper-mute:#6f8a7b;
     --green:#16a34a; --green-deep:#0d7a47; --green-bright:#3fbf7f; --green-glow:#5fd39a;
     --novel:#7aa2ff; --improve:#e0a760; --low:#8595a0; --warn:#e0a760; --red:#e0736a;
@@ -99,6 +106,7 @@
   :root[data-theme="light"]{
     --ink:#f4f7f4; --ink-2:#ffffff; --ink-3:#eef5f0; --ink-4:#e2ede5;
     --line:#d6e3d9; --line-soft:#e6efe8;
+    --line-strong:#78907f;   /* 3.19:1 on --ink, 3.45:1 on --ink-2 */
     --paper:#12211a; --paper-dim:#3e5548; --paper-mute:#6b8375;
     --green-glow:#0d7a47; --green-bright:#16a34a;
     --link-out:#1558c4;      /* 6.51:1 on white, 6.03:1 on the page ground */
@@ -107,6 +115,7 @@
     :root:not([data-theme="dark"]){
       --ink:#f4f7f4; --ink-2:#ffffff; --ink-3:#eef5f0; --ink-4:#e2ede5;
       --line:#d6e3d9; --line-soft:#e6efe8;
+      --line-strong:#78907f;   /* 3.19:1 on --ink, 3.45:1 on --ink-2 */
       --paper:#12211a; --paper-dim:#3e5548; --paper-mute:#6b8375;
       --green-glow:#0d7a47; --green-bright:#16a34a;
       --link-out:#1558c4;
@@ -177,6 +186,10 @@
     gap:20px; flex-wrap:wrap;}
   .view-head .vt{font-size:19px; font-weight:650; letter-spacing:-.01em;}
   .view-head .vs{font-size:13px; color:var(--paper-dim); margin-top:2px;}
+  /* The "How to read results" chip, in both the empty state and the results
+     prioritization_results.js draws. Spaced here rather than inline in either
+     one so the two cannot drift apart. */
+  .view-head .ebp-help-btn{margin-top:10px;}
 
   /* Shell furniture, shared by both Task 6 views — kept here rather than in
      either component so the two cannot drift into two button styles. */
@@ -230,10 +243,6 @@
       <div class="head-left">
         <div class="crumb">Prioritization · one question</div>
         <h1>Is my species list worth sequencing?</h1>
-        <!-- Reference material, reachable from every view rather than owned by
-             one — the same labels appear in Results, Coverage and both trend
-             panels. `#help` deep-links straight into it. -->
-        <button class="ebp-help-btn" id="helpBtn" type="button">? How to read this</button>
       </div>
       <!-- Populated by whichever of the two identities the page has. They are
            not the same claim, so the unit is not the same word: a tracked list
@@ -288,7 +297,15 @@
     <div id="results-empty">
       <div class="view-head">
         <div class="vt">Results</div>
-        <div class="vs">Every species, its novelty, and who is already working on it</div>
+        <!-- Reference material for the labels this view is about to show. It
+             sat between the page title and the strapline, where it read as part
+             of the tool's own description; it belongs to Results, which is the
+             only view whose labels need explaining. `#help` still deep-links
+             straight into it, and the delegated .ebp-help-open-link handler in
+             prioritization_help.js opens it from wherever it is rendered —
+             here, and again in the results prioritization_results.js draws once
+             a run lands. -->
+        <button class="ebp-help-btn ebp-help-open-link" type="button">How to read results <span aria-hidden="true">→</span></button>
       </div>
       <div class="card">
         <p><b>Nothing screened yet.</b> Submit a species list and its results open here — or open a
@@ -378,11 +395,13 @@
   document.getElementById('results-goto-submit')
     .addEventListener('click', function () { show('submit'); });
 
-  /* "How to read this" — available from every view, and from ?…#help. Its
+  /* "How to read results" — opened from the chip under the Results heading (both
+     the empty state and the rendered run) and from ?…#help; mount() takes no
+     button because the chip is rendered inside a view, not in the shell. Its
      Sources block names the IUCN release rather than carrying a version string,
      for the reason iucn_release.py gives; the GoaT reference size arrives with
      the first submission. Neither is required for the panel to open. */
-  PrioritizationHelp.mount(document.getElementById('helpBtn'));
+  PrioritizationHelp.mount();
   EBPBackend.health()
     .then(function (health) {
       PrioritizationHelp.setContext({

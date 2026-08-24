@@ -94,10 +94,28 @@ const PrioritizationHelp = (function () {
   // ── styles ────────────────────────────────────────────────────────────────
   const STYLE_ID = 'ebp-help-styles';
   const STYLES = `
-  .ebp-help-btn{background:transparent; border:1px solid var(--line,#22362b); color:var(--paper-dim,#a6bcaf);
+  /* A 999px pill is also what the LABEL badges use (.ebp-res-chip, .ebp-chip,
+     .ebp-help-chip), and by the time a reader reaches Results those have taught
+     them "pill = read it, don't click it". Two things separate this one from a
+     badge: the trailing arrow, carried at rest, and an underline on hover.
+     Underline rather than a fill or a new hue because green already means links,
+     the active tab, "Export to Excel" and the High_New label -- a green help chip
+     would compete with the view's one primary action. See also .ebp-help-link
+     below: the drawer's other opener, styled as a link for the same reason.
+     The outline takes --line-strong, not --line: --line is a hairline meant to
+     separate panels, and at 1.23:1 on the light ground the pill all but vanished,
+     leaving the arrow to carry the affordance alone. */
+  .ebp-help-btn{background:transparent; border:1px solid var(--line-strong,#4a6b57); color:var(--paper-dim,#a6bcaf);
     border-radius:999px; padding:7px 13px; font:inherit; font-size:12px; font-weight:600; cursor:pointer;
     white-space:nowrap;}
-  .ebp-help-btn:hover{color:var(--green-glow,#5fd39a); border-color:rgba(63,191,127,.4);}
+  /* Solid --green-glow, not the rgba(63,191,127,.4) the page's other quiet
+     controls hover to: at 40% over the light ground that composites to 1.36:1,
+     which is FAINTER than this control's 3.19:1 rest outline -- the ring would
+     deflate on hover. The other controls keep the soft value because their rest
+     border is soft too; only this one had its rest state darkened. */
+  .ebp-help-btn:hover,
+  .ebp-help-btn:focus-visible{color:var(--green-glow,#5fd39a); border-color:var(--green-glow,#5fd39a);
+    text-decoration:underline;}
 
   .ebp-help-scrim{position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.5);
     backdrop-filter:blur(2px); display:flex; justify-content:flex-end;}

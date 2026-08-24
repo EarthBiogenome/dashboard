@@ -472,6 +472,11 @@ const PrioritizationResults = (function () {
         <div class="vt">Results</div>
         <div class="vs">${num(total)} species${opts.source ? ' · ' + esc(opts.source) : ''}${
           reference ? ' · screened against ' + num(reference) + ' species with assemblies in GoaT' : ''}</div>
+        <!-- Same chip as the empty state's, so the glossary stays reachable
+             once a run has replaced that state. No wiring needed: the
+             document-level .ebp-help-open-link handler mount() installs picks
+             it up wherever it is drawn. -->
+        <button class="ebp-help-btn ebp-help-open-link" type="button">How to read results <span aria-hidden="true">→</span></button>
       </div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn" id="ebp-res-new" type="button">↩ New submission</button>
