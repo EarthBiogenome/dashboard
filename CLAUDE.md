@@ -20,7 +20,7 @@ The **EBP Dashboard** is a static web frontend for the Earth BioGenome Project (
 
 ### Entry Point and Configuration
 - `index.html` — Main dashboard landing page with sticky header, Phase I progress tracking bars, and card-based navigation to visualizations
-- `config.js` — Defines all visualization pages in two categories: "Assembly Progress" and "Network Visualization"; also holds the `copyright` object
+- `config.js` — Defines all dashboard pages in three categories: "Assembly Progress", "Network Visualization" and "Sequencing Coordination Toolset"; also holds the `copyright` object. The third holds the two *tools* rather than reports — they read the `ebp-backend` API, so their entries carry `requiresBackend: true` and `index.html` renders them as unavailable until `BACKEND_BASE_PRODUCTION` (in `pages/services_backend.js`) has a hostname. See STYLE_SPEC.md §5.
 
 ### Visualization Files
 All visualization HTML files live in [pages/](pages/). Each file is self-contained — it includes its own `<script>` and `<style>` tags and loads data via `fetch()` from external GOAT/EBP APIs or local JSON.

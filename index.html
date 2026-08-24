@@ -449,6 +449,52 @@
             transform: translateX(3px);
         }
 
+        /* ── A tool with no backend behind it yet ─────────────
+           Rendered as a <div>, not an <a>: until Phase B sets
+           BACKEND_BASE_PRODUCTION the page behind these two can only say "no
+           backend is configured", so a link here would be a dead end dressed as
+           a working tool. Muted, no hover, no arrow — and it carries the reason
+           rather than leaving the reader to click and find out. */
+        .link.unavailable {
+            background: var(--bg-alt);
+            border-style: dashed;
+            cursor: default;
+        }
+
+        .link.unavailable:hover {
+            background: var(--bg-alt);
+            border-color: var(--border);
+            box-shadow: none;
+            transform: none;
+        }
+
+        .link.unavailable .link-icon { background: var(--border); }
+        .link.unavailable .link-icon i { color: var(--text-muted); }
+        .link.unavailable .link-title { color: var(--text-dim); }
+
+        /* Its own row, not a chip appended to the title: the two titles are
+           different lengths, so inline it sat beside the first and wrapped below
+           the second — the same state rendered two ways on adjacent cards. */
+        .link-badge {
+            display: inline-block;
+            margin: 0.3rem 0 0.15rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .link-note {
+            margin-top: 0.35rem;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
         /* ── Footer ──────────────────────────────────────── */
         footer {
             border-top: 1px solid var(--border);
@@ -551,6 +597,11 @@
     </footer>
 
     <script src="config.js"></script>
+    <!-- Loaded for one reason: `EBPBackend.backendBase()` is the single source of
+         truth for whether a backend exists for this deployment, and the two tool
+         cards below are only real if one does. Defining the client is side-effect
+         free — no request is made until a page calls it. -->
+    <script src="./pages/services_backend.js"></script>
     <script>
         // GA4 Event Tracking Functions
         function trackEvent(eventName, parameters = {}) {
@@ -662,6 +713,16 @@
         // Build catalog from config
         const container = document.getElementById('content-container');
 
+        /* Is there a backend for THIS deployment?
+           `backendBase()` returns localhost when the page is served locally and
+           BACKEND_BASE_PRODUCTION otherwise — empty until Phase B provisions a
+           hostname. Asking it, rather than repeating the hostname here, is what
+           makes setting that one constant the only edit needed to turn the two
+           tool cards live. If the client failed to load at all, treat the
+           backend as absent: better a card that says "not yet" than a link to a
+           page whose own client is missing. */
+        const backendConfigured = typeof EBPBackend !== 'undefined' && !!EBPBackend.backendBase();
+
         pages.forEach(category => {
             trackCategoryView(category.category);
 
@@ -677,22 +738,31 @@
             linksContainer.classList.add('links-container');
 
             category.pages.forEach(page => {
-                const link = document.createElement('a');
-                link.classList.add('link');
-                link.href = page.file;
-                link.target = '_blank';
-                link.title = page.description;
+                // A tool page with no backend behind it is not a link. See the
+                // .link.unavailable rule above for why it is not merely dimmed.
+                const unavailable = page.requiresBackend && !backendConfigured;
 
-                link.addEventListener('click', () => trackVisualizationClick(category.category, page.name, page.file));
-                link.addEventListener('mouseenter', () => trackHover(category.category, page.name));
-                link.addEventListener('focus', () => {
-                    trackEvent('visualization_focus', {
-                        event_category: 'accessibility',
-                        event_label: page.name,
-                        custom_parameter_1: category.category,
-                        value: 1
+                const link = document.createElement(unavailable ? 'div' : 'a');
+                link.classList.add('link');
+                if (unavailable) {
+                    link.classList.add('unavailable');
+                    link.title = page.description;
+                } else {
+                    link.href = page.file;
+                    link.target = '_blank';
+                    link.title = page.description;
+
+                    link.addEventListener('click', () => trackVisualizationClick(category.category, page.name, page.file));
+                    link.addEventListener('mouseenter', () => trackHover(category.category, page.name));
+                    link.addEventListener('focus', () => {
+                        trackEvent('visualization_focus', {
+                            event_category: 'accessibility',
+                            event_label: page.name,
+                            custom_parameter_1: category.category,
+                            value: 1
+                        });
                     });
-                });
+                }
 
                 const iconWrapper = document.createElement('div');
                 iconWrapper.classList.add('link-icon');
@@ -710,12 +780,30 @@
                 description.classList.add('link-description');
                 description.textContent = page.description;
                 content.appendChild(title);
+
+                if (unavailable) {
+                    const badge = document.createElement('span');
+                    badge.classList.add('link-badge');
+                    badge.textContent = 'Coming soon';
+                    content.appendChild(badge);
+                }
+
                 content.appendChild(description);
+
+                if (unavailable) {
+                    const note = document.createElement('div');
+                    note.classList.add('link-note');
+                    note.textContent = 'Built and running locally. It needs the EBP backend, which has not been deployed yet.';
+                    content.appendChild(note);
+                }
+
                 link.appendChild(content);
 
-                const arrow = document.createElement('i');
-                arrow.classList.add('fas', 'fa-arrow-right', 'link-arrow');
-                link.appendChild(arrow);
+                if (!unavailable) {
+                    const arrow = document.createElement('i');
+                    arrow.classList.add('fas', 'fa-arrow-right', 'link-arrow');
+                    link.appendChild(arrow);
+                }
 
                 linksContainer.appendChild(link);
             });

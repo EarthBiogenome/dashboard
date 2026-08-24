@@ -86,6 +86,34 @@
 <script src="./duplication_report.js"></script>
 <script src="./duplication_trend.js"></script>
 
+<script>
+/* ---------------------------------------------------------------------------
+   Theme, restored BEFORE first paint.
+
+   This runs in <head>, ahead of the stylesheet below, because the alternative
+   is a visible flash: the page would paint in the system theme and then swap
+   once a script at the bottom got to run.
+
+   Only an EXPLICIT choice is stored. With nothing in storage no attribute is
+   set, so `@media (prefers-color-scheme)` decides and the page still follows
+   the OS the way it always did. `ebp-theme` is shared by prioritization.html
+   and duplication_overview.html — same origin, one key — so the switcher in
+   the topbar no longer drops your choice when you move between the two tools.
+
+   Wrapped in try/catch on purpose: `localStorage` THROWS rather than returning
+   null in a private window or where site data is blocked, and an exception
+   here, in <head>, would take out the rest of the page.
+   --------------------------------------------------------------------------- */
+(function () {
+  try {
+    var stored = localStorage.getItem('ebp-theme');
+    if (stored === 'dark' || stored === 'light') {
+      document.documentElement.setAttribute('data-theme', stored);
+    }
+  } catch (e) { /* no storage: fall through to the system preference */ }
+})();
+</script>
+
 <style>
   :root{
     /* Botanical-ink ground — the same tokens prioritization.html and the mockup
@@ -183,15 +211,22 @@
   .topbar{display:flex; align-items:center; gap:12px; padding:14px 0;
     border-bottom:1px solid var(--line); background:var(--ink-2);}
   .logo{display:flex; align-items:center; gap:9px; font-weight:800; font-size:14px; color:var(--paper);}
-  .logo .mk{width:24px; height:24px; border-radius:7px;
+  .logo .mk{width:25px; height:25px; border-radius:7px;
     background:linear-gradient(135deg,var(--green-deep),var(--green));
     display:flex; align-items:center; justify-content:center; font-size:13px;}
-  .topnav{margin-left:auto; display:flex; gap:4px;}
-  .topnav .n{font-size:12.5px; padding:6px 11px; border-radius:7px; color:var(--paper-dim);}
+  /* Kept identical to prioritization.html's topbar: the two pages now link to each
+     other, so the switcher is one component seen twice. Metrics differed because the
+     two mockups differed (12.5px/6px 11px here, 13px/8px 13px there) and each page
+     matched its own. Change both or neither. */
+  .topnav{margin-left:auto; display:flex; gap:3px; align-items:center;}
+  /* line-height pinned, not inherited: the two pages set body line-height 1.5 and
+     1.55, which made the same pill 0.6px taller on one of them. */
+  .topnav .n{font-size:13px; line-height:1.5; padding:8px 13px; border-radius:8px;
+    color:var(--paper-dim); white-space:nowrap;}
   .topnav .n.on{background:var(--ink-4); color:var(--green-glow); font-weight:700;}
   .theme-toggle{background:transparent; border:1px solid var(--line); color:var(--paper-dim);
-    border-radius:999px; padding:6px 12px; font:inherit; font-size:12px; font-weight:600;
-    cursor:pointer; margin-left:8px;}
+    border-radius:999px; padding:7px 12px; font:inherit; font-size:12px; line-height:1.5;
+    font-weight:600; cursor:pointer; margin-left:8px; white-space:nowrap;}
   .theme-toggle:hover{color:var(--green-glow); border-color:rgba(63,191,127,.4);}
 
   /* ── question header ── */
@@ -402,7 +437,12 @@
     if (!current) {
       current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
-    root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    /* Remember it, so the topbar's switcher does not drop the choice on the way
+       to the other tool. Same key on both pages; same try/catch reason as the
+       <head> restore above. */
+    try { localStorage.setItem('ebp-theme', next); } catch (e) {}
     /* Every colour in both views is read from a CSS variable at draw time, and
        the two themes carry different validated ramps, so a flip is a redraw. */
     if (view) view.redraw();
