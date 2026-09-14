@@ -102,17 +102,12 @@
   a.ebp-dd-item:hover{background:var(--ink-3,#eef5f0); text-decoration:none;}
   .ebp-dd-item.off{opacity:.6; cursor:default;}
   /* The page you are on: marked, not dimmed. Sharing the .off styling here
-     made the current tool read as unavailable.
+     made the current tool read as unavailable. The tint and aria-current say it;
+     there is no added label, because the row already names the page you are on.
      NOTE: no backticks anywhere in this block. It is a template literal, so a
      backtick ENDS it -- quoting a class name that way silently truncated the
      stylesheet and turned the rest into a tagged-template call. */
   .ebp-dd-item.here{background:var(--ink-3,#eef5f0); cursor:default;}
-  /* The middot is the literal character, not a CSS escape: this block is a JS
-     TEMPLATE LITERAL, where a backslash-zero is the NULL escape. Writing the
-     unicode form put a NUL byte in the file and took the component down.
-     Twice, in fact: re.sub's REPLACEMENT reads it as an octal group ref too. */
-  .ebp-dd-item.here .dt::after{content:' · you are here'; font-weight:600;
-    color:var(--paper-mute,#5a6e62);}
   .ebp-dd-item .di{width:32px; height:32px; border-radius:8px; display:flex; align-items:center;
     justify-content:center; font-size:14px; flex:none;}
   .ebp-dd-item.prio .di{background:rgba(122,209,81,.18); border:1px solid rgba(122,209,81,.45);
