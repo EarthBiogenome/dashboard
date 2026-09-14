@@ -1,5 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
+<!-- Pinned light, not merely un-toggled: this stylesheet is DARK-FIRST, so
+     removing the button alone would have left a dark-OS reader on dark tool
+     pages and a light home page — a worse mismatch than the one being fixed.
+     The dark palette is kept in the CSS, unselected, because it carries
+     measured WCAG contrast work that would cost more to re-derive than to
+     leave sitting there; deleting `data-theme` here restores it. -->
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -85,6 +91,7 @@
 <script src="./services_backend.js"></script>
 <script src="./duplication_report.js"></script>
 <script src="./duplication_trend.js"></script>
+<script src="./site_topbar.js"></script>
 
 <script>
 /* ---------------------------------------------------------------------------
@@ -104,14 +111,10 @@
    null in a private window or where site data is blocked, and an exception
    here, in <head>, would take out the rest of the page.
    --------------------------------------------------------------------------- */
-(function () {
-  try {
-    var stored = localStorage.getItem('ebp-theme');
-    if (stored === 'dark' || stored === 'light') {
-      document.documentElement.setAttribute('data-theme', stored);
-    }
-  } catch (e) { /* no storage: fall through to the system preference */ }
-})();
+/* Nothing to restore: `data-theme="light"` is on the <html> tag itself, so the
+   first paint is already correct and there is no stored choice to read back.
+   The dark palette below is kept and simply never selected — see the <html>
+   tag's comment for why it is pinned rather than deleted. */
 </script>
 
 <style>
@@ -207,27 +210,8 @@
     color:var(--green-glow); background:var(--ink-3); border:1px solid var(--line);
     border-radius:5px; padding:1px 6px;}
 
-  /* ── top bar ── */
-  .topbar{display:flex; align-items:center; gap:12px; padding:14px 0;
-    border-bottom:1px solid var(--line); background:var(--ink-2);}
-  .logo{display:flex; align-items:center; gap:9px; font-weight:800; font-size:14px; color:var(--paper);}
-  .logo .mk{width:25px; height:25px; border-radius:7px;
-    background:linear-gradient(135deg,var(--green-deep),var(--green));
-    display:flex; align-items:center; justify-content:center; font-size:13px;}
-  /* Kept identical to prioritization.html's topbar: the two pages now link to each
-     other, so the switcher is one component seen twice. Metrics differed because the
-     two mockups differed (12.5px/6px 11px here, 13px/8px 13px there) and each page
-     matched its own. Change both or neither. */
-  .topnav{margin-left:auto; display:flex; gap:3px; align-items:center;}
-  /* line-height pinned, not inherited: the two pages set body line-height 1.5 and
-     1.55, which made the same pill 0.6px taller on one of them. */
-  .topnav .n{font-size:13px; line-height:1.5; padding:8px 13px; border-radius:8px;
-    color:var(--paper-dim); white-space:nowrap;}
-  .topnav .n.on{background:var(--ink-4); color:var(--green-glow); font-weight:700;}
-  .theme-toggle{background:transparent; border:1px solid var(--line); color:var(--paper-dim);
-    border-radius:999px; padding:7px 12px; font:inherit; font-size:12px; line-height:1.5;
-    font-weight:600; cursor:pointer; margin-left:8px; white-space:nowrap;}
-  .theme-toggle:hover{color:var(--green-glow); border-color:rgba(63,191,127,.4);}
+  /* The top bar's styles left with it: site_topbar.js injects its own,
+     namespaced `.ebp-*`, so nothing here was still matching. */
 
   /* ── question header ── */
   header.q{padding:30px 0 22px;
@@ -334,15 +318,11 @@
 </head>
 <body>
 
-<div class="topbar">
-  <div class="wrap" style="display:flex; align-items:center; gap:12px; width:100%;">
-    <a class="logo" href="../index.html"><span class="mk">🌳</span> Earth BioGenome</a>
-    <div class="topnav">
-      <a class="n" href="./prioritization.html">Prioritization</a><span class="n on">Duplication</span>
-    </div>
-    <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
-  </div>
-</div>
+<!-- The header is injected by site_topbar.js, which builds the home page's own
+     logo, search and Report / Network / Tools menus from config.js. What stood
+     here was a two-item Prioritization/Duplication switcher, so the only route
+     to a report page was the browser's Back button — and a reader who arrived
+     here directly had no route to the rest of the site at all. -->
 
 <header class="q">
   <div class="wrap">
@@ -432,22 +412,11 @@
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const num = (value) => (Number(value) || 0).toLocaleString();
 
-  el('themeToggle').addEventListener('click', function () {
-    let current = root.getAttribute('data-theme');
-    if (!current) {
-      current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    var next = current === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
-    /* Remember it, so the topbar's switcher does not drop the choice on the way
-       to the other tool. Same key on both pages; same try/catch reason as the
-       <head> restore above. */
-    try { localStorage.setItem('ebp-theme', next); } catch (e) {}
-    /* Every colour in both views is read from a CSS variable at draw time, and
-       the two themes carry different validated ramps, so a flip is a redraw. */
-    if (view) view.redraw();
-    if (trend) trend.redraw();
-  });
+  /* The theme toggle was removed on 2026-09-14. The home page has never had one
+     and is not theme-aware — its palette IS the light one — so the tools
+     offering dark meant the site had two looks and no way to reconcile them.
+     The pages pin light; the redraw hooks the toggle used are still called by
+     the resize handlers that need them. */
   window.addEventListener('resize', function () { if (trend) trend.redraw(); });
 
   /* ── dates ────────────────────────────────────────────────────────────────
