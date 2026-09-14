@@ -54,7 +54,23 @@ const PrioritizationSubmit = (function () {
       .map((line) => line.trim()).filter(Boolean);
   }
 
-  const ACCEPT = '.csv,.tsv,.txt,.xlsx,.xls';
+  /**
+   * What the backend can actually parse — the same five as its
+   * `_ACCEPTED_UPLOAD_EXTENSIONS`, kept in step by test_label_parity.py.
+   *
+   * Used TWICE on purpose. As the input's `accept` attribute it filters the
+   * browse dialog; as a check in `chooseFile` it covers the drop zone, which
+   * `accept` does not reach. Without the second, a dropped .pdf was taken by
+   * the card, uploaded, and refused by the server a round trip later.
+   */
+  const ACCEPT_EXTENSIONS = ['.csv', '.tsv', '.txt', '.xlsx', '.xls'];
+  const ACCEPT = ACCEPT_EXTENSIONS.join(',');
+
+  /** Does this filename end in something the backend will parse? */
+  function isAcceptedFile(name) {
+    const lower = String(name || '').toLowerCase();
+    return ACCEPT_EXTENSIONS.some((extension) => lower.endsWith(extension));
+  }
 
   /* ── styles ───────────────────────────────────────────────────────────────
      Injected by the component, as Panels A and B do, so the view stays a
@@ -159,9 +175,9 @@ const PrioritizationSubmit = (function () {
       <div class="ebp-sub-input">
         <div class="card pad">
           <div class="ebp-drop" id="ebp-drop" role="button" tabindex="0"
-               aria-label="Choose a CSV or Excel file, or drop one here">
+               aria-label="Choose a species list file, or drop one here">
             <div class="icon" aria-hidden="true">⤒</div>
-            <div class="big">Drop a CSV or Excel file here</div>
+            <div class="big">Drop a species list here</div>
             <div class="small">or <span class="browse">browse your computer</span>
               · .xlsx, .xls, .csv, .tsv, .txt · the first column that looks like a name is used</div>
           </div>
@@ -299,6 +315,19 @@ const PrioritizationSubmit = (function () {
   }
 
   function chooseFile(file) {
+    if (file && !isAcceptedFile(file.name)) {
+      /* Said here rather than after the upload: the round trip is the whole
+         cost of a 40 MB drop, and the server's 400 arrives as a bare detail
+         string with no way to point at the file that caused it. */
+      els.file.value = '';
+      chosenFile = null;
+      els.fileChip.hidden = true;
+      els.names.disabled = false;
+      setError('<b>' + esc(file.name) + '</b> is not a file type this tool reads. '
+        + 'Accepted: ' + ACCEPT_EXTENSIONS.join(', ') + '.');
+      refreshCount();
+      return;
+    }
     chosenFile = file || null;
     els.fileChip.hidden = !chosenFile;
     if (chosenFile) {
@@ -408,7 +437,7 @@ const PrioritizationSubmit = (function () {
 
   async function start() {
     if (!refreshCount()) {
-      setError('Paste some species names, or choose a CSV/XLSX file.');
+      setError('Paste some species names, or choose a spreadsheet or text file.');
       return;
     }
     setError('');
