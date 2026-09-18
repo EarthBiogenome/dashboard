@@ -15,6 +15,9 @@ geocoding/*.log
 geocoding/~$*.xlsx
 geocoding/~$*.xls
 
+# JEDI paper
+JEDI_paper/
+
 # Environment variables
 .env
 *.csv
