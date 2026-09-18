@@ -326,7 +326,7 @@
         <div class="sidebar-title">EBP Global Network</div>
         <div class="legend-item">
             <span class="lc" style="width:12px;height:12px;background:#EA580C;"></span>
-            <span>Project center (Number indicates cluster count)</span>
+            <span>Projects' central operations (Number indicates cluster count)</span>
         </div>
         <div class="legend-item">
             <span class="ls" style="background:#0F5A66;"></span>
@@ -334,10 +334,10 @@
         </div>
         <hr class="sidebar-divider">
         <div class="sidebar-intro">
-            <strong>EBP Secretariat</strong> + <strong id="countYellow">—</strong> affiliated project centers
-            across <strong id="countCountries">—</strong> countries. Search, click or zoom into a cluster to explore project centers.
+            <strong>EBP Secretariat</strong> + <strong id="countYellow">—</strong> affiliated projects' central operations
+            across <strong id="countCountries">—</strong> countries. Search, click or zoom into a cluster to explore projects' central operations.
         </div>
-        <input id="centerSearch" type="text" placeholder="Search centers…" autocomplete="off" />
+        <input id="centerSearch" type="text" placeholder="Search central operations…" autocomplete="off" />
         <div id="centerList"></div>
     </div>
     <div id="mapZoomControls">
@@ -761,7 +761,7 @@
                                     return countries.length === 1 ? countries[0] : locs[0];
                                 })();
                                 const locStr = clusterLoc ? ` in ${clusterLoc}` : '';
-                                return `<strong>${c.count} Project Centers${locStr}. Click to expand.</strong><br/>${names}`;
+                                return `<strong>${c.count} Projects' Central Operations${locStr}. Click to expand.</strong><br/>${names}`;
                             }
                             const p = c.group[0];
                             let html = `<strong>${projectAbbr(p.name)}</strong>`;
@@ -944,7 +944,7 @@
                     if (!matches.length) {
                         const empty = document.createElement('div');
                         empty.className = 'center-empty';
-                        empty.textContent = 'No matching centers';
+                        empty.textContent = 'No matching central operations';
                         centerList.appendChild(empty);
                         return;
                     }
@@ -1298,7 +1298,7 @@
 
             const captionParts = [
                 [null,                   'Geographic distribution of EBP network of networks.'],
-                ['Yellow circles',       ` mark ${yellowN} project coordination centers and regional nodes.`],
+                ['Yellow circles',       ` mark ${yellowN} projects' central operations and regional nodes.`],
                 ['Teal-shaded countries',` (${countryN}) host at least one EBP-affiliated project or site.`],
                 [null,                   'Click any marker to visit the project website.'],
             ];
@@ -1316,7 +1316,7 @@
                 <line x1="${W}" y1="0" x2="${W}" y2="${svgHeight}" stroke="#CBD5E1" stroke-width="1"/>
                 <text x="${PAD}" y="44" font-family="sans-serif" font-size="15" font-weight="bold" fill="#1E293B">EBP Global Network</text>
                 <circle cx="28" cy="82" r="4" fill="#EA580C"/>
-                <text x="46" y="87" font-family="sans-serif" font-size="12.5" fill="#1E293B">Project center (Number indicates cluster count)</text>
+                <text x="46" y="87" font-family="sans-serif" font-size="12.5" fill="#1E293B">Projects' central operations (Number indicates cluster count)</text>
                 <rect x="20" y="103" width="16" height="11" rx="3" fill="#0F5A66"/>
                 <text x="46" y="112" font-family="sans-serif" font-size="12.5" fill="#1E293B">Country with EBP presence</text>
                 <line x1="${PAD}" y1="133" x2="${W - PAD}" y2="133" stroke="#CBD5E1" stroke-width="1"/>
@@ -1324,12 +1324,181 @@
             `;
         }
 
+        /**
+         * Flattened [lng, lat] pairs for every vertex in the world geometry,
+         * built once and reused across exports.
+         */
+        let landPointsCache = null;
+        function getLandPoints() {
+            if (landPointsCache) return landPointsCache;
+            if (typeof worldJson === 'undefined' || !worldJson || !worldJson.features) return null;
+            const pts = [];
+            const walk = c => {
+                if (!c || !c.length) return;
+                if (typeof c[0] === 'number') { pts.push(c); return; }
+                for (const part of c) walk(part);
+            };
+            worldJson.features.forEach(f => {
+                if (f && f.geometry && f.geometry.coordinates) walk(f.geometry.coordinates);
+            });
+            landPointsCache = pts.length ? pts : null;
+            return landPointsCache;
+        }
+
+        /**
+         * The geo component's layout box in pixels — the region the map is clipped
+         * to. Used to bound the crop so a zoomed-in export cannot reach into the
+         * sidebar gutter, where nothing is ever painted.
+         */
+        function getGeoViewRect(chart) {
+            try {
+                const cs = chart.getModel().getComponent('geo').coordinateSystem;
+                const r = cs && cs.getViewRect && cs.getViewRect();
+                if (r && r.width > 0 && r.height > 0) {
+                    return { x: r.x, y: r.y, width: r.width, height: r.height };
+                }
+            } catch (err) {
+                // Internal API moved — caller falls back to the full canvas.
+            }
+            return null;
+        }
+
+        /**
+         * Pixel bounds of the drawn landmasses at the current zoom and pan.
+         *
+         * Derived from the projection rather than the DOM. Measuring the SVG is
+         * unreliable here: the geo clip rect and the transparent pointer-capture
+         * surface that `roam: true` installs both span the full layout box, so any
+         * DOM union reports the layout box and reproduces exactly the blank bands
+         * this crop exists to remove. Projecting the source geometry has no such
+         * ambiguity — it sees only real coastline.
+         *
+         * Vertices are strided to keep a download click responsive; a few pixels
+         * of slack on a bounding box is imperceptible.
+         */
+        function getLandBounds(chart) {
+            const pts = getLandPoints();
+            if (!pts || !chart) return null;
+            const stride = Math.max(1, Math.ceil(pts.length / 20000));
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (let i = 0; i < pts.length; i += stride) {
+                const p = chart.convertToPixel({ geoIndex: 0 }, pts[i]);
+                if (!p || !isFinite(p[0]) || !isFinite(p[1])) continue;
+                if (p[0] < minX) minX = p[0];
+                if (p[0] > maxX) maxX = p[0];
+                if (p[1] < minY) minY = p[1];
+                if (p[1] > maxY) maxY = p[1];
+            }
+            if (!isFinite(minX) || maxX <= minX || maxY <= minY) return null;
+            return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+        }
+
+        /**
+         * Measures the tight pixel bounds of everything the chart actually draws.
+         *
+         * Deliberately does NOT use svgEl.getBBox(): on the root <svg> that can
+         * pick up the geo component's full-size clip rect (and anything else that
+         * spans the canvas), which reports the layout box rather than the inked
+         * area and leaves the very margins we are trying to remove. <rect> and
+         * <line> are skipped for the same reason: the geo clip rect is exactly the
+         * layout box, so measuring it reproduces the blank bands verbatim. Map
+         * content here is paths and circles only, so nothing real is lost. Each
+         * leaf shape is measured in its own user space and mapped into root space
+         * through its CTM, then unioned.
+         *
+         * @returns {?{x:number,y:number,width:number,height:number}} null if nothing measurable.
+         */
+        function getRenderedBounds(svgEl, fullW, fullH) {
+            const rootCTM = svgEl.getScreenCTM();
+            if (!rootCTM) return null;
+            const toRoot = rootCTM.inverse();
+            const pt = svgEl.createSVGPoint();
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+            svgEl.querySelectorAll('path,circle,ellipse,polygon,polyline,text,image')
+                .forEach(el => {
+                    // Definitions are never inked, so they must not widen the crop.
+                    if (el.closest('defs,clipPath,mask,pattern,marker,symbol')) return;
+                    if (el.getAttribute('visibility') === 'hidden') return;
+                    if (el.getAttribute('display') === 'none') return;
+
+                    let bb;
+                    try { bb = el.getBBox(); } catch (err) { return; }
+                    if (!bb || bb.width <= 0 || bb.height <= 0) return;
+
+                    // Belt and braces: a shape spanning the whole canvas is
+                    // backdrop scaffolding, not map content — land never forms one.
+                    if (bb.width >= fullW * 0.99 && bb.height >= fullH * 0.99) return;
+
+                    const ctm = el.getScreenCTM();
+                    if (!ctm) return;
+                    const m = toRoot.multiply(ctm);
+                    const corners = [[bb.x, bb.y], [bb.x + bb.width, bb.y],
+                                     [bb.x, bb.y + bb.height], [bb.x + bb.width, bb.y + bb.height]];
+                    for (const [cx, cy] of corners) {
+                        pt.x = cx; pt.y = cy;
+                        const p = pt.matrixTransform(m);
+                        if (p.x < minX) minX = p.x;
+                        if (p.x > maxX) maxX = p.x;
+                        if (p.y < minY) minY = p.y;
+                        if (p.y > maxY) maxY = p.y;
+                    }
+                });
+
+            if (!isFinite(minX) || maxX <= minX || maxY <= minY) return null;
+            return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+        }
+
+        /**
+         * Serializes the live chart SVG for download, cropped to the inked area.
+         *
+         * The on-screen chart reserves a 220px left gutter for the (HTML) sidebar
+         * and letterboxes the equal-earth projection inside what is left, so the
+         * raw canvas carries wide blank margins that serve no purpose in an
+         * exported figure. The crop is a viewBox over the measured bounds,
+         * intersected with the visible canvas so a zoomed-in export cannot drag
+         * off-screen continents back into frame. If nothing can be measured the
+         * full frame is kept, so export still works.
+         */
         function buildDownloadSVG() {
             const svgEl = mapChartInstance.getDom().querySelector('svg');
-            return svgEl.outerHTML.replace(
-                /(<svg[^>]*>)/,
-                `$1<rect width="100%" height="100%" fill="#E6F0F5"/>`
-            );
+            const bounds = svgEl.getBoundingClientRect();
+            const fullW = svgEl.width?.baseVal?.value || bounds.width || svgEl.clientWidth;
+            const fullH = svgEl.height?.baseVal?.value || bounds.height || svgEl.clientHeight;
+
+            let x = 0, y = 0, w = fullW, h = fullH;
+            // Projection first; the DOM union only backstops it.
+            const b = getLandBounds(mapChartInstance) || getRenderedBounds(svgEl, fullW, fullH);
+            const view = getGeoViewRect(mapChartInstance);
+            const loX = view ? Math.max(0, view.x) : 0;
+            const loY = view ? Math.max(0, view.y) : 0;
+            const hiX = view ? Math.min(fullW, view.x + view.width) : fullW;
+            const hiY = view ? Math.min(fullH, view.y + view.height) : fullH;
+            if (b) {
+                const x1 = Math.max(Math.floor(loX), Math.floor(b.x));
+                const y1 = Math.max(Math.floor(loY), Math.floor(b.y));
+                const x2 = Math.min(Math.ceil(hiX), Math.ceil(b.x + b.width));
+                const y2 = Math.min(Math.ceil(hiY), Math.ceil(b.y + b.height));
+                if (x2 > x1 && y2 > y1) { x = x1; y = y1; w = x2 - x1; h = y2 - y1; }
+            }
+            const clone = svgEl.cloneNode(true);
+            clone.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
+            clone.setAttribute('width', w);
+            clone.setAttribute('height', h);
+            clone.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+            // Background must sit at the crop origin, not 0,0: with a viewBox the
+            // user-space origin is the cropped corner, so a 100%/100% rect at 0,0
+            // would be offset by exactly the margin being removed.
+            const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('x', x);
+            bg.setAttribute('y', y);
+            bg.setAttribute('width', w);
+            bg.setAttribute('height', h);
+            bg.setAttribute('fill', '#E6F0F5');
+            clone.insertBefore(bg, clone.firstChild);
+
+            return clone.outerHTML;
         }
 
         document.getElementById('downloadSvgBtn').onclick = function (e) {
